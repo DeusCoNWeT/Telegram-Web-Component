@@ -1,39 +1,99 @@
 <!--
 @license
-Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
-This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
-The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
-The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
-Code distributed by Google as part of the polymer project is also
-subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
--->
-<link rel="import" href="../polymer/polymer.html">
-
-<script src="node_modules/requirejs/require.js"></script>
-<script src="node_modules/telegram.link/lib/telegram.link.js"></script>
-
-<!--
-An element providing a solution to no problem in particular.
+@author Javier Caballero Abenza. All rights reserved.
 
 Example:
 
     <telegram-wc></telegram-wc>
 
-@group Seed Elements
 @element telegram-wc
 @demo demo/index.html
-@hero hero.svg
 -->
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../paper-toolbar/paper-toolbar.html">
+<link rel="import" href="../paper-menu/paper-menu.html">
+
 <dom-module id="telegram-wc">
 
   <template>
-    <style>
-      :host {
+
+    <style is="custom-style">
+
+      :host{
+        display: block;
+        width: 400px;
+        height: 400px;
+        --background: #3a6d99;
+        overflow: hidden;
+        position: relative;
+      }
+
+      paper-toolbar.toolbar{
+        --paper-toolbar-background: var(--background);
+        --paper-toolbar-title:{
+          text-align: center;
+          margin-left: auto;
+          margin-right: auto;
+          overflow: visible;
+        }
+      }
+
+      .menu{
+        margin-right: 0 !important;
+      }
+
+      paper-menu.dropdown{
+        position: absolute;
+        width: 100px;
+        max-width: 100px;
+        left: -105px;
+        transition: .5s ease;
+      }
+
+      .chat{
+        height: calc(100% - 64px);
+        background: #ffffff;
+      }
+
+      .input{
+        position: absolute;
+        bottom: 10px;
+        width: calc(100% - 115px);
+        left: 15px;
+        right: 100px;
+        resize: none;
+        font: 15px Roboto,arial,sans-serif;
+      }
+
+      .send{
+        position: absolute;
+        bottom: 10px;
+        right: 0;
       }
 
     </style>
 
-    <h1>HI THERE, im telegram-wc</h1>
+    <!-- Header -->
+    <paper-toolbar class="toolbar">
+      <paper-icon-button icon="menu" class="menu" on-click="_toggle"></paper-icon-button>
+      <div class="title">Telegram-Web-Component</div>
+    </paper-toolbar>
+
+    <!-- Dropdown -->
+    <paper-menu id="dropdown-content" class="dropdown">
+      <paper-button raised class="item">Aqui van los chats</paper-button>
+    </paper-menu>
+
+    <!-- Chat -->
+    <div class="chat">
+      <textarea class="input" rows="4" cols="50" value="" on-keydown=""></textarea>
+      <paper-icon-button icon="send" class="send"></paper-icon-button>
+    </div>
 
   </template>  
 
@@ -50,8 +110,19 @@ Example:
     },
 
     attached: function(){
-      console.log('yep',telegramLink);
-    }
+      this.$['dropdown-content'].style.left="-105px";
+    },
+
+    /* Side Menu animation */
+
+    _toggle: function(){
+      if(this.$['dropdown-content'].style.left=="-105px"){
+        this.$['dropdown-content'].style.left="0";
+      }
+      else{
+        this.$['dropdown-content'].style.left="-105px";
+      }
+    },
 
   });
 
