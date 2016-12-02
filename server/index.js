@@ -25,7 +25,7 @@ var keyCreated = function(response){
 
   /* Send the auth code to the user phone */
   client.auth.sendCode(
-  '34625355635',
+  '666666666',
   5,
   'en',
   codeResponse
