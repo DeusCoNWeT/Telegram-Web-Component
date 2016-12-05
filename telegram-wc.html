@@ -33,6 +33,8 @@ Example:
         position: relative;
       }
 
+      /* HEADER */
+
       paper-toolbar.toolbar{
         --paper-toolbar-background: var(--background);
         --paper-toolbar-title:{
@@ -43,56 +45,197 @@ Example:
         }
       }
 
-      .menu{
-        margin-right: 0 !important;
+      /* SIDE BAR CONTACTS */
+
+      .contacts{
+        display: inline-block;
+        position: absolute;
+        left: 0;
+        width: 36px;
+        height: calc(100% - 64px);
+        background: var(--paper-grey-200);
+        padding: 2px;
+        transition: .5s ease;
+        z-index: 1;
+        overflow: hidden;
       }
 
-      paper-menu.dropdown{
-        position: absolute;
-        width: 100px;
-        max-width: 100px;
-        left: -105px;
-        transition: .5s ease;
+      .contact{
+        display: flex;
+        cursor: pointer;
+        margin-bottom: 5px;
+        max-height: 36px; 
       }
+
+      .contact img, iron-icon{
+        display: inline-table;
+        width: 36px;
+        border-radius: 18px;
+      }
+
+      .contacts iron-icon{
+        height: 30px;
+        color: var(--background);
+      }
+
+      .contactHidden{
+        visibility: hidden;
+        align-self: center;
+        left: 40px;
+        width: 100px;
+        white-space: nowrap;
+        margin-left: 5px;
+      }
+
+      .contacts:hover{
+        width: 160px;
+        overflow-y: scroll;
+      }
+
+      .contacts:hover .contactHidden{
+        visibility: visible;
+      }
+
+      .contact:hover{
+        background: #ffffff;
+      }
+
+      #style-3::-webkit-scrollbar-track
+      {
+        -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+        background-color: var(--paper-grey-200);
+      }
+
+      #style-3::-webkit-scrollbar
+      {
+        width: 6px;
+        background-color: var(--paper-grey-200);
+      }
+
+      #style-3::-webkit-scrollbar-thumb
+      {
+        background-color: var(--background);
+      }
+
+      /* CHAT AREA */
 
       .chat{
+        padding-left: 40px;
         height: calc(100% - 64px);
         background: #ffffff;
       }
 
-      .input{
+      .displayArea{
+        padding: 10px;
+        height: 100%;
+      }
+
+      .messageIn, .messageOut{
+        background: var(--paper-blue-200);
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 10px;
+        max-width: 50%;
+      }
+
+      .messageIn{
+        float: left;
+        margin-right: 50%;
+      }
+
+      .messageOut{
+        float: right;
+        margin-left: 50%;
+      }
+
+      .sendArea{
         position: absolute;
-        bottom: 10px;
-        width: calc(100% - 115px);
-        left: 15px;
-        right: 100px;
+        bottom: 0;
+        padding: 10px;
+        display: flex;
+      }
+
+      .input{
+        width: calc(100% - 42px);
         resize: none;
         font: 15px Roboto,arial,sans-serif;
+        align-self: center;
+        margin-right: 10px;
       }
 
       .send{
-        position: absolute;
-        bottom: 10px;
-        right: 0;
+        align-self: center;
+        color: var(--background);
       }
 
     </style>
 
     <!-- Header -->
     <paper-toolbar class="toolbar">
-      <paper-icon-button icon="menu" class="menu" on-click="_toggle"></paper-icon-button>
       <div class="title">Telegram-Web-Component</div>
     </paper-toolbar>
 
-    <!-- Dropdown -->
-    <paper-menu id="dropdown-content" class="dropdown">
-      <paper-button raised class="item">Aqui van los chats</paper-button>
-    </paper-menu>
+    <div class="contacts" id="style-3">
+      <div class="contact">
+        <iron-icon icon="search"></iron-icon>
+        <input class="contactHidden"></input>
+      </div>
+      <div class="contact">
+        <img src="default.png">
+        <span class="contactHidden">Juan Pedro</span>
+      </div>
+      <div class="contact">
+        <img src="default.png">
+      </div>
+      <div class="contact">
+        <img src="default.png">
+      </div>
+      <div class="contact">
+        <img src="default.png">
+      </div>
+      <div class="contact">
+        <img src="default.png">
+      </div>
+      <div class="contact">
+        <img src="default.png">
+      </div>
+      <div class="contact">
+        <img src="default.png">
+      </div>
+      <div class="contact">
+        <img src="default.png">
+      </div>
+      <div class="contact">
+        <img src="default.png">
+      </div>
+      <div class="contact">
+        <img src="default.png">
+      </div>
+      <div class="contact">
+        <img src="default.png">
+      </div>
+    </div>
 
     <!-- Chat -->
     <div class="chat">
-      <textarea class="input" rows="4" cols="50" value="" on-keydown=""></textarea>
-      <paper-icon-button icon="send" class="send"></paper-icon-button>
+      <div class="displayArea">
+        <div class="messageIn">
+          <span>Hi</span>
+        </div>
+        <div class="messageOut">
+          <span>Surprise madafaka</span>
+        </div>
+        <div class="messageIn">
+          <span>I am a message from the outside</span>
+        </div>
+        <div class="messageOut">
+          <span>I am a message from the user</span>
+        </div>
+      </div>
+      <div class="sendArea">
+        <textarea class="input" rows="4" cols="50" value="" on-keydown=""></textarea>
+        <paper-icon-button icon="send" class="send"></paper-icon-button>
+      </div>
     </div>
 
   </template>  
