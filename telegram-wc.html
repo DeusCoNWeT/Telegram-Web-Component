@@ -13,6 +13,7 @@ Example:
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../iron-icon/iron-icon.html">
 <link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="../iron-ajax/iron-ajax.html">
 <link rel="import" href="../paper-button/paper-button.html">
 <link rel="import" href="../paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../paper-toolbar/paper-toolbar.html">
@@ -170,6 +171,13 @@ Example:
 
     </style>
 
+    <iron-ajax
+    id="requestTL"
+    url="https://localhost:3000/getTL"
+    on-response="_tl_response"
+    >
+    </iron-ajax>
+
     <!-- Header -->
     <paper-toolbar class="toolbar">
       <div class="title">Telegram-Web-Component</div>
@@ -253,18 +261,28 @@ Example:
     },
 
     attached: function(){
-      this.$['dropdown-content'].style.left="-105px";
+      this.$.requestTL.generateRequest();
     },
 
-    /* Side Menu animation */
+    connected: function(ex){
+      if(!ex) { 
+        console.log('Connected to Telegram!'); 
+      }
+    },
 
-    _toggle: function(){
-      if(this.$['dropdown-content'].style.left=="-105px"){
-        this.$['dropdown-content'].style.left="0";
-      }
-      else{
-        this.$['dropdown-content'].style.left="-105px";
-      }
+    _tl_response: function(event, detail){
+      console.log('Recibido:', detail.response);
+      this.telegramLink = detail.response;
+      var client = telegramLink.createClient(
+      {/* TEST id and hash change to your app credentials on deploy */
+        id: 10534,
+        hash: '844584f2b1fd2daecee726166dcc1ef8',
+        version: '1.0.0',
+        lang: 'en'
+      },
+      telegramLink.TEST_PRIMARY_DC,
+      connected
+    );
     },
 
   });
