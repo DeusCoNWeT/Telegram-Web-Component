@@ -19,6 +19,9 @@ Example:
 <link rel="import" href="../paper-toolbar/paper-toolbar.html">
 <link rel="import" href="../paper-menu/paper-menu.html">
 
+<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+<script src="/telegram-api/dist/telegramApi.js"></script>
+
 <dom-module id="telegram-wc">
 
   <template>
@@ -261,7 +264,39 @@ Example:
     },
 
     attached: function(){
-      this.$.requestTL.generateRequest();
+/*      this.$.requestTL.generateRequest();*/
+      telegramApi.setConfig({
+        app:{
+          id: 10534,
+          hash: '844584f2b1fd2daecee726166dcc1ef8',
+          version: '1.0.0'
+        },
+        server:{
+          test: [
+            {
+              id: 2, /* DC ID */
+              host: '149.154.167.40',
+              port: 443
+            }
+          ],
+          production: [
+            {
+              id: 2, /* DC ID */
+              host: '149.154.167.50',
+              port: 443
+            }
+          ]
+        }
+      });
+
+      telegramApi.getUserInfo().then(function(user) {
+        if (user.id) {
+            console.log('Logged');
+        } else {
+            console.log('Not Logged');
+        }
+      });
+
     },
 
     connected: function(ex){
