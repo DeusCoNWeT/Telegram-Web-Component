@@ -174,13 +174,6 @@ Example:
 
     </style>
 
-    <iron-ajax
-    id="requestTL"
-    url="https://localhost:3000/getTL"
-    on-response="_tl_response"
-    >
-    </iron-ajax>
-
     <!-- Header -->
     <paper-toolbar class="toolbar">
       <div class="title">Telegram-Web-Component</div>
@@ -244,8 +237,8 @@ Example:
         </div>
       </div>
       <div class="sendArea">
-        <textarea class="input" rows="4" cols="50" value="" on-keydown=""></textarea>
-        <paper-icon-button icon="send" class="send"></paper-icon-button>
+        <textarea value="{{phoneCode::input}}" class="input" rows="4" cols="50"></textarea>
+        <paper-icon-button icon="send" class="send" on-click="login"></paper-icon-button>
       </div>
     </div>
 
@@ -261,63 +254,109 @@ Example:
 
     properties: {
 
+      phone: {
+        type: String,
+        value: '34625355635'
+      },
+
+      app: {
+        type: Object,
+        value: {
+          id: 82261,
+          hash: 'bb8cba71451932da9b62b7542ae27da2',
+          version: '1.0.0'
+        }
+      },
+
+      server: {
+        type: Object,
+        value: {
+          test: [
+            {id: 1, host: '149.154.175.10',  port: 80},
+            {id: 2, host: '149.154.167.40',  port: 80},
+            {id: 3, host: '149.154.175.117', port: 80}
+          ],
+          production: [
+            {id: 1, host: '149.154.175.50',  port: 80},
+            {id: 2, host: '149.154.167.51',  port: 80},
+            {id: 3, host: '149.154.175.100', port: 80},
+            {id: 4, host: '149.154.167.91',  port: 80},
+            {id: 5, host: '149.154.171.5',   port: 80}
+          ]
+        }
+      },
+
     },
 
     attached: function(){
-/*      this.$.requestTL.generateRequest();*/
-      telegramApi.setConfig({
-        app:{
-          id: 10534,
-          hash: '844584f2b1fd2daecee726166dcc1ef8',
-          version: '1.0.0'
-        },
-        server:{
-          test: [
-            {
-              id: 2, /* DC ID */
-              host: '149.154.167.40',
-              port: 443
-            }
-          ],
-          production: [
-            {
-              id: 2, /* DC ID */
-              host: '149.154.167.50',
-              port: 443
-            }
-          ]
-        }
-      });
+
+      telegramApi.setConfig({ app: this.app, server: this.server });
+
+      var me = this;
 
       telegramApi.getUserInfo().then(function(user) {
         if (user.id) {
             console.log('Logged');
         } else {
             console.log('Not Logged');
+            me.sendCode();
         }
       });
 
     },
 
-    connected: function(ex){
-      if(!ex) { 
-        console.log('Connected to Telegram!'); 
+    sendCode: function(){
+      console.log('Sending code to: ', this.phone);
+      var me = this;
+
+      telegramApi.sendCode(this.phone).then(
+        function(sent_code) {
+          console.log('sendCode response', sent_code);
+          me.codeHash = sent_code.phone_code_hash;
+          me.registered = sent_code.phone_registered;         
+        }
+      );
+    },
+
+    login: function(){
+      console.log('Login');
+      if(this.registered){
+        this.signIn();
+      }
+      else{
+        this.signUp();
       }
     },
 
-    _tl_response: function(event, detail){
-      console.log('Recibido:', detail.response);
-      this.telegramLink = detail.response;
-      var client = telegramLink.createClient(
-      {/* TEST id and hash change to your app credentials on deploy */
-        id: 10534,
-        hash: '844584f2b1fd2daecee726166dcc1ef8',
-        version: '1.0.0',
-        lang: 'en'
-      },
-      telegramLink.TEST_PRIMARY_DC,
-      connected
-    );
+    signIn: function(){
+      console.log('Sign in');
+      var me = this;
+
+      if(this.phone && this.codeHash && this.phoneCode){
+        telegramApi.signIn(this.phone, this.codeHash, this.phoneCode).then(
+          function(response) {
+          // Sign in complete
+          console.log('Sign In succesfull');
+          }, 
+          function(err) {
+            console.log(err);
+          }
+        );
+      }
+    },
+
+    signUp: function(){
+      console.log('Sign up');
+      var me = this;
+
+      if(this.phone && this.codeHash && this.phoneCode){
+        telegramApi.signUp(this.phone, this.codeHash, this.phoneCode, this.user.firstname, this.user.lastname).then(
+          function(response) {
+            // Sign up complete
+            console.log('Sign Up succesfull');
+          }
+        );
+      }
     },
 
   });
