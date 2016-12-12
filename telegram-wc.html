@@ -68,7 +68,7 @@ Example:
         display: flex;
         cursor: pointer;
         margin-bottom: 5px;
-        max-height: 36px; 
+        max-height: 36px;
       }
 
       .contact img, iron-icon{
@@ -172,6 +172,46 @@ Example:
         color: var(--background);
       }
 
+      /* Login menus */
+
+      .login{
+        background: var(--background);
+        color: var(--paper-grey-700);
+        font: 15px Roboto,arial,sans-serif;
+        height: calc(100% - 64px);
+        display: flex;
+      }
+
+      .loginMenu{
+        align-self: center;
+        padding: 10px;
+        width: 100%;
+        background: var(--paper-grey-200);
+      }
+
+      .loginMenu span{
+        display: inline-table;    
+      }
+
+      .loginMenu input{
+        width: 60%;
+      }
+
+      .loginMenu paper-button{
+        background: var(--background);
+        color: #ffffff;
+        text-transform: none;
+        padding: 6px;
+      }
+
+      .inputContainer{
+        width: calc(60% + 82px);
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: 10px;
+        margin-bottom: 10px;
+      }
+
     </style>
 
     <!-- Header -->
@@ -179,68 +219,67 @@ Example:
       <div class="title">Telegram-Web-Component</div>
     </paper-toolbar>
 
-    <div class="contacts" id="style-3">
-      <div class="contact">
-        <iron-icon icon="search"></iron-icon>
-        <input class="contactHidden"></input>
+    <template is="dom-if" if="{{!logged}}">
+      <div class="login" hidden="{{showCode}}">
+        <div class="loginMenu">
+          <span>Enter your phone number(w/ country code)</span>
+          <div class="inputContainer">
+            <input value="{{phone::input}}"></input>
+            <paper-button raised on-click="sendCode">Send code</paper-button>
+          </div>          
+          <span class="info">You will receive a code on telegram app</span>
+        </div>
       </div>
-      <div class="contact">
-        <img src="default.png">
-        <span class="contactHidden">Juan Pedro</span>
+      <div class="login" hidden="{{!showCode}}">
+        <div class="loginMenu">
+          <span>Enter the code you have received</span>
+          <div class="inputContainer">
+            <input value="{{phoneCode::input}}"></input>
+            <paper-button raised on-click="login">Log in</paper-button>
+          </div>
+          <paper-button raised on-click="sendCode">Send again</paper-button>
+        </div>
       </div>
-      <div class="contact">
-        <img src="default.png">
-      </div>
-      <div class="contact">
-        <img src="default.png">
-      </div>
-      <div class="contact">
-        <img src="default.png">
-      </div>
-      <div class="contact">
-        <img src="default.png">
-      </div>
-      <div class="contact">
-        <img src="default.png">
-      </div>
-      <div class="contact">
-        <img src="default.png">
-      </div>
-      <div class="contact">
-        <img src="default.png">
-      </div>
-      <div class="contact">
-        <img src="default.png">
-      </div>
-      <div class="contact">
-        <img src="default.png">
-      </div>
-      <div class="contact">
-        <img src="default.png">
-      </div>
-    </div>
+    </template>
 
-    <!-- Chat -->
-    <div class="chat">
-      <div class="displayArea">
-        <div class="messageIn">
-          <span>Hi</span>
+    <template is="dom-if" if="{{logged}}">
+
+      <div class="contacts" id="style-3">
+        <div class="contact">
+          <iron-icon icon="search"></iron-icon>
+          <input class="contactHidden"></input>
         </div>
-        <div class="messageOut">
-          <span>Surprise madafaka</span>
+        <template is="dom-repeat" items="[[contacts]]">
+          <div class="contact">
+            <img src="default.png">
+            <span class="contactHidden">{{item.first_name}} {{item.last_name}}</span>
+          </div>
+        </template>
+      </div>
+
+      <!-- Chat -->
+      <div class="chat">
+        <div class="displayArea">
+          <div class="messageIn">
+            <span>Hi</span>
+          </div>
+          <div class="messageOut">
+            <span>Surprise madafaka</span>
+          </div>
+          <div class="messageIn">
+            <span>I am a message from the outside</span>
+          </div>
+          <div class="messageOut">
+            <span>I am a message from the user</span>
+          </div>
         </div>
-        <div class="messageIn">
-          <span>I am a message from the outside</span>
-        </div>
-        <div class="messageOut">
-          <span>I am a message from the user</span>
+        <div class="sendArea">
+          <textarea value="{{textArea::input}}" class="input" rows="4" cols="50"></textarea>
+          <paper-icon-button icon="send" class="send" on-click=""></paper-icon-button>
         </div>
       </div>
-      <div class="sendArea">
-        <textarea value="{{phoneCode::input}}" class="input" rows="4" cols="50"></textarea>
-        <paper-icon-button icon="send" class="send" on-click="login"></paper-icon-button>
-      </div>
-    </div>
+
+    </template>
 
   </template>  
 
@@ -256,7 +295,17 @@ Example:
 
       phone: {
         type: String,
-        value: '34625355635'
+        value: ''
+      },
+
+      logged: {
+        type: Boolean,
+        value: false
+      },
+
+      showCode: {
+        type: Boolean,
+        value: false
       },
 
       app: {
@@ -291,18 +340,16 @@ Example:
     attached: function(){
 
       telegramApi.setConfig({ app: this.app, server: this.server });
+      //telegramApi.logOut();
 
       var me = this;
 
-      telegramApi.getUserInfo().then(function(user) {
-        if (user.id) {
-            console.log('Logged');
-        } else {
-            console.log('Not Logged');
-            me.sendCode();
-        }
-      });
+      this.getUser();
 
+    },
+
+    dettached: function(){
+      telegramApi.logOut();
     },
 
     sendCode: function(){
@@ -311,9 +358,9 @@ Example:
 
       telegramApi.sendCode(this.phone).then(
         function(sent_code) {
-          console.log('sendCode response', sent_code);
           me.codeHash = sent_code.phone_code_hash;
-          me.registered = sent_code.phone_registered;         
+          me.registered = sent_code.phone_registered;
+          me.showCode = true;         
         }
       );
     },
@@ -333,10 +380,14 @@ Example:
       var me = this;
 
       if(this.phone && this.codeHash && this.phoneCode){
+
         telegramApi.signIn(this.phone, this.codeHash, this.phoneCode).then(
           function(response) {
           // Sign in complete
-          console.log('Sign In succesfull');
+          console.log('Sign In succesfull');        
+
+          me.getUser();
+
           }, 
           function(err) {
             console.log(err);
@@ -354,9 +405,46 @@ Example:
           function(response) {
             // Sign up complete
             console.log('Sign Up succesfull');
+            
+            this.getUser();
+
           }
         );
       }
+    },
+
+    getUser: function(){
+      var me = this;
+      telegramApi.getUserInfo().then(function(user) {
+        if (user.id) {
+            me.user = user;
+            me.logged = true;
+            me.getContacts();
+            me.getDialogs();
+        } else {
+            console.log('Not Logged');
+        }
+      });
+    },
+
+    getContacts: function(){
+      var me = this;
+      telegramApi.invokeApi('contacts.getContacts', {}).then(
+        function(response) {
+          console.log('Get contacts result: ', response);
+          me.contacts = response.users;
+        }
+      );
+    },
+
+    getDialogs: function(){
+      var me = this;
+      telegramApi.invokeApi('messages.getDialogs', {offset_peer: null}).then(
+        function(response) {
+          console.log('Get dialogs result: ', response);
+          //me.contacts = response.users;
+        }
+      );
     },
 
   });
