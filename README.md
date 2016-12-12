@@ -7,7 +7,8 @@ WebComponent for the Telegram API using Polymer
 [MTProto](https://core.telegram.org/mtproto)
 
 ##Libraries
-[TelegramLink](https://github.com/enricostara/telegram.link) by [enricostara](https://github.com/enricostara)
+[TelegramLink](https://github.com/enricostara/telegram.link) by [enricostara](https://github.com/enricostara)   
+[TelegramApi](https://github.com/sunriselink/TelegramApi) by [Maxim Sadofyev](https://github.com/sunriselink)
 
 ##Run Server
 ``cd server``    
