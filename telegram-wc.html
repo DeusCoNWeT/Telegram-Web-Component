@@ -249,10 +249,10 @@ Example:
           <iron-icon icon="search"></iron-icon>
           <input class="contactHidden"></input>
         </div>
-        <template is="dom-repeat" items="[[contacts]]">
+        <template is="dom-repeat" items="[[chats]]">
           <div class="contact">
-            <img src="default.png">
-            <span class="contactHidden">{{item.first_name}} {{item.last_name}}</span>
+            <img src="{{item.photo}}">
+            <span class="contactHidden">{{item.user.first_name}} {{item.user.last_name}}</span>
           </div>
         </template>
       </div>
@@ -439,12 +439,72 @@ Example:
 
     getDialogs: function(){
       var me = this;
-      telegramApi.invokeApi('messages.getDialogs', {offset_peer: null}).then(
+      telegramApi.invokeApi('messages.getDialogs', {
+        offset_peer: me.user,
+      }).then(
         function(response) {
           console.log('Get dialogs result: ', response);
-          //me.contacts = response.users;
+          me.chats = [];
+          for (var i = 0; i < response.dialogs.length; i++) {
+            me.getHistory(response.dialogs[i].peer);            
+          };
+          console.log(me.chats);
         }
       );
+    },
+
+    getHistory: function(peer){
+  
+      if(peer._ == 'peerChannel'){
+        var id = peer.channel_id;
+        var type = 'chat';
+      }
+      else if(peer._ == 'peerUser'){
+        var id = peer.user_id;
+        var type = 'user';
+      }
+
+      var me = this;
+      telegramApi.getHistory({
+          id: id,
+          take: 50,
+          type: type
+      }).then(function(data) {
+          console.log('History response:',data);
+          //Preprocess chats
+          var chat = {};
+          if(data.users.length == 2){
+            if(data.users[0].id == me.user.id) chat.user = data.users[1];
+            else chat.user = data.users[0];
+          }
+          me.getPhoto(chat);
+          console.log('Chat', chat);
+          
+          me.push('chats',chat);
+      });
+    },
+
+    getPhoto: function(chat){
+      var user = chat.user;
+      if (!user.photo) {
+        return null;
+      }
+
+      var photo = user.photo.photo_big;
+
+      var location = {
+        _: "inputFileLocation",
+        local_id: photo.local_id,
+        secret: photo.secret,
+        volume_id: photo.volume_id
+      };
+      
+      telegramApi.invokeApi('upload.getFile', {location: location}).then(
+        function(result) {
+          chat.photo =  "data:image/jpeg;base64," + btoa(String.fromCharCode.apply(null, result.bytes));
+        }
+      );
+
     },
 
   });
