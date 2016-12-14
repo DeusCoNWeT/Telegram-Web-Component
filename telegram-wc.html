@@ -71,7 +71,7 @@ Example:
         max-height: 36px;
       }
 
-      .contact img, iron-icon{
+      .contact .profImg, iron-icon{
         display: inline-table;
         width: 36px;
         border-radius: 18px;
@@ -131,7 +131,8 @@ Example:
 
       .displayArea{
         padding: 10px;
-        height: 100%;
+        height: calc(100% - 98px);
+        overflow-y: scroll; 
       }
 
       .messageIn, .messageOut{
@@ -250,8 +251,10 @@ Example:
           <input class="contactHidden"></input>
         </div>
         <template is="dom-repeat" items="[[chats]]">
-          <div class="contact">
-            <img src="{{item.photo}}">
+          <div class="contact" on-click="loadChat">
+            <object class="profImg" data="{{item.photo}}" type="image/jpg">
+              <img class="profImg" src="default.png">
+            </object>
             <span class="contactHidden">{{item.user.first_name}} {{item.user.last_name}}</span>
           </div>
         </template>
@@ -260,18 +263,18 @@ Example:
       <!-- Chat -->
       <div class="chat">
         <div class="displayArea">
-          <div class="messageIn">
-            <span>Hi</span>
-          </div>
-          <div class="messageOut">
-            <span>Surprise madafaka</span>
-          </div>
-          <div class="messageIn">
-            <span>I am a message from the outside</span>
-          </div>
-          <div class="messageOut">
-            <span>I am a message from the user</span>
-          </div>
+          <template is="dom-repeat" items="[[chat]]">
+            <template is="dom-if" if="{{item.mine}}">
+              <div class="messageOut">
+                <span>{{item.text}}</span>
+              </div>
+            </template>
+            <template is="dom-if" if="{{!item.mine}}">
+              <div class="messageIn">
+                <span>{{item.text}}</span>
+              </div>
+            </template>
+          </template>
         </div>
         <div class="sendArea">
           <textarea value="{{textArea::input}}" class="input" rows="4" cols="50"></textarea>
@@ -443,12 +446,10 @@ Example:
         offset_peer: me.user,
       }).then(
         function(response) {
-          console.log('Get dialogs result: ', response);
           me.chats = [];
           for (var i = 0; i < response.dialogs.length; i++) {
             me.getHistory(response.dialogs[i].peer);            
           };
-          console.log(me.chats);
         }
       );
     },
@@ -470,21 +471,21 @@ Example:
           take: 50,
           type: type
       }).then(function(data) {
-          console.log('History response:',data);
           //Preprocess chats
           var chat = {};
           if(data.users.length == 2){
             if(data.users[0].id == me.user.id) chat.user = data.users[1];
             else chat.user = data.users[0];
           }
+          chat.messages = data.messages;
           me.getPhoto(chat);
-          console.log('Chat', chat);
+          console.log(chat.user.first_name+' history:', data);
           
-          me.push('chats',chat);
       });
     },
 
     getPhoto: function(chat){
+
       var user = chat.user;
       if (!user.photo) {
         return null;
@@ -492,20 +493,42 @@ Example:
 
       var photo = user.photo.photo_big;
 
-      var location = {
-        _: "inputFileLocation",
-        local_id: photo.local_id,
-        secret: photo.secret,
-        volume_id: photo.volume_id
-      };
-      
-      telegramApi.invokeApi('upload.getFile', {location: location}).then(
+      var me = this;
+      telegramApi.getPhoto('base64', photo).then(
         function(result) {
-          chat.photo =  "data:image/jpeg;base64," + btoa(String.fromCharCode.apply(null, result.bytes));
+          chat.photo =  result;
+          me.push('chats',chat);
         }
       );
 
     },
+
+    addMSG: function(msg){
+      message = {};
+      if(msg.from_id == this.user.id){
+        message.mine = true;
+      }
+      else{
+        message.mine = false;
+      }
+      message.text = msg.message;
+
+      var date = new Date(msg.date * 1000);
+
+      message.date = date.getDate() +'/'+(date.getMonth()+1)+'/'+date.getFullYear();
+
+      this.push('chat', message);
+
+    },
+
+    loadChat: function(e){
+      var chat = e.model.item;
+      console.log('Load ',chat);
+      this.chat = [];
+      for(var i = chat.messages.length-1; i >= 0; i--){
+        this.addMSG(chat.messages[i]);
+      }
+    }
 
   });
 
