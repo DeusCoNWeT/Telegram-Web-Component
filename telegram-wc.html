@@ -255,13 +255,13 @@ Example:
         </div>
         <template is="dom-repeat" items="[[chats]]">
           <div class="contact" on-click="loadChat">
-            <template is="dom-if" if="{{item.photo}}">
-              <img class="profImg" src="{{item.photo}}">
+            <template is="dom-if" if="{{item.chat.photo}}">
+              <img class="profImg" src="{{item.chat.photo}}">
             </template>
-            <template is="dom-if" if="{{!item.photo}}">
+            <template is="dom-if" if="{{!item.chat.photo}}">
               <img class="profImg" src="default.png">
             </template>
-            <span class="contactHidden">{{item.user.first_name}} {{item.user.last_name}}</span>
+            <span class="contactHidden">{{item.chat.user.first_name}} {{item.chat.user.last_name}}</span>
           </div>
         </template>
       </div>
@@ -428,7 +428,7 @@ Example:
         if (user.id) {
             me.user = user;
             me.logged = true;
-            me.getContacts();
+            //me.getContacts();
             me.getDialogs();
         } else {
             console.log('Not Logged');
@@ -452,7 +452,8 @@ Example:
         function(response) {
           me.chats = [];
           for (var i = 0; i < response.result.dialogs.length; i++) {
-            me.getHistory(response.result.dialogs[i].peer);            
+            me.getHistory(response.result.dialogs[i].peer);
+            me.subscribe(response.result.dialogs[i].peer);            
           };
         }
       );
@@ -486,7 +487,7 @@ Example:
             }
             if(chat.user.first_name){
               chat.messages = data.messages;
-              me.getPhoto(chat);
+              me.getPhoto(chat, peer);
             }            
           }
           else{
@@ -494,16 +495,16 @@ Example:
               first_name: 'Channel'
             };
             chat.messages = data.messages;
-            me.push('chats',chat);
+            me.push('chats',{chat: chat, peer: peer});
           }          
           
       });
     },
 
-    getPhoto: function(chat){
+    getPhoto: function(chat, peer){
 
       if (!chat.user.photo) {
-        this.push('chats',chat);
+        this.push('chats',{chat: chat, peer: peer});
         return null;
       }
 
@@ -513,16 +514,21 @@ Example:
       telegramApi.getPhoto('base64', photo).then(
         function(result) {
           chat.photo =  result;
-          me.push('chats',chat);
+          me.push('chats',{chat: chat, peer: peer});
         },
         function(error){
-          me.push('chats',chat);
+          me.push('chats',{chat: chat, peer: peer});
         }
       );
 
     },
 
     addMSG: function(msg){
+      for (var i = this.chat.length - 1; i >= 0 && !exists; i--) {
+        var exists = this.chat[i].id == msg.id;
+      }
+      if(exists)return;
+
       message = {};
       if(msg.from_id == this.user.id){
         message.mine = true;
@@ -536,22 +542,88 @@ Example:
 
       message.date = date.getDate() +'/'+(date.getMonth()+1)+'/'+date.getFullYear();
 
+      message.id = msg.id;
+
       this.push('chat', message);
 
     },
 
     loadChat: function(e){
-      var chat = e.model.item;
+      var chat = e.model.item.chat;
       console.log('Load ',chat);
-      this.chat = [];
-      for(var i = chat.messages.length-1; i >= 0; i--){
-        this.addMSG(chat.messages[i]);
-      }
+      this.show = e.model.item;  
+      this.refreshChat();
     },
 
     sendMSG: function(){
       if(this.textArea == null || this.textArea == '')return null;
 
+    },
+
+    subscribe: function(peer){
+      var id = this.getId(peer);
+      var me = this;
+      telegramApi.subscribe(id, function(response){
+        if(response._ == 'updates'){
+          for (var i = response.updates.length - 1; i >= 0; i--) {
+            if(response.updates[i]._ == 'updateNewMessage'){
+              console.log('NEW MESSAGE', response);
+              var msg = response.updates[i].message;
+              if(msg.from_id == me.user.id){
+                var id = me.getId(msg.to_id);
+              }
+              else{
+                var id = msg.from_id;
+              }
+              if(me.show.chat.user.id == id){
+                me.refreshChat();
+              } 
+              else{
+                //GIVE FEEDBACK TO USER ON CHAT LIST
+              }             
+
+            }
+          };
+        }
+      });
+    },
+
+    getId: function(peer){
+      switch(peer._){
+        case 'peerUser':
+          return peer.user_id;break
+        case 'peerChannel':
+          return peer.channel_id;break
+        case 'peerChat':
+          return peer.chat_id;break
+      }
+    },
+
+    refreshChat: function(){
+      //GET MESSAGES
+      var peer = this.show.peer;  
+      if(peer._ == 'peerChannel'){
+        var id = peer.channel_id;
+        var type = 'chat';
+      }
+      else if(peer._ == 'peerUser'){
+        var id = peer.user_id;
+        var type = 'user';
+      }
+
+      var me = this;
+      telegramApi.getHistory({
+          id: id,
+          take: 50,
+          type: type
+      }).then(function(data){
+          //UPDATE MESSAGES
+          me.show.chat.messages = data.messages;
+          me.chat = [];
+          for(var i = data.messages.length-1; i >= 0; i--){
+            me.addMSG(data.messages[i]);
+          }
+      });
     },
 
   });
