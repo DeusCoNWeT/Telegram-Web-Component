@@ -67,7 +67,7 @@ Example:
       .contact{
         display: flex;
         cursor: pointer;
-        margin-bottom: 5px;
+        margin-bottom: 7px;
         max-height: 36px;
       }
 
@@ -75,6 +75,15 @@ Example:
         display: inline-table;
         width: 36px;
         border-radius: 18px;
+      }
+
+      .contactSelected{
+        background: var(--background);
+        color: #ffffff;
+      }
+
+      .contactSelected:hover{
+        background: var(--background) !important;
       }
 
       .contacts iron-icon{
@@ -131,7 +140,7 @@ Example:
 
       .displayArea{
         padding: 10px;
-        height: calc(100% - 98px);
+        height: calc(100% - 106px);
         overflow-y: scroll;
         overflow-x: hidden;
       }
@@ -174,6 +183,7 @@ Example:
         font: 15px Roboto,arial,sans-serif;
         align-self: center;
         margin-right: 10px;
+        padding: 5px;
       }
 
       .send{
@@ -264,7 +274,7 @@ Example:
           <input class="contactHidden"></input>
         </div>
         <template is="dom-repeat" items="[[chats]]">
-          <div class="contact" on-click="loadChat">
+          <div id="chat{{item.chat.user.id}}" class="contact" on-click="loadChat">
             <template is="dom-if" if="{{item.chat.photo}}">
               <img class="profImg" src="{{item.chat.photo}}">
             </template>
@@ -295,7 +305,7 @@ Example:
           </template>
         </div>
         <div class="sendArea">
-          <textarea value="{{textArea::input}}" class="input" rows="4" cols="50"></textarea>
+          <textarea value="{{textArea::input}}" class="input" rows="3" cols="50"></textarea>
           <paper-icon-button icon="send" class="send" on-click="sendMSG"></paper-icon-button>
         </div>
       </div>
@@ -513,7 +523,8 @@ Example:
           }
           else{
             chat.user = {
-              first_name: 'Channel'
+              first_name: data.chats[0].title,
+              id: data.chats[0].id
             };
             chat.messages = data.messages;
             me.push('chats',{chat: chat, peer: peer});
@@ -587,7 +598,17 @@ Example:
 
     loadChat: function(e){
       var chat = e.model.item.chat;
-      console.log('Load ',chat);
+      var id = '#chat'+chat.user.id;
+      var div = Polymer.dom(this.root).querySelectorAll(id)[0];
+
+      if(this.show){
+        var id = '#chat' + this.show.chat.user.id;
+        var divOld = Polymer.dom(this.root).querySelectorAll(id)[0];
+        divOld.className = div.className;
+      }
+
+      div.className += " contactSelected";
+      
       this.show = e.model.item;  
       this.refreshChat();
       this.continueRefresh();
