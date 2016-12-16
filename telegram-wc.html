@@ -132,7 +132,8 @@ Example:
       .displayArea{
         padding: 10px;
         height: calc(100% - 98px);
-        overflow-y: scroll; 
+        overflow-y: scroll;
+        overflow-x: hidden;
       }
 
       .messageIn, .messageOut{
@@ -141,6 +142,7 @@ Example:
         padding: 10px;
         margin-bottom: 10px;
         max-width: 50%;
+        font: 15px Roboto,arial,sans-serif;
       }
 
       .messageIn{
@@ -151,6 +153,12 @@ Example:
       .messageOut{
         float: right;
         margin-left: 50%;
+      }
+
+      .date{
+        font: 10px Roboto,arial,sans-serif;
+        display: inherit;
+        margin-bottom: 4px;
       }
 
       .sendArea{
@@ -218,6 +226,8 @@ Example:
     <!-- Header -->
     <paper-toolbar class="toolbar">
       <div class="title">Telegram-Web-Component</div>
+      <paper-icon-button icon="power-settings-new" on-click="logout" hidden="{{!logged}}"></paper-icon-button>
+      power-settings-new
     </paper-toolbar>
 
     <!-- Login -->
@@ -268,15 +278,17 @@ Example:
 
       <!-- Chat -->
       <div class="chat">
-        <div class="displayArea">
+        <div class="displayArea" id="displayArea">
           <template is="dom-repeat" items="[[chat]]">
             <template is="dom-if" if="{{item.mine}}">
               <div class="messageOut">
+                <span class="date">{{item.date}}</span>
                 <span>{{item.text}}</span>
               </div>
             </template>
             <template is="dom-if" if="{{!item.mine}}">
               <div class="messageIn">
+                <span class="date">{{item.date}}</span>
                 <span>{{item.text}}</span>
               </div>
             </template>
@@ -358,7 +370,7 @@ Example:
     },
 
     dettached: function(){
-      telegramApi.logOut();
+      this.logout();
     },
 
     sendCode: function(){
@@ -382,6 +394,15 @@ Example:
       else{
         this.signUp();
       }
+    },
+
+    logout: function(){
+      telegramApi.logOut();
+      this.logged = false;
+      this.showCode = false;
+      this.show = null;
+      this.chats = null;
+      this.user = null;
     },
 
     signIn: function(){
@@ -540,7 +561,8 @@ Example:
 
       var date = new Date(msg.date * 1000);
 
-      message.date = date.getDate() +'/'+(date.getMonth()+1)+'/'+date.getFullYear();
+      message.date = date.getDate() +'/'+(date.getMonth()+1)+'/'+date.getFullYear()+' '
+      +date.toLocaleTimeString();
 
       message.id = msg.id;
 
@@ -548,16 +570,63 @@ Example:
 
     },
 
+    sendMSG: function(){
+      if(this.textArea == null || this.textArea == '')return null;
+      var me = this;
+      telegramApi.sendMessage(this.getId(this.show.peer), this.textArea).then(
+        function(response){
+          me.refreshChat();
+        }
+      );
+      var msg = {};
+      msg.message = this.textArea;
+      msg.from_id = this.user.id;
+      msg.date = new Date();
+      this.addMSG(msg);
+    },
+
     loadChat: function(e){
       var chat = e.model.item.chat;
       console.log('Load ',chat);
       this.show = e.model.item;  
       this.refreshChat();
+      this.continueRefresh();
     },
 
-    sendMSG: function(){
-      if(this.textArea == null || this.textArea == '')return null;
+    fixBottom: function(){
+      var container = Polymer.dom(this.root).querySelectorAll('#displayArea')[0];
+      container.scrollTop = container.scrollHeight;
+      if(container.scrollTop != container.scrollHeight){
+        var promise = new Promise(function (resolve, reject) {
+          window.setTimeout(
+            function() {
+              resolve();
+            }, 100);                    
+        });
+        /* DELAY */
+        var me = this;
+        promise.then(function(){
+          container.scrollTop = container.scrollHeight;
+        });
+      }
+      
+    },
 
+    continueRefresh: function(){
+      var promise = new Promise(function (resolve, reject) {
+        window.setTimeout(
+          function() {
+            resolve();
+          }, 60000);                    
+      });
+      /* DELAY */
+      var me = this;
+      promise.then(function(){
+        if(me.show){
+          me.refreshChat();
+          me.continueRefresh();
+        }        
+      });
     },
 
     subscribe: function(peer){
@@ -584,6 +653,19 @@ Example:
 
             }
           };
+        }
+        else if(response._ == 'updateShortMessage'){
+          console.log('NEW MESSAGE', response);
+          if(response.user_id == me.user.id){
+            //unlucky
+          }
+          else if(me.show.chat.user.id == response.user_id){
+            me.refreshChat();
+          } 
+          
+          else{
+            //GIVE FEEDBACK TO USER ON CHAT LIST
+          }             
         }
       });
     },
@@ -623,6 +705,7 @@ Example:
           for(var i = data.messages.length-1; i >= 0; i--){
             me.addMSG(data.messages[i]);
           }
+          me.fixBottom();
       });
     },
 
