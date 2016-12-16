@@ -324,11 +324,6 @@ Example:
 
     properties: {
 
-      phone: {
-        type: String,
-        value: ''
-      },
-
       logged: {
         type: Boolean,
         value: false
@@ -368,10 +363,11 @@ Example:
 
     },
 
+    /*---------------------- Component lifecycle --------------------*/
+
     attached: function(){
 
       telegramApi.setConfig({ app: this.app, server: this.server });
-      //telegramApi.logOut();
 
       var me = this;
 
@@ -383,10 +379,27 @@ Example:
       this.logout();
     },
 
-    sendCode: function(){
-      console.log('Sending code to: ', this.phone);
-      var me = this;
+    /*---------------------- Component behaviour --------------------*/
 
+    login: function(){
+      if(this.registered) this.signIn();
+      else this.signUp();
+    },
+
+    logout: function(){
+      telegramApi.logOut();
+      this.logged = false;
+      this.showCode = false;
+      this.show = null;
+      this.chats = null;
+      this.chat = null;
+      this.user = null;
+    },
+
+    sendCode: function(){
+      if(!this.phone) return;
+
+      var me = this;
       telegramApi.sendCode(this.phone).then(
         function(sent_code) {
           me.codeHash = sent_code.phone_code_hash;
@@ -396,75 +409,43 @@ Example:
       );
     },
 
-    login: function(){
-      console.log('Login');
-      if(this.registered){
-        this.signIn();
-      }
-      else{
-        this.signUp();
-      }
-    },
-
-    logout: function(){
-      telegramApi.logOut();
-      this.logged = false;
-      this.showCode = false;
-      this.show = null;
-      this.chats = null;
-      this.user = null;
-    },
-
     signIn: function(){
-      console.log('Sign in');
+      if(!this.phone || !this.codeHash || !this.phoneCode) return;
+
       var me = this;
-
-      if(this.phone && this.codeHash && this.phoneCode){
-
-        telegramApi.signIn(this.phone, this.codeHash, this.phoneCode).then(
-          function(response) {
+      telegramApi.signIn(this.phone, this.codeHash, this.phoneCode).then(
+        function(response) {
           // Sign in complete
-          console.log('Sign In succesfull');        
-
           me.getUser();
-
-          }, 
-          function(err) {
-            console.log(err);
-          }
-        );
-      }
+        }
+      );
     },
 
     signUp: function(){
-      console.log('Sign up');
+      if(!this.phone || !this.codeHash || !this.phoneCode) return;
+      
       var me = this;
-
-      if(this.phone && this.codeHash && this.phoneCode){
-        telegramApi.signUp(this.phone, this.codeHash, this.phoneCode, this.user.firstname, this.user.lastname).then(
-          function(response) {
-            // Sign up complete
-            console.log('Sign Up succesfull');
-            
-            this.getUser();
-
-          }
-        );
-      }
+      telegramApi.signUp(this.phone, this.codeHash, this.phoneCode, this.user.firstname, this.user.lastname).then(
+        function(response) {
+          // Sign up complete
+          this.getUser();
+        }
+      );
     },
 
     getUser: function(){
       var me = this;
-      telegramApi.getUserInfo().then(function(user) {
-        if (user.id) {
+      telegramApi.getUserInfo().then(
+        function(user) {
+          if (user.id) {
+            //Logged
             me.user = user;
             me.logged = true;
-            //me.getContacts();
+            me.getContacts();
             me.getDialogs();
-        } else {
-            console.log('Not Logged');
+          }
         }
-      });
+      );
     },
 
     getContacts: function(){
@@ -477,6 +458,11 @@ Example:
       );
     },
 
+    /* getDialogs(): 
+        Obtains the user last dialogs 
+        then asks for their message history 
+        and subscribes to receive notifications
+    */
     getDialogs: function(){
       var me = this;
       telegramApi.getDialogs().then(
@@ -509,6 +495,7 @@ Example:
       }).then(function(data) {
           //Preprocess chats
           var chat = {};
+          //Chat with 1 contact or bot
           if(data.users.length == 2){
             if(data.users[0].id == me.user.id){
               chat.user = data.users[1];
@@ -521,6 +508,7 @@ Example:
               me.getPhoto(chat, peer);
             }            
           }
+          //Groups or channels
           else{
             chat.user = {
               first_name: data.chats[0].title,
@@ -556,11 +544,13 @@ Example:
     },
 
     addMSG: function(msg){
+      //Check if exists
       for (var i = this.chat.length - 1; i >= 0 && !exists; i--) {
         var exists = this.chat[i].id == msg.id;
       }
       if(exists)return;
 
+      //Check outbound or inbound message
       message = {};
       if(msg.from_id == this.user.id){
         message.mine = true;
@@ -568,13 +558,16 @@ Example:
       else{
         message.mine = false;
       }
+
+      //Text
       message.text = msg.message;
 
+      //Parse date
       var date = new Date(msg.date * 1000);
-
       message.date = date.getDate() +'/'+(date.getMonth()+1)+'/'+date.getFullYear()+' '
       +date.toLocaleTimeString();
 
+      //Set id
       message.id = msg.id;
 
       this.push('chat', message);
@@ -583,38 +576,44 @@ Example:
 
     sendMSG: function(){
       if(this.textArea == null || this.textArea == '')return null;
+
       var me = this;
       telegramApi.sendMessage(this.getId(this.show.peer), this.textArea).then(
         function(response){
           me.refreshChat();
         }
       );
+
+      //Manual insert
       var msg = {};
       msg.message = this.textArea;
       msg.from_id = this.user.id;
       msg.date = new Date();
       this.addMSG(msg);
+      this.textArea = '';
     },
 
     loadChat: function(e){
       var chat = e.model.item.chat;
+
+      //Set selected style
       var id = '#chat'+chat.user.id;
       var div = Polymer.dom(this.root).querySelectorAll(id)[0];
-
       if(this.show){
         var id = '#chat' + this.show.chat.user.id;
         var divOld = Polymer.dom(this.root).querySelectorAll(id)[0];
         divOld.className = div.className;
       }
-
       div.className += " contactSelected";
       
+      //Load chat
       this.show = e.model.item;  
       this.refreshChat();
       this.continueRefresh();
     },
 
     fixBottom: function(){
+      //Fix scroll bar bottom
       var container = Polymer.dom(this.root).querySelectorAll('#displayArea')[0];
       container.scrollTop = container.scrollHeight;
       if(container.scrollTop != container.scrollHeight){
@@ -633,6 +632,9 @@ Example:
       
     },
 
+    /* continueRefresh():
+        Refresh the chat every minute
+    */
     continueRefresh: function(){
       var promise = new Promise(function (resolve, reject) {
         window.setTimeout(
@@ -653,41 +655,44 @@ Example:
     subscribe: function(peer){
       var id = this.getId(peer);
       var me = this;
-      telegramApi.subscribe(id, function(response){
-        if(response._ == 'updates'){
-          for (var i = response.updates.length - 1; i >= 0; i--) {
-            if(response.updates[i]._ == 'updateNewMessage'){
-              console.log('NEW MESSAGE', response);
-              var msg = response.updates[i].message;
-              if(msg.from_id == me.user.id){
-                var id = me.getId(msg.to_id);
-              }
-              else{
-                var id = msg.from_id;
-              }
-              if(me.show.chat.user.id == id){
-                me.refreshChat();
-              } 
-              else{
-                //GIVE FEEDBACK TO USER ON CHAT LIST
-              }             
+      telegramApi.subscribe(id, 
+        function(response){
+          //Notifications callback
+          if(response._ == 'updates'){
+            for (var i = response.updates.length - 1; i >= 0; i--) {
+              if(response.updates[i]._ == 'updateNewMessage'){
+                //Identify target chat
+                var msg = response.updates[i].message;
+                if(msg.from_id == me.user.id){
+                  var id = me.getId(msg.to_id);
+                }
+                else{
+                  var id = msg.from_id;
+                }
+                //If its the active chat refresh it
+                if(me.show.chat.user.id == id){
+                  me.refreshChat();
+                } 
+                else{
+                  //GIVE FEEDBACK TO USER ON CHAT LIST
+                }             
 
+                }
             }
-          };
-        }
-        else if(response._ == 'updateShortMessage'){
-          console.log('NEW MESSAGE', response);
-          if(response.user_id == me.user.id){
-            //unlucky
           }
-          else if(me.show.chat.user.id == response.user_id){
-            me.refreshChat();
-          } 
-          
-          else{
-            //GIVE FEEDBACK TO USER ON CHAT LIST
-          }             
-        }
+          else if(response._ == 'updateShortMessage'){
+            if(response.user_id == me.user.id){
+              //unlucky: Cannot identify the chat if its an outbound message
+            }
+            //If its the active chat refresh it
+            else if(me.show.chat.user.id == response.user_id){
+              me.refreshChat();
+            } 
+            
+            else{
+              //GIVE FEEDBACK TO USER ON CHAT LIST
+            }             
+          }
       });
     },
 
@@ -702,8 +707,11 @@ Example:
       }
     },
 
+    /* refreshChat():
+          Update the active chat history
+    */
     refreshChat: function(){
-      //GET MESSAGES
+      //Get messages
       var peer = this.show.peer;  
       if(peer._ == 'peerChannel'){
         var id = peer.channel_id;
@@ -720,7 +728,7 @@ Example:
           take: 50,
           type: type
       }).then(function(data){
-          //UPDATE MESSAGES
+          //Update view
           me.show.chat.messages = data.messages;
           me.chat = [];
           for(var i = data.messages.length-1; i >= 0; i--){
