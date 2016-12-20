@@ -739,19 +739,17 @@ Example:
     */
     refreshChat: function(){
       //Get messages
-      var peer = this.show.peer;  
-      if(peer._ == 'peerChannel'){
-        var id = peer.channel_id;
-        var type = 'chat';
-      }
-      else if(peer._ == 'peerUser'){
-        var id = peer.user_id;
+      var user = this.show.chat.user;  
+      if(user._ == 'user'){
         var type = 'user';
+      }
+      else{
+        var type = 'chat';
       }
 
       var me = this;
       telegramApi.getHistory({
-          id: id,
+          id: user.id,
           take: 50,
           type: type
       }).then(function(data){
