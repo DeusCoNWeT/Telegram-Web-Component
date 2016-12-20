@@ -11,7 +11,7 @@ WebComponent for the Telegram API using Polymer
 [TelegramLink](https://github.com/enricostara/telegram.link) by [enricostara](https://github.com/enricostara)   
 [TelegramApi](https://github.com/sunriselink/TelegramApi) by [Maxim Sadofyev](https://github.com/sunriselink)
 
-#Dependencies
+##Dependencies
 Please use [my fork](https://github.com/fjcaballero/TelegramApi) of the TelegramAPI as i added new specific functions for this component
 
 ##Use
