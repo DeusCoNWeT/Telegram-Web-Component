@@ -17,29 +17,32 @@ Example:
 <link rel="import" href="bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="bower_components/paper-toolbar/paper-toolbar.html">
 <link rel="import" href="bower_components/paper-menu/paper-menu.html">
-
-<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+<link rel="import" href="bower_components/paper-input/paper-input.html">
+<link rel="import" href="bower_components/iron-flex-layout/iron-flex-layout-classes.html" <script src="https://code.jquery.com/jquery-1.10.2.js">
+</script>
 <script src="bower_components/telegram-api/dist/telegramApi.js"></script>
 
 <dom-module id="telegram-wc">
 
   <template>
 
-    <style is="custom-style">
+    <style is="custom-style" include="iron-flex iron-flex-alignment">
 
       :host{
         display: block;
         width: 400px;
         height: 400px;
-        --background: #3a6d99;
+        --telegram-background: #5682a3;
         overflow: hidden;
         position: relative;
+        font-family: Tahoma, sans-serif, Arial, Helvetica;
+        background-color: #e7ebf0;
       }
 
       /* HEADER */
 
       paper-toolbar.toolbar{
-        --paper-toolbar-background: var(--background);
+        --paper-toolbar-background: var(--telegram-background);
         --paper-toolbar-title:{
           text-align: center;
           margin-left: auto;
@@ -47,7 +50,10 @@ Example:
           overflow: visible;
         }
       }
-
+      paper-icon-button {
+        padding: 0;
+        margin-right: 8px;
+      }
       /* SIDE BAR CONTACTS */
 
       .contacts{
@@ -193,18 +199,17 @@ Example:
       /* Login menus */
 
       .login{
-        background: var(--background);
+        padding:18px;
         color: var(--paper-grey-700);
         font: 15px Roboto,arial,sans-serif;
-        height: calc(100% - 64px);
+        height: calc(100% - 90px);
         display: flex;
       }
 
       .loginMenu{
-        align-self: center;
-        padding: 10px;
+        padding: 18px;
         width: 100%;
-        background: var(--paper-grey-200);
+        background-color:white; 
       }
 
       .loginMenu span{
@@ -223,112 +228,147 @@ Example:
       }
 
       .inputContainer{
-        width: calc(60% + 82px);
-        margin-left: auto;
+        /*margin-left: auto;
         margin-right: auto;
         margin-top: 10px;
-        margin-bottom: 10px;
+        margin-bottom: 10px;*/
       }
-
+      .register {
+        font-weight: bold;
+        text-transform: capitalize;
+      }
+      .subtitle {
+        color: #999;
+        margin: 15px 0 30px;
+        font-size: 13px;
+        line-height: 160%;
+      }
+      .code {
+        margin:0 5px;
+        width: 50px;
+        height: 30px;
+      }
+      paper-input {
+         --paper-input-container-input: {
+          font-size: 13px;
+        };
+      }
+      paper-input /deep/ paper-input-container {
+        padding:0;
+      }
+      .phoneContainer {
+        margin:20px 0 10px 0;
+        font-size:13px;
+      }
     </style>
 
-    <!-- Header -->
-    <paper-toolbar class="toolbar">
-      <div class="title">Telegram-Web-Component</div>
-      <paper-icon-button icon="power-settings-new" on-click="logout" hidden="{{!logged}}"></paper-icon-button>
-      power-settings-new
-    </paper-toolbar>
 
-    <!-- Login -->
-    <template is="dom-if" if="{{!logged}}">
-      <div class="login" hidden="{{showCode}}">
-        <div class="loginMenu">
-          <span>Enter your phone number(w/ country code)</span>
-          <div class="inputContainer">
-            <input value="{{phone::input}}"></input>
-            <paper-button raised on-click="sendCode">Send code</paper-button>
-          </div>          
-          <span class="info">You will receive a code on telegram app</span>
-        </div>
-      </div>
-      <div class="login" hidden="{{!showCode}}">
-        <div class="loginMenu">
-          <span>Enter the code you have received</span>
-          <div class="inputContainer">
-            <input value="{{phoneCode::input}}"></input>
-            <paper-button raised on-click="login">Log in</paper-button>
+<!-- Login -->
+<template is="dom-if" if="{{!logged}}">
+  <!-- Header -->
+  <paper-toolbar class="toolbar">
+    <paper-icon-button src="General.png">
+    </paper-icon-button>
+    <p>Telegram</p>
+  </paper-toolbar>
+
+  <div class="login" hidden="{{showCode}}">
+    <div class="loginMenu">
+      <p class="register">Register</p>
+      <p class="subtitle">Please, select your country and introduce your phone number. You will receive a code of telegram app</p>
+      <div class="inputContainer">
+        <label for="country" class="subtitle">Country</label>
+        <paper-input value="{{phone::country}}" no-label-float></paper-input>
+        <div class="phoneContainer horizontal layout ">
+          <div>
+            <label for="code" class="subtitle">Code</label>
+            <paper-input name="code" value="{{phone::countryCode}}" class="code" no-label-float></paper-input>
           </div>
-          <paper-button raised on-click="sendCode">Send again</paper-button>
+          <div class="flex">
+            <label for="phonenumber" class="subtitle">Phone Number</label>
+            <paper-input for="phonenumber" value="{{phone::phone}}" class="phonenumber" no-label-float></paper-input>
+          </div>
         </div>
       </div>
+    </div>
+  </div>
+  <div class="login" hidden="{{!showCode}}">
+    <div class="loginMenu">
+      <span>Enter the code you have received</span>
+      <div class="inputContainer">
+        <input value="{{phoneCode::input}}"></input>
+      </div>
+      <paper-button raised on-click="sendCode">Send again</paper-button>
+    </div>
+  </div>
+</template>
+
+<!-- Logged -->
+<template is="dom-if" if="{{logged}}">
+
+  <!-- Contacts/Chats -->
+  <div class="contacts" id="style-3">
+    <div class="contact">
+      <iron-icon icon="search"></iron-icon>
+      <input class="contactHidden" value="{{search_keywords::input}}"></input>
+    </div>
+    <!-- Contacts -->
+    <template is="dom-if" if="{{searching}}">
+      <template is="dom-repeat" items="[[searchResult]]">
+        <div class="contact" on-click="loadContact">
+          <template is="dom-if" if="{{item.image}}">
+            <img class="profImg" src="{{item.image}}">
+          </template>
+          <template is="dom-if" if="{{!item.image}}">
+            <img class="profImg" src="default.png">
+          </template>
+          <span class="contactHidden">{{item.first_name}} {{item.last_name}}</span>
+        </div>
+      </template>
     </template>
-
-    <!-- Logged -->
-    <template is="dom-if" if="{{logged}}">
-
-      <!-- Contacts/Chats -->
-      <div class="contacts" id="style-3">
-        <div class="contact">
-          <iron-icon icon="search"></iron-icon>
-          <input class="contactHidden" value="{{search_keywords::input}}"></input>
-        </div>
-        <!-- Contacts -->
-        <template is="dom-if" if="{{searching}}">
-          <template is="dom-repeat" items="[[searchResult]]">
-            <div class="contact" on-click="loadContact">
-              <template is="dom-if" if="{{item.image}}">
-                <img class="profImg" src="{{item.image}}">
-              </template>
-              <template is="dom-if" if="{{!item.image}}">
-                <img class="profImg" src="default.png">
-              </template>
-              <span class="contactHidden">{{item.first_name}} {{item.last_name}}</span>
-            </div>
+    <!-- Chats -->
+    <template is="dom-if" if="{{!searching}}">
+      <template is="dom-repeat" items="[[chats]]" id="chatsTemplate">
+        <div id="chat{{item.chat.user.id}}" class="contact" on-click="loadChat">
+          <template is="dom-if" if="{{item.chat.photo}}">
+            <img class="profImg" src="{{item.chat.photo}}">
           </template>
-        </template>
-        <!-- Chats -->
-        <template is="dom-if" if="{{!searching}}">
-          <template is="dom-repeat" items="[[chats]]" id="chatsTemplate">
-            <div id="chat{{item.chat.user.id}}" class="contact" on-click="loadChat">
-              <template is="dom-if" if="{{item.chat.photo}}">
-                <img class="profImg" src="{{item.chat.photo}}">
-              </template>
-              <template is="dom-if" if="{{!item.chat.photo}}">
-                <img class="profImg" src="default.png">
-              </template>
-              <span class="contactHidden">{{item.chat.user.title}} {{item.chat.user.first_name}} {{item.chat.user.last_name}}</span>
-            </div>
+          <template is="dom-if" if="{{!item.chat.photo}}">
+            <img class="profImg" src="default.png">
           </template>
-        </template>
-      </div>
-
-      <!-- Chat -->
-      <div class="chat">
-        <div class="displayArea" id="displayArea">
-          <template is="dom-repeat" items="[[chat]]">
-            <template is="dom-if" if="{{item.mine}}">
-              <div class="messageOut">
-                <span class="date">{{item.date}}</span>
-                <span>{{item.text}}</span>
-              </div>
-            </template>
-            <template is="dom-if" if="{{!item.mine}}">
-              <div class="messageIn">
-                <span class="date">{{item.date}}</span>
-                <span>{{item.text}}</span>
-              </div>
-            </template>
-          </template>
+          <span class="contactHidden">{{item.chat.user.title}} {{item.chat.user.first_name}} {{item.chat.user.last_name}}</span>
         </div>
-        <div class="sendArea">
-          <textarea value="{{textArea::input}}" class="input" rows="3" cols="50"></textarea>
-          <paper-icon-button icon="send" class="send" on-click="sendMSG"></paper-icon-button>
-        </div>
-      </div>
-
+      </template>
     </template>
+  </div>
 
-  </template>  
+  <!-- Chat -->
+  <div class="chat">
+    <div class="displayArea" id="displayArea">
+      <template is="dom-repeat" items="[[chat]]">
+        <template is="dom-if" if="{{item.mine}}">
+          <div class="messageOut">
+            <span class="date">{{item.date}}</span>
+            <span>{{item.text}}</span>
+          </div>
+        </template>
+        <template is="dom-if" if="{{!item.mine}}">
+          <div class="messageIn">
+            <span class="date">{{item.date}}</span>
+            <span>{{item.text}}</span>
+          </div>
+        </template>
+      </template>
+    </div>
+    <div class="sendArea">
+      <textarea value="{{textArea::input}}" class="input" rows="3" cols="50"></textarea>
+      <paper-icon-button icon="send" class="send" on-click="sendMSG"></paper-icon-button>
+    </div>
+  </div>
+
+</template>
+
+</template>
 
 </dom-module>
 
@@ -355,7 +395,7 @@ Example:
         value: false
       },
 
-      search_keywords:{
+      search_keywords: {
         type: String,
         observer: "search_keywords_changed"
       },
@@ -373,16 +413,16 @@ Example:
         type: Object,
         value: {
           test: [
-            {id: 1, host: '149.154.175.10',  port: 80},
-            {id: 2, host: '149.154.167.40',  port: 80},
-            {id: 3, host: '149.154.175.117', port: 80}
+            { id: 1, host: '149.154.175.10', port: 80 },
+            { id: 2, host: '149.154.167.40', port: 80 },
+            { id: 3, host: '149.154.175.117', port: 80 }
           ],
           production: [
-            {id: 1, host: '149.154.175.50',  port: 80},
-            {id: 2, host: '149.154.167.51',  port: 80},
-            {id: 3, host: '149.154.175.100', port: 80},
-            {id: 4, host: '149.154.167.91',  port: 80},
-            {id: 5, host: '149.154.171.5',   port: 80}
+            { id: 1, host: '149.154.175.50', port: 80 },
+            { id: 2, host: '149.154.167.51', port: 80 },
+            { id: 3, host: '149.154.175.100', port: 80 },
+            { id: 4, host: '149.154.167.91', port: 80 },
+            { id: 5, host: '149.154.171.5', port: 80 }
           ]
         }
       },
@@ -391,48 +431,48 @@ Example:
 
     //Component lifecycle
 
-    attached: function(){
+    attached: function () {
 
       telegramApi.setConfig({ app: this.app, server: this.server });
       // Extend telegram api
-      telegramApi.getPhoto = function(type, photo) {
+      telegramApi.getPhoto = function (type, photo) {
         var location = {
-            _: "inputFileLocation",
-            local_id: photo.local_id,
-            secret: photo.secret,
-            volume_id: photo.volume_id
+          _: "inputFileLocation",
+          local_id: photo.local_id,
+          secret: photo.secret,
+          volume_id: photo.volume_id
         };
         var params = {
-            dcID: photo.dc_id,
-            fileDownload: true,
-            singleInRequest: window.safari !== undefined,
-            createNetworker: true
+          dcID: photo.dc_id,
+          fileDownload: true,
+          singleInRequest: window.safari !== undefined,
+          createNetworker: true
         };
-    
+
         return telegramApi.invokeApi('upload.getFile', {
-            location: location,
-            offset: 0,
-            limit: 524288
-        }, params).then(function(result) {
-            switch (type) {
-                case 'byteArray':
-                    return result.bytes;
-                case 'base64':
-                    return "data:image/jpeg;base64," + btoa(String.fromCharCode.apply(null, result.bytes));
-                case 'blob':
-                    return new Blob([result.bytes], {type: 'image/jpeg'});
-                default:
-                    return result.bytes;
-            }
+          location: location,
+          offset: 0,
+          limit: 524288
+        }, params).then(function (result) {
+          switch (type) {
+            case 'byteArray':
+              return result.bytes;
+            case 'base64':
+              return "data:image/jpeg;base64," + btoa(String.fromCharCode.apply(null, result.bytes));
+            case 'blob':
+              return new Blob([result.bytes], { type: 'image/jpeg' });
+            default:
+              return result.bytes;
+          }
         });
-     }
+      }
       var me = this;
 
       this.getUser();
 
     },
 
-    dettached: function(){
+    dettached: function () {
       this.logout();
     },
 
@@ -440,12 +480,12 @@ Example:
 
     /*------------------------------------Authentication----------------------------*/
 
-    login: function(){
-      if(this.registered) this.signIn();
+    login: function () {
+      if (this.registered) this.signIn();
       else this.signUp();
     },
 
-    logout: function(){
+    logout: function () {
       telegramApi.logOut();
       this.logged = false;
       this.showCode = false;
@@ -455,40 +495,40 @@ Example:
       this.user = null;
     },
 
-    sendCode: function(){
-      if(!this.phone) return;
+    sendCode: function () {
+      if (!this.phone) return;
 
       var me = this;
       telegramApi.sendCode(this.phone).then(
-        function(sent_code) {
+        function (sent_code) {
           me.codeHash = sent_code.phone_code_hash;
           me.registered = sent_code.phone_registered;
-          me.showCode = true;         
+          me.showCode = true;
         },
-        function(error) {
+        function (error) {
 
         }
       );
     },
 
-    signIn: function(){
-      if(!this.phone || !this.codeHash || !this.phoneCode) return;
+    signIn: function () {
+      if (!this.phone || !this.codeHash || !this.phoneCode) return;
 
       var me = this;
       telegramApi.signIn(this.phone, this.codeHash, this.phoneCode).then(
-        function(response) {
+        function (response) {
           // Sign in complete
           me.getUser();
         }
       );
     },
 
-    signUp: function(){
-      if(!this.phone || !this.codeHash || !this.phoneCode) return;
-      
+    signUp: function () {
+      if (!this.phone || !this.codeHash || !this.phoneCode) return;
+
       var me = this;
       telegramApi.signUp(this.phone, this.codeHash, this.phoneCode, this.user.firstname, this.user.lastname).then(
-        function(response) {
+        function (response) {
           // Sign up complete
           this.getUser();
         }
@@ -497,10 +537,10 @@ Example:
 
     /*--------------------------------------User info-------------------------------------*/
 
-    getUser: function(){
+    getUser: function () {
       var me = this;
       telegramApi.getUserInfo().then(
-        function(user) {
+        function (user) {
           if (user.id) {
             //Logged
             me.user = user;
@@ -512,10 +552,10 @@ Example:
       );
     },
 
-    getContacts: function(){
+    getContacts: function () {
       var me = this;
       telegramApi.invokeApi('contacts.getContacts', {}).then(
-        function(response) {
+        function (response) {
           me.contacts = response.users;
           for (var i = me.contacts.length - 1; i >= 0; i--) {
             me.getPhotoContact(me.contacts[i]);
@@ -528,15 +568,15 @@ Example:
         Obtains the user recent dialogs 
         and subscribes to receive notifications
     */
-    getDialogs: function(){
+    getDialogs: function () {
       var me = this;
       telegramApi.getDialogs().then(
-        function(response) {
+        function (response) {
           me.data = response.result;
           me.chats = [];
           for (var i = 0; i < response.result.dialogs.length; i++) {
             me.initializeChat(response.result.dialogs[i].peer);
-            me.subscribe(response.result.dialogs[i].peer);            
+            me.subscribe(response.result.dialogs[i].peer);
           };
         }
       );
@@ -545,7 +585,7 @@ Example:
 
     /*----------------------------------Load component--------------------------------*/
 
-    initializeChat: function(peer){
+    initializeChat: function (peer) {
       /* Object stored on array 'chats' show on sidebar:
         {
           - Chat:
@@ -559,40 +599,40 @@ Example:
       */
       var chat = {};
       chat.user = this.searchUser(peer);
-      if(chat.user.first_name || chat.user.title) this.getPhoto(chat,peer);
+      if (chat.user.first_name || chat.user.title) this.getPhoto(chat, peer);
     },
 
-    getId: function(peer){
-      switch(peer._){
+    getId: function (peer) {
+      switch (peer._) {
         case 'peerUser':
-          return peer.user_id;break
+          return peer.user_id; break
         case 'peerChannel':
-          return peer.channel_id;break
+          return peer.channel_id; break
         case 'peerChat':
-          return peer.chat_id;break
+          return peer.chat_id; break
       }
     },
 
-    searchUser: function(peer){
+    searchUser: function (peer) {
       var id = this.getId(peer);
       var found = false;
       for (var i = this.data.chats.length - 1; i >= 0 && !found; i--) {
-        if(this.data.chats[i].id == id){
+        if (this.data.chats[i].id == id) {
           found = true;
           return this.data.chats[i]
         }
       }
       for (var i = this.data.users.length - 1; i >= 0 && !found; i--) {
-        if(this.data.users[i].id == id){
+        if (this.data.users[i].id == id) {
           found = true;
           return this.data.users[i];
         }
       };
     },
 
-    getPhoto: function(chat, peer){
+    getPhoto: function (chat, peer) {
       if (!chat.user.photo) {
-        this.push('chats',{chat: chat, peer: peer});
+        this.push('chats', { chat: chat, peer: peer });
         return;
       }
 
@@ -600,25 +640,25 @@ Example:
 
       var me = this;
       telegramApi.getPhoto('base64', photo).then(
-        function(result) {
-          chat.photo =  result;
-          me.push('chats',{chat: chat, peer: peer});
+        function (result) {
+          chat.photo = result;
+          me.push('chats', { chat: chat, peer: peer });
         },
-        function(error){
-          me.push('chats',{chat: chat, peer: peer});
+        function (error) {
+          me.push('chats', { chat: chat, peer: peer });
         }
       );
 
     },
 
-    getPhotoContact: function(user){
-      if(!user.photo)return;
+    getPhotoContact: function (user) {
+      if (!user.photo) return;
 
       var photo = user.photo.photo_small;
 
       var me = this;
       telegramApi.getPhoto('base64', photo).then(
-        function(result) {
+        function (result) {
           user.image = result;
         }
       );
@@ -626,36 +666,36 @@ Example:
 
     /*---------------------------------Search methods-------------------------------*/
 
-    search_keywords_changed: function(e){
-      if(!this.search_keywords || this.search_keywords == '' || this.search_keywords.length == 0){
+    search_keywords_changed: function (e) {
+      if (!this.search_keywords || this.search_keywords == '' || this.search_keywords.length == 0) {
         this.searching = false;
       }
-      else{
+      else {
         this.searchContact();
       }
     },
 
-    searchContact: function(){
+    searchContact: function () {
       this.searchResult = this.contacts;
       this.searching = true;
     },
 
     /*------------------------------------Load chat---------------------------------*/
 
-    loadContact: function(e){
+    loadContact: function (e) {
       this.searching = false;
       this.search_keywords = '';
       var user = e.model.item;
       var exists = false;
       for (var i = this.chats.length - 1; i >= 0 && !exists; i--) {
         //If it exists
-        if(this.chats[i].chat.user.id == user.id){
+        if (this.chats[i].chat.user.id == user.id) {
           exists = true;
           var fakeEvent = { model: { item: this.chats[i], index: i } };
           this.loadChat(fakeEvent);
         }
       }
-      if(!exists){
+      if (!exists) {
         var chat = {
           messages: [],
           user: user
@@ -664,47 +704,47 @@ Example:
           _: 'peerUser',
           user_id: user.id
         };
-        this.push('chats',{chat: chat, peer: peer});
+        this.push('chats', { chat: chat, peer: peer });
 
         //Set selected style
         var id = '#chatsTemplate';
         var div = Polymer.dom(this.root).querySelectorAll(id)[0];
         div.render();
 
-        var fakeEvent = { model: { item: {chat: chat, peer: peer}, index: this.chats.length-1 } };
+        var fakeEvent = { model: { item: { chat: chat, peer: peer }, index: this.chats.length - 1 } };
         this.loadChat(fakeEvent);
         this.subscribe(peer);
       }
     },
 
-    loadChat: function(e){
+    loadChat: function (e) {
       var chat = e.model.item.chat;
 
       //Set selected style
-      var id = '#chat'+chat.user.id;
+      var id = '#chat' + chat.user.id;
       var div = Polymer.dom(this.root).querySelectorAll(id)[0];
-      if(this.show){
+      if (this.show) {
         var id = '#chat' + this.show.chat.user.id;
         var divOld = Polymer.dom(this.root).querySelectorAll(id)[0];
         divOld.className = div.className;
       }
       div.className += " contactSelected";
       this.focusChat(e);
-      
+
       //Load chat
-      this.show = e.model.item;  
+      this.show = e.model.item;
       this.refreshChat();
       this.continueRefresh();
     },
 
     /*----------------------------------Comunication methods-----------------------------*/
 
-    sendMSG: function(){
-      if(this.textArea == null || this.textArea == '')return null;
+    sendMSG: function () {
+      if (this.textArea == null || this.textArea == '') return null;
 
       var me = this;
       telegramApi.sendMessage(this.getId(this.show.peer), this.textArea).then(
-        function(response){
+        function (response) {
           me.refreshChat();
         }
       );
@@ -718,48 +758,48 @@ Example:
       this.textArea = '';
     },
 
-    subscribe: function(peer){
+    subscribe: function (peer) {
       var id = this.getId(peer);
       var me = this;
-      telegramApi.subscribe(id, 
-        function(response){
+      telegramApi.subscribe(id,
+        function (response) {
           //Notifications callback
-          if(response._ == 'updates'){
+          if (response._ == 'updates') {
             for (var i = response.updates.length - 1; i >= 0; i--) {
-              if(response.updates[i]._ == 'updateNewMessage'){
+              if (response.updates[i]._ == 'updateNewMessage') {
                 //Identify target chat
                 var msg = response.updates[i].message;
-                if(msg.from_id == me.user.id){
+                if (msg.from_id == me.user.id) {
                   var id = me.getId(msg.to_id);
                 }
-                else{
+                else {
                   var id = msg.from_id;
                 }
                 //If its the active chat refresh it
-                if(me.show.chat.user.id == id){
+                if (me.show.chat.user.id == id) {
                   me.refreshChat();
-                } 
-                else{
-                  //GIVE FEEDBACK TO USER ON CHAT LIST
-                }             
-
                 }
+                else {
+                  //GIVE FEEDBACK TO USER ON CHAT LIST
+                }
+
+              }
             }
           }
-          else if(response._ == 'updateShortMessage'){
-            if(response.user_id == me.user.id){
+          else if (response._ == 'updateShortMessage') {
+            if (response.user_id == me.user.id) {
               //unlucky: Cannot identify the chat if its an outbound message
             }
             //If its the active chat refresh it
-            else if(me.show.chat.user.id == response.user_id){
+            else if (me.show.chat.user.id == response.user_id) {
               me.refreshChat();
-            } 
-            
-            else{
+            }
+
+            else {
               //GIVE FEEDBACK TO USER ON CHAT LIST
-            }             
+            }
           }
-      });
+        });
     },
 
     /*-------------------------------Refresh chat history-------------------------------*/
@@ -767,93 +807,93 @@ Example:
     /* refreshChat():
           Update the active chat history
     */
-    refreshChat: function(){
+    refreshChat: function () {
       //Get messages
-      var user = this.show.chat.user;  
-      if(user._ == 'user'){
+      var user = this.show.chat.user;
+      if (user._ == 'user') {
         var type = 'user';
       }
-      else{
+      else {
         var type = 'chat';
       }
 
       var me = this;
       telegramApi.getHistory({
-          id: user.id,
-          take: 50,
-          type: type
-      }).then(function(data){
-          //Update view
-          me.show.chat.messages = data.messages;
-          me.chat = [];
-          for(var i = data.messages.length-1; i >= 0; i--){
-            me.addMSG(data.messages[i]);
-          }
-          me.fixBottom();
+        id: user.id,
+        take: 50,
+        type: type
+      }).then(function (data) {
+        //Update view
+        me.show.chat.messages = data.messages;
+        me.chat = [];
+        for (var i = data.messages.length - 1; i >= 0; i--) {
+          me.addMSG(data.messages[i]);
+        }
+        me.fixBottom();
       });
     },
 
     /* continueRefresh():
         Refresh the chat every minute
     */
-    continueRefresh: function(){
+    continueRefresh: function () {
       var promise = new Promise(function (resolve, reject) {
         window.setTimeout(
-          function() {
+          function () {
             resolve();
-          }, 60000);                    
+          }, 60000);
       });
       /* DELAY */
       var me = this;
-      promise.then(function(){
-        if(me.show){
+      promise.then(function () {
+        if (me.show) {
           me.refreshChat();
           me.continueRefresh();
-        }        
+        }
       });
     },
 
     /*----------------------------------Display methods----------------------------------*/
 
-    focusChat: function(e){
+    focusChat: function (e) {
       var container = Polymer.dom(this.root).querySelectorAll('#style-3')[0];
-      var height = (container.scrollHeight/(this.chats.length+1))*(e.model.index-1.5);
+      var height = (container.scrollHeight / (this.chats.length + 1)) * (e.model.index - 1.5);
       container.scrollTop = height;
     },
 
-    fixBottom: function(){
+    fixBottom: function () {
       //Fix scroll bar bottom
       var container = Polymer.dom(this.root).querySelectorAll('#displayArea')[0];
       container.scrollTop = container.scrollHeight;
-      if(container.scrollTop != container.scrollHeight){
+      if (container.scrollTop != container.scrollHeight) {
         var promise = new Promise(function (resolve, reject) {
           window.setTimeout(
-            function() {
+            function () {
               resolve();
-            }, 100);                    
+            }, 100);
         });
         /* DELAY */
         var me = this;
-        promise.then(function(){
+        promise.then(function () {
           container.scrollTop = container.scrollHeight;
         });
       }
-      
+
     },
 
-    addMSG: function(msg){
+    addMSG: function (msg) {
       //Check if exists
       for (var i = this.chat.length - 1; i >= 0 && !exists; i--) {
         var exists = this.chat[i].id == msg.id;
       }
-      if(exists)return;
+      if (exists) return;
 
       //Check outbound or inbound message
       message = {};
-      if(msg.from_id == this.user.id){
+      if (msg.from_id == this.user.id) {
         message.mine = true;
       }
-      else{
+      else {
         message.mine = false;
       }
 
@@ -862,8 +902,8 @@ Example:
 
       //Parse date
       var date = new Date(msg.date * 1000);
-      message.date = date.getDate() +'/'+(date.getMonth()+1)+'/'+date.getFullYear()+' '
-      +date.toLocaleTimeString();
+      message.date = date.getDate() + '/' + (date.getMonth() + 1) + '/' + date.getFullYear() + ' '
+        + date.toLocaleTimeString();
 
       //Set id
       message.id = msg.id;
