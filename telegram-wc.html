@@ -9,18 +9,17 @@ Example:
 @element telegram-wc
 @demo demo/index.html
 -->
--->
-<link rel="import" href="../polymer/polymer.html">
-<link rel="import" href="../iron-icon/iron-icon.html">
-<link rel="import" href="../iron-icons/iron-icons.html">
-<link rel="import" href="../iron-ajax/iron-ajax.html">
-<link rel="import" href="../paper-button/paper-button.html">
-<link rel="import" href="../paper-icon-button/paper-icon-button.html">
-<link rel="import" href="../paper-toolbar/paper-toolbar.html">
-<link rel="import" href="../paper-menu/paper-menu.html">
+<link rel="import" href="bower_components/polymer/polymer.html">
+<link rel="import" href="bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="bower_components/paper-button/paper-button.html">
+<link rel="import" href="bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="bower_components/paper-toolbar/paper-toolbar.html">
+<link rel="import" href="bower_components/paper-menu/paper-menu.html">
 
 <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
-<script src="/telegram-api/dist/telegramApi.js"></script>
+<script src="bower_components/telegram-api/dist/telegramApi.js"></script>
 
 <dom-module id="telegram-wc">
 
@@ -395,7 +394,38 @@ Example:
     attached: function(){
 
       telegramApi.setConfig({ app: this.app, server: this.server });
-
+      // Extend telegram api
+      telegramApi.getPhoto = function(type, photo) {
+        var location = {
+            _: "inputFileLocation",
+            local_id: photo.local_id,
+            secret: photo.secret,
+            volume_id: photo.volume_id
+        };
+        var params = {
+            dcID: photo.dc_id,
+            fileDownload: true,
+            singleInRequest: window.safari !== undefined,
+            createNetworker: true
+        };
+    
+        return telegramApi.invokeApi('upload.getFile', {
+            location: location,
+            offset: 0,
+            limit: 524288
+        }, params).then(function(result) {
+            switch (type) {
+                case 'byteArray':
+                    return result.bytes;
+                case 'base64':
+                    return "data:image/jpeg;base64," + btoa(String.fromCharCode.apply(null, result.bytes));
+                case 'blob':
+                    return new Blob([result.bytes], {type: 'image/jpeg'});
+                default:
+                    return result.bytes;
+            }
+        });
+     }
       var me = this;
 
       this.getUser();
