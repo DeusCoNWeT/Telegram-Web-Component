@@ -20,14 +20,15 @@ Example:
 <link rel="import" href="bower_components/paper-input/paper-input.html">
 <link rel="import" href="bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="bower_components/paper-styles/shadow.html">
+<link rel="import" href="bower_components/paper-button/paper-button.html">
 <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
 <script src="bower_components/telegram-api/dist/telegramApi.js"></script>
 
 <dom-module id="telegram-wc">
 
-    <template>
+  <template>
 
-        <style is="custom-style" include="iron-flex iron-flex-alignment">
+    <style is="custom-style" include="iron-flex iron-flex-alignment">
 
       :host{
         display: block;
@@ -208,7 +209,7 @@ Example:
       }
 
       .loginMenu{
-        padding: 18px;
+        padding: 0 18px 8px 18px;
         width: 100%;
         background-color:white; 
       }
@@ -221,17 +222,10 @@ Example:
         width: 60%;
       }
 
-      .loginMenu paper-button{
-        background: var(--background);
-        color: #ffffff;
-        text-transform: none;
-        padding: 6px;
-      }
-
       .inputContainer{
         position:relative;
       }
-      .register {
+      .bold {
         font-weight: bold;
         text-transform: capitalize;
       }
@@ -265,134 +259,151 @@ Example:
         max-height: 100px;
         position: absolute;
         background-color:white;
-        @apply(--shadow-elevation-6dp);
         padding:0;
         top:50px;
         overflow:auto;
         z-index:1000;
+        color: #42749b;
+        @apply(--shadow-elevation-6dp);
       }
       .country-list > li {
         padding:8px 12px;
       }
       .country-list > li:hover {
-        background-color: var(--paper-grey-200);
+        background-color: #f2f6fa;
+      }
+      .button {
+        color: #42749b;
+      }
+      .loginMenu .button {
+        margin-top:12px;
+        float:right;
+      }
+      .requireCode {
+        text-align: center;
+      }
+      .requireCode [name="phoneCode"]{
+        margin-top:60px;
+      }
+      .requireCode paper-button{
+        margin-top:18px;
       }
     </style>
 
 
+<!-- Header -->
+<paper-toolbar class="toolbar">
+  <img src="icon.png"></img>
+  <p>Telegram</p>
+</paper-toolbar>
 <!-- Login -->
 <template is="dom-if" if="{{!logged}}">
-    <!-- Header -->
-    <paper-toolbar class="toolbar">
-        <img src="icon.png"></img>
-        <p>Telegram</p>
-    </paper-toolbar>
-    <!-- Phone and code -->
-    <div class="login" hidden="{{showCode}}">
-        <div class="loginMenu">
-            <p class="register">Register</p>
-            <p class="subtitle">Please, select your country and introduce your phone number. You will receive a code of telegram app</p>
-            <div class="inputContainer">
-                <div>
-                    <label for="country" class="subtitle">Country</label>
-                    <paper-input value="{{country}}" no-label-float focused="{{_openedSelector}}">
-                    </paper-input>
-                    <template is="dom-if" if="{{_openedSelector}}">
-                        <ul class="country-list" on-focus="_openSelector">
-                            <template is="dom-repeat" items="{{country_codes}}" filter="{{filterCountry(country)}}">
-                                <li on-mousedown="_selectCountry">{{item.name}}</li>
-                            </template>
-                        </ul>
-                    </template>
-                </div>
-                <div class="phoneContainer horizontal layout ">
-                    <div>
-                        <label for="code" class="subtitle">Code</label>
-                        <paper-input name="code" value="{{countryCode::value}}" class="code" no-label-float>
-                            <div prefix>+</div>
-                        </paper-input>
-                    </div>
-                    <div class="flex">
-                        <label for="phonenumber" class="subtitle">Phone Number</label>
-                        <paper-input for="phonenumber" value="{{phone::value}}" class="phonenumber" no-label-float></paper-input>
-                    </div>
-                </div>
-            </div>
+  <!-- Phone and code -->
+  <div class="login" hidden="{{showCode}}">
+    <div class="loginMenu">
+      <p class="bold">Register</p>
+      <p class="subtitle">Please, select your country and introduce your phone number. You will receive a code of telegram app</p>
+      <div class="inputContainer">
+        <!-- Search country code -->
+        <label for="country" class="subtitle">Country</label>
+        <paper-input value="{{country}}" no-label-float focused="{{_openedSelector}}">
+        </paper-input>
+        <template is="dom-if" if="{{_openedSelector}}">
+          <ul class="country-list" on-focus="_openSelector">
+            <template is="dom-repeat" items="{{country_codes}}" filter="{{filterCountry(country)}}">
+              <li on-mousedown="_selectCountry" tabindex="0">{{item.name}}</li>
+            </template>
+          </ul>
+        </template>
+        <!--  END search code-->
+        <div class="phoneContainer horizontal layout ">
+          <div>
+            <label for="code" class="subtitle">Code</label>
+            <paper-input name="code" value="{{countryCode}}" class="code" no-label-float>
+              <div prefix>+</div>
+            </paper-input>
+          </div>
+          <div class="flex">
+            <label for="phonenumber" class="subtitle">Phone Number</label>
+            <paper-input name="phonenumber" value="{{phone}}" class="phonenumber" no-label-float></paper-input>
+          </div>
         </div>
+        <paper-button on-click="sendCode" class="button">Send</paper-button>
+      </div>
     </div>
-    <div class="login" hidden="{{!showCode}}">
-        <div class="loginMenu">
-            <span>Enter the code you have received</span>
-            <div class="inputContainer">
-                <input value="{{phoneCode::input}}"></input>
-            </div>
-            <paper-button raised on-click="sendCode">Send again</paper-button>
-        </div>
+  </div>
+  <div class="login requireCode" hidden="{{!showCode}}">
+    <div class="loginMenu">
+      <p class="bold">+{{countryCode}} {{phone}}</p>
+      <p class="subtitle flex">Enter the code you have received</p>
+      <paper-input name="phoneCode" value="{{phoneCode}}" label="Insert your code here"></paper-input>
+      <paper-button raised on-click="login" class="button">Send Code</paper-button>
     </div>
+  </div>
 </template>
 
 <!-- Logged -->
 <template is="dom-if" if="{{logged}}">
 
-    <!-- Contacts/Chats -->
-    <div class="contacts" id="style-3">
-        <div class="contact">
-            <iron-icon icon="search"></iron-icon>
-            <input class="contactHidden" value="{{search_keywords::input}}"></input>
-        </div>
-        <!-- Contacts -->
-        <template is="dom-if" if="{{searching}}">
-            <template is="dom-repeat" items="[[searchResult]]">
-                <div class="contact" on-click="loadContact">
-                    <template is="dom-if" if="{{item.image}}">
-                        <img class="profImg" src="{{item.image}}">
-                    </template>
-                    <template is="dom-if" if="{{!item.image}}">
-                        <img class="profImg" src="default.png">
-                    </template>
-                    <span class="contactHidden">{{item.first_name}} {{item.last_name}}</span>
-                </div>
-            </template>
-        </template>
-        <!-- Chats -->
-        <template is="dom-if" if="{{!searching}}">
-            <template is="dom-repeat" items="[[chats]]" id="chatsTemplate">
-                <div id="chat{{item.chat.user.id}}" class="contact" on-click="loadChat">
-                    <template is="dom-if" if="{{item.chat.photo}}">
-                        <img class="profImg" src="{{item.chat.photo}}">
-                    </template>
-                    <template is="dom-if" if="{{!item.chat.photo}}">
-                        <img class="profImg" src="default.png">
-                    </template>
-                    <span class="contactHidden">{{item.chat.user.title}} {{item.chat.user.first_name}} {{item.chat.user.last_name}}</span>
-                </div>
-            </template>
-        </template>
+  <!-- Contacts/Chats -->
+  <div class="contacts" id="style-3">
+    <div class="contact">
+      <iron-icon icon="search"></iron-icon>
+      <input class="contactHidden" value="{{search_keywords::input}}"></input>
     </div>
+    <!-- Contacts -->
+    <template is="dom-if" if="{{searching}}">
+      <template is="dom-repeat" items="[[searchResult]]">
+        <div class="contact" on-click="loadContact">
+          <template is="dom-if" if="{{item.image}}">
+            <img class="profImg" src="{{item.image}}">
+          </template>
+          <template is="dom-if" if="{{!item.image}}">
+            <img class="profImg" src="default.png">
+          </template>
+          <span class="contactHidden">{{item.first_name}} {{item.last_name}}</span>
+        </div>
+      </template>
+    </template>
+    <!-- Chats -->
+    <template is="dom-if" if="{{!searching}}">
+      <template is="dom-repeat" items="[[chats]]" id="chatsTemplate">
+        <div id="chat{{item.chat.user.id}}" class="contact" on-click="loadChat">
+          <template is="dom-if" if="{{item.chat.photo}}">
+            <img class="profImg" src="{{item.chat.photo}}">
+          </template>
+          <template is="dom-if" if="{{!item.chat.photo}}">
+            <img class="profImg" src="default.png">
+          </template>
+          <span class="contactHidden">{{item.chat.user.title}} {{item.chat.user.first_name}} {{item.chat.user.last_name}}</span>
+        </div>
+      </template>
+    </template>
+  </div>
 
-    <!-- Chat -->
-    <div class="chat">
-        <div class="displayArea" id="displayArea">
-            <template is="dom-repeat" items="[[chat]]">
-                <template is="dom-if" if="{{item.mine}}">
-                    <div class="messageOut">
-                        <span class="date">{{item.date}}</span>
-                        <span>{{item.text}}</span>
-                    </div>
-                </template>
-                <template is="dom-if" if="{{!item.mine}}">
-                    <div class="messageIn">
-                        <span class="date">{{item.date}}</span>
-                        <span>{{item.text}}</span>
-                    </div>
-                </template>
-            </template>
-        </div>
-        <div class="sendArea">
-            <textarea value="{{textArea::input}}" class="input" rows="3" cols="50"></textarea>
-            <paper-icon-button icon="send" class="send" on-click="sendMSG"></paper-icon-button>
-        </div>
+  <!-- Chat -->
+  <div class="chat">
+    <div class="displayArea" id="displayArea">
+      <template is="dom-repeat" items="[[chat]]">
+        <template is="dom-if" if="{{item.mine}}">
+          <div class="messageOut">
+            <span class="date">{{item.date}}</span>
+            <span>{{item.text}}</span>
+          </div>
+        </template>
+        <template is="dom-if" if="{{!item.mine}}">
+          <div class="messageIn">
+            <span class="date">{{item.date}}</span>
+            <span>{{item.text}}</span>
+          </div>
+        </template>
+      </template>
     </div>
+    <div class="sendArea">
+      <textarea value="{{textArea::input}}" class="input" rows="3" cols="50"></textarea>
+      <paper-icon-button icon="send" class="send" on-click="sendMSG"></paper-icon-button>
+    </div>
+  </div>
 
 </template>
 
@@ -401,618 +412,618 @@ Example:
 </dom-module>
 
 <script>
-    Polymer({
+  Polymer({
 
-        is: 'telegram-wc',
+    is: 'telegram-wc',
 
-        properties: {
+    properties: {
 
-            logged: {
-                type: Boolean,
-                value: false
-            },
+      logged: {
+        type: Boolean,
+        value: false
+      },
 
-            showCode: {
-                type: Boolean,
-                value: false
-            },
+      showCode: {
+        type: Boolean,
+        value: false
+      },
 
-            searching: {
-                type: Boolean,
-                value: false
-            },
+      searching: {
+        type: Boolean,
+        value: false
+      },
 
-            search_keywords: {
-                type: String,
-                observer: "search_keywords_changed"
-            },
+      search_keywords: {
+        type: String,
+        observer: "search_keywords_changed"
+      },
 
-            app: {
-                type: Object,
-                value: {
-                    id: 82261,
-                    hash: 'bb8cba71451932da9b62b7542ae27da2',
-                    version: '1.0.0'
-                }
-            },
+      app: {
+        type: Object,
+        value: {
+          id: 82261,
+          hash: 'bb8cba71451932da9b62b7542ae27da2',
+          version: '1.0.0'
+        }
+      },
 
-            server: {
-                type: Object,
-                value: {
-                    test: [{
-                        id: 1,
-                        host: '149.154.175.10',
-                        port: 80
-                    }, {
-                        id: 2,
-                        host: '149.154.167.40',
-                        port: 80
-                    }, {
-                        id: 3,
-                        host: '149.154.175.117',
-                        port: 80
-                    }],
-                    production: [{
-                        id: 1,
-                        host: '149.154.175.50',
-                        port: 80
-                    }, {
-                        id: 2,
-                        host: '149.154.167.51',
-                        port: 80
-                    }, {
-                        id: 3,
-                        host: '149.154.175.100',
-                        port: 80
-                    }, {
-                        id: 4,
-                        host: '149.154.167.91',
-                        port: 80
-                    }, {
-                        id: 5,
-                        host: '149.154.171.5',
-                        port: 80
-                    }]
-                }
-            },
+      server: {
+        type: Object,
+        value: {
+          test: [{
+            id: 1,
+            host: '149.154.175.10',
+            port: 80
+          }, {
+            id: 2,
+            host: '149.154.167.40',
+            port: 80
+          }, {
+            id: 3,
+            host: '149.154.175.117',
+            port: 80
+          }],
+          production: [{
+            id: 1,
+            host: '149.154.175.50',
+            port: 80
+          }, {
+            id: 2,
+            host: '149.154.167.51',
+            port: 80
+          }, {
+            id: 3,
+            host: '149.154.175.100',
+            port: 80
+          }, {
+            id: 4,
+            host: '149.154.167.91',
+            port: 80
+          }, {
+            id: 5,
+            host: '149.154.171.5',
+            port: 80
+          }]
+        }
+      },
 
+    },
+
+    //Component lifecycle
+    ready: function () {
+      var _self = this;
+      var url = '/' + Polymer.Base.resolveUrl('code.json');
+      $.get(url, function (data) {
+        _self.country_codes = $.parseJSON(data);
+      });
+      telegramApi.setConfig({
+        app: this.app,
+        server: this.server
+      });
+      // Extend telegram api
+      telegramApi.getPhoto = function (type, photo) {
+        var location = {
+          _: "inputFileLocation",
+          local_id: photo.local_id,
+          secret: photo.secret,
+          volume_id: photo.volume_id
+        };
+        var params = {
+          dcID: photo.dc_id,
+          fileDownload: true,
+          singleInRequest: window.safari !== undefined,
+          createNetworker: true
+        };
+
+        return telegramApi.invokeApi('upload.getFile', {
+          location: location,
+          offset: 0,
+          limit: 524288
+        }, params).then(function (result) {
+          switch (type) {
+            case 'byteArray':
+              return result.bytes;
+            case 'base64':
+              return "data:image/jpeg;base64," + btoa(String.fromCharCode.apply(null, result.bytes));
+            case 'blob':
+              return new Blob([result.bytes], {
+                type: 'image/jpeg'
+              });
+            default:
+              return result.bytes;
+          }
+        });
+      }
+      this.getUser();
+
+    },
+
+    dettached: function () {
+      this.logout();
+    },
+
+    //Component behaviour
+
+    /*------------------------------------Authentication----------------------------*/
+
+    login: function () {
+      if (this.registered) this.signIn();
+      else this.signUp();
+    },
+
+    logout: function () {
+      telegramApi.logOut();
+      this.logged = false;
+      this.showCode = false;
+      this.show = null;
+      this.chats = null;
+      this.chat = null;
+      this.user = null;
+    },
+
+    sendCode: function () {
+      if (!this.phone ||!this.countryCode) return;
+
+      var me = this;
+      telegramApi.sendCode(this.countryCode + this.phone).then(
+        function (sent_code) {
+          me.codeHash = sent_code.phone_code_hash;
+          me.registered = sent_code.phone_registered;
+          me.showCode = true;
         },
+        function (error) {
 
-        //Component lifecycle
-        ready: function () {
-            var _self = this;
-            var url = '/' + Polymer.Base.resolveUrl('code.json');
-            $.get(url, function (data) {
-                _self.country_codes = $.parseJSON(data);
-            });
-            telegramApi.setConfig({
-                app: this.app,
-                server: this.server
-            });
-            // Extend telegram api
-            telegramApi.getPhoto = function (type, photo) {
-                var location = {
-                    _: "inputFileLocation",
-                    local_id: photo.local_id,
-                    secret: photo.secret,
-                    volume_id: photo.volume_id
-                };
-                var params = {
-                    dcID: photo.dc_id,
-                    fileDownload: true,
-                    singleInRequest: window.safari !== undefined,
-                    createNetworker: true
-                };
+        }
+      );
+    },
 
-                return telegramApi.invokeApi('upload.getFile', {
-                    location: location,
-                    offset: 0,
-                    limit: 524288
-                }, params).then(function (result) {
-                    switch (type) {
-                        case 'byteArray':
-                            return result.bytes;
-                        case 'base64':
-                            return "data:image/jpeg;base64," + btoa(String.fromCharCode.apply(null, result.bytes));
-                        case 'blob':
-                            return new Blob([result.bytes], {
-                                type: 'image/jpeg'
-                            });
-                        default:
-                            return result.bytes;
-                    }
-                });
+    signIn: function () {
+      if (!this.phone || !this.codeHash || !this.phoneCode || !this.countryCode) return;
+
+      var me = this;
+      telegramApi.signIn( (this.countryCode + this.phone), this.codeHash, this.phoneCode).then(
+        function (response) {
+          // ls
+
+          me.getUser();
+        }
+      );
+    },
+
+    signUp: function () {
+      if (!this.phone || !this.codeHash || !this.phoneCode || !this.countryCode) return;
+
+      var me = this;
+      telegramApi.signUp((this.countryCode + this.phone), this.codeHash, this.phoneCode, this.user.firstname, this.user.lastname).then(
+        function (response) {
+          // Sign up complete
+          this.getUser();
+        }
+      );
+    },
+
+    /*--------------------------------------User info-------------------------------------*/
+
+    getUser: function () {
+      var me = this;
+      telegramApi.getUserInfo().then(
+        function (user) {
+          if (user.id) {
+            //Logged
+            me.user = user;
+            me.logged = true;
+            me.getContacts();
+            me.getDialogs();
+          }
+        }
+      );
+    },
+
+    getContacts: function () {
+      var me = this;
+      telegramApi.invokeApi('contacts.getContacts', {}).then(
+        function (response) {
+          me.contacts = response.users;
+          for (var i = me.contacts.length - 1; i >= 0; i--) {
+            me.getPhotoContact(me.contacts[i]);
+          };
+        }
+      );
+    },
+
+    /* getDialogs(): 
+        Obtains the user recent dialogs 
+        and subscribes to receive notifications
+    */
+    getDialogs: function () {
+      var me = this;
+      telegramApi.getDialogs().then(
+        function (response) {
+          me.data = response.result;
+          me.chats = [];
+          for (var i = 0; i < response.result.dialogs.length; i++) {
+            me.initializeChat(response.result.dialogs[i].peer);
+            me.subscribe(response.result.dialogs[i].peer);
+          };
+        }
+      );
+    },
+
+
+    /*----------------------------------Load component--------------------------------*/
+
+    initializeChat: function (peer) {
+      /* Object stored on array 'chats' show on sidebar:
+        {
+          - Chat:
+              - messages[] (chat history)
+              - photo (String type image/jpeg)
+              - user (user talking with)
+          - Peer:
+              - _ (type of peer: peerUser, peerChannel, peerChat)
+              - id (user_id, channel_id, chat_id)
+        }
+      */
+      var chat = {};
+      chat.user = this.searchUser(peer);
+      if (chat.user.first_name || chat.user.title) this.getPhoto(chat, peer);
+    },
+
+    getId: function (peer) {
+      switch (peer._) {
+        case 'peerUser':
+          return peer.user_id;
+          break
+        case 'peerChannel':
+          return peer.channel_id;
+          break
+        case 'peerChat':
+          return peer.chat_id;
+          break
+      }
+    },
+
+    searchUser: function (peer) {
+      var id = this.getId(peer);
+      var found = false;
+      for (var i = this.data.chats.length - 1; i >= 0 && !found; i--) {
+        if (this.data.chats[i].id == id) {
+          found = true;
+          return this.data.chats[i]
+        }
+      }
+      for (var i = this.data.users.length - 1; i >= 0 && !found; i--) {
+        if (this.data.users[i].id == id) {
+          found = true;
+          return this.data.users[i];
+        }
+      };
+    },
+
+    getPhoto: function (chat, peer) {
+      if (!chat.user.photo) {
+        this.push('chats', {
+          chat: chat,
+          peer: peer
+        });
+        return;
+      }
+
+      var photo = chat.user.photo.photo_small;
+
+      var me = this;
+      telegramApi.getPhoto('base64', photo).then(
+        function (result) {
+          chat.photo = result;
+          me.push('chats', {
+            chat: chat,
+            peer: peer
+          });
+        },
+        function (error) {
+          me.push('chats', {
+            chat: chat,
+            peer: peer
+          });
+        }
+      );
+
+    },
+
+    getPhotoContact: function (user) {
+      if (!user.photo) return;
+
+      var photo = user.photo.photo_small;
+
+      var me = this;
+      telegramApi.getPhoto('base64', photo).then(
+        function (result) {
+          user.image = result;
+        }
+      );
+    },
+
+    /*---------------------------------Search methods-------------------------------*/
+
+    search_keywords_changed: function (e) {
+      if (!this.search_keywords || this.search_keywords == '' || this.search_keywords.length == 0) {
+        this.searching = false;
+      } else {
+        this.searchContact();
+      }
+    },
+
+    searchContact: function () {
+      this.searchResult = this.contacts;
+      this.searching = true;
+    },
+
+    /*------------------------------------Load chat---------------------------------*/
+
+    loadContact: function (e) {
+      this.searching = false;
+      this.search_keywords = '';
+      var user = e.model.item;
+      var exists = false;
+      for (var i = this.chats.length - 1; i >= 0 && !exists; i--) {
+        //If it exists
+        if (this.chats[i].chat.user.id == user.id) {
+          exists = true;
+          var fakeEvent = {
+            model: {
+              item: this.chats[i],
+              index: i
             }
-            this.getUser();
+          };
+          this.loadChat(fakeEvent);
+        }
+      }
+      if (!exists) {
+        var chat = {
+          messages: [],
+          user: user
+        };
+        var peer = {
+          _: 'peerUser',
+          user_id: user.id
+        };
+        this.push('chats', {
+          chat: chat,
+          peer: peer
+        });
 
-        },
+        //Set selected style
+        var id = '#chatsTemplate';
+        var div = Polymer.dom(this.root).querySelectorAll(id)[0];
+        div.render();
 
-        dettached: function () {
-            this.logout();
-        },
+        var fakeEvent = {
+          model: {
+            item: {
+              chat: chat,
+              peer: peer
+            },
+            index: this.chats.length - 1
+          }
+        };
+        this.loadChat(fakeEvent);
+        this.subscribe(peer);
+      }
+    },
 
-        //Component behaviour
+    loadChat: function (e) {
+      var chat = e.model.item.chat;
 
-        /*------------------------------------Authentication----------------------------*/
+      //Set selected style
+      var id = '#chat' + chat.user.id;
+      var div = Polymer.dom(this.root).querySelectorAll(id)[0];
+      if (this.show) {
+        var id = '#chat' + this.show.chat.user.id;
+        var divOld = Polymer.dom(this.root).querySelectorAll(id)[0];
+        divOld.className = div.className;
+      }
+      div.className += " contactSelected";
+      this.focusChat(e);
 
-        login: function () {
-            if (this.registered) this.signIn();
-            else this.signUp();
-        },
+      //Load chat
+      this.show = e.model.item;
+      this.refreshChat();
+      this.continueRefresh();
+    },
 
-        logout: function () {
-            telegramApi.logOut();
-            this.logged = false;
-            this.showCode = false;
-            this.show = null;
-            this.chats = null;
-            this.chat = null;
-            this.user = null;
-        },
+    /*----------------------------------Comunication methods-----------------------------*/
 
-        sendCode: function () {
-            if (!this.phone) return;
+    sendMSG: function () {
+      if (this.textArea == null || this.textArea == '') return null;
 
-            var me = this;
-            telegramApi.sendCode(this.phone).then(
-                function (sent_code) {
-                    me.codeHash = sent_code.phone_code_hash;
-                    me.registered = sent_code.phone_registered;
-                    me.showCode = true;
-                },
-                function (error) {
+      var me = this;
+      telegramApi.sendMessage(this.getId(this.show.peer), this.textArea).then(
+        function (response) {
+          me.refreshChat();
+        }
+      );
 
+      //Manual insert
+      var msg = {};
+      msg.message = this.textArea;
+      msg.from_id = this.user.id;
+      msg.date = new Date();
+      this.addMSG(msg);
+      this.textArea = '';
+    },
+
+    subscribe: function (peer) {
+      var id = this.getId(peer);
+      var me = this;
+      telegramApi.subscribe(id,
+        function (response) {
+          //Notifications callback
+          if (response._ == 'updates') {
+            for (var i = response.updates.length - 1; i >= 0; i--) {
+              if (response.updates[i]._ == 'updateNewMessage') {
+                //Identify target chat
+                var msg = response.updates[i].message;
+                if (msg.from_id == me.user.id) {
+                  var id = me.getId(msg.to_id);
+                } else {
+                  var id = msg.from_id;
                 }
-            );
-        },
-
-        signIn: function () {
-            if (!this.phone || !this.codeHash || !this.phoneCode) return;
-
-            var me = this;
-            telegramApi.signIn(this.phone, this.codeHash, this.phoneCode).then(
-                function (response) {
-                    // ls
-
-                    me.getUser();
+                //If its the active chat refresh it
+                if (me.show.chat.user.id == id) {
+                  me.refreshChat();
+                } else {
+                  //GIVE FEEDBACK TO USER ON CHAT LIST
                 }
-            );
-        },
 
-        signUp: function () {
-            if (!this.phone || !this.codeHash || !this.phoneCode) return;
-
-            var me = this;
-            telegramApi.signUp(this.phone, this.codeHash, this.phoneCode, this.user.firstname, this.user.lastname).then(
-                function (response) {
-                    // Sign up complete
-                    this.getUser();
-                }
-            );
-        },
-
-        /*--------------------------------------User info-------------------------------------*/
-
-        getUser: function () {
-            var me = this;
-            telegramApi.getUserInfo().then(
-                function (user) {
-                    if (user.id) {
-                        //Logged
-                        me.user = user;
-                        me.logged = true;
-                        me.getContacts();
-                        me.getDialogs();
-                    }
-                }
-            );
-        },
-
-        getContacts: function () {
-            var me = this;
-            telegramApi.invokeApi('contacts.getContacts', {}).then(
-                function (response) {
-                    me.contacts = response.users;
-                    for (var i = me.contacts.length - 1; i >= 0; i--) {
-                        me.getPhotoContact(me.contacts[i]);
-                    };
-                }
-            );
-        },
-
-        /* getDialogs(): 
-            Obtains the user recent dialogs 
-            and subscribes to receive notifications
-        */
-        getDialogs: function () {
-            var me = this;
-            telegramApi.getDialogs().then(
-                function (response) {
-                    me.data = response.result;
-                    me.chats = [];
-                    for (var i = 0; i < response.result.dialogs.length; i++) {
-                        me.initializeChat(response.result.dialogs[i].peer);
-                        me.subscribe(response.result.dialogs[i].peer);
-                    };
-                }
-            );
-        },
-
-
-        /*----------------------------------Load component--------------------------------*/
-
-        initializeChat: function (peer) {
-            /* Object stored on array 'chats' show on sidebar:
-              {
-                - Chat:
-                    - messages[] (chat history)
-                    - photo (String type image/jpeg)
-                    - user (user talking with)
-                - Peer:
-                    - _ (type of peer: peerUser, peerChannel, peerChat)
-                    - id (user_id, channel_id, chat_id)
               }
-            */
-            var chat = {};
-            chat.user = this.searchUser(peer);
-            if (chat.user.first_name || chat.user.title) this.getPhoto(chat, peer);
-        },
-
-        getId: function (peer) {
-            switch (peer._) {
-                case 'peerUser':
-                    return peer.user_id;
-                    break
-                case 'peerChannel':
-                    return peer.channel_id;
-                    break
-                case 'peerChat':
-                    return peer.chat_id;
-                    break
             }
-        },
-
-        searchUser: function (peer) {
-            var id = this.getId(peer);
-            var found = false;
-            for (var i = this.data.chats.length - 1; i >= 0 && !found; i--) {
-                if (this.data.chats[i].id == id) {
-                    found = true;
-                    return this.data.chats[i]
-                }
+          } else if (response._ == 'updateShortMessage') {
+            if (response.user_id == me.user.id) {
+              //unlucky: Cannot identify the chat if its an outbound message
             }
-            for (var i = this.data.users.length - 1; i >= 0 && !found; i--) {
-                if (this.data.users[i].id == id) {
-                    found = true;
-                    return this.data.users[i];
-                }
-            };
-        },
-
-        getPhoto: function (chat, peer) {
-            if (!chat.user.photo) {
-                this.push('chats', {
-                    chat: chat,
-                    peer: peer
-                });
-                return;
-            }
-
-            var photo = chat.user.photo.photo_small;
-
-            var me = this;
-            telegramApi.getPhoto('base64', photo).then(
-                function (result) {
-                    chat.photo = result;
-                    me.push('chats', {
-                        chat: chat,
-                        peer: peer
-                    });
-                },
-                function (error) {
-                    me.push('chats', {
-                        chat: chat,
-                        peer: peer
-                    });
-                }
-            );
-
-        },
-
-        getPhotoContact: function (user) {
-            if (!user.photo) return;
-
-            var photo = user.photo.photo_small;
-
-            var me = this;
-            telegramApi.getPhoto('base64', photo).then(
-                function (result) {
-                    user.image = result;
-                }
-            );
-        },
-
-        /*---------------------------------Search methods-------------------------------*/
-
-        search_keywords_changed: function (e) {
-            if (!this.search_keywords || this.search_keywords == '' || this.search_keywords.length == 0) {
-                this.searching = false;
+            //If its the active chat refresh it
+            else if (me.show.chat.user.id == response.user_id) {
+              me.refreshChat();
             } else {
-                this.searchContact();
+              //GIVE FEEDBACK TO USER ON CHAT LIST
             }
-        },
+          }
+        });
+    },
 
-        searchContact: function () {
-            this.searchResult = this.contacts;
-            this.searching = true;
-        },
+    /*-------------------------------Refresh chat history-------------------------------*/
 
-        /*------------------------------------Load chat---------------------------------*/
+    /* refreshChat():
+          Update the active chat history
+    */
+    refreshChat: function () {
+      //Get messages
+      var user = this.show.chat.user;
+      if (user._ == 'user') {
+        var type = 'user';
+      } else {
+        var type = 'chat';
+      }
 
-        loadContact: function (e) {
-            this.searching = false;
-            this.search_keywords = '';
-            var user = e.model.item;
-            var exists = false;
-            for (var i = this.chats.length - 1; i >= 0 && !exists; i--) {
-                //If it exists
-                if (this.chats[i].chat.user.id == user.id) {
-                    exists = true;
-                    var fakeEvent = {
-                        model: {
-                            item: this.chats[i],
-                            index: i
-                        }
-                    };
-                    this.loadChat(fakeEvent);
-                }
-            }
-            if (!exists) {
-                var chat = {
-                    messages: [],
-                    user: user
-                };
-                var peer = {
-                    _: 'peerUser',
-                    user_id: user.id
-                };
-                this.push('chats', {
-                    chat: chat,
-                    peer: peer
-                });
+      var me = this;
+      telegramApi.getHistory({
+        id: user.id,
+        take: 50,
+        type: type
+      }).then(function (data) {
+        //Update view
+        me.show.chat.messages = data.messages;
+        me.chat = [];
+        for (var i = data.messages.length - 1; i >= 0; i--) {
+          me.addMSG(data.messages[i]);
+        }
+        me.fixBottom();
+      });
+    },
 
-                //Set selected style
-                var id = '#chatsTemplate';
-                var div = Polymer.dom(this.root).querySelectorAll(id)[0];
-                div.render();
+    /* continueRefresh():
+        Refresh the chat every minute
+    */
+    continueRefresh: function () {
+      var promise = new Promise(function (resolve, reject) {
+        window.setTimeout(
+          function () {
+            resolve();
+          }, 60000);
+      });
+      /* DELAY */
+      var me = this;
+      promise.then(function () {
+        if (me.show) {
+          me.refreshChat();
+          me.continueRefresh();
+        }
+      });
+    },
 
-                var fakeEvent = {
-                    model: {
-                        item: {
-                            chat: chat,
-                            peer: peer
-                        },
-                        index: this.chats.length - 1
-                    }
-                };
-                this.loadChat(fakeEvent);
-                this.subscribe(peer);
-            }
-        },
+    /*----------------------------------Display methods----------------------------------*/
 
-        loadChat: function (e) {
-            var chat = e.model.item.chat;
+    focusChat: function (e) {
+      var container = Polymer.dom(this.root).querySelectorAll('#style-3')[0];
+      var height = (container.scrollHeight / (this.chats.length + 1)) * (e.model.index - 1.5);
+      container.scrollTop = height;
+    },
 
-            //Set selected style
-            var id = '#chat' + chat.user.id;
-            var div = Polymer.dom(this.root).querySelectorAll(id)[0];
-            if (this.show) {
-                var id = '#chat' + this.show.chat.user.id;
-                var divOld = Polymer.dom(this.root).querySelectorAll(id)[0];
-                divOld.className = div.className;
-            }
-            div.className += " contactSelected";
-            this.focusChat(e);
+    fixBottom: function () {
+      //Fix scroll bar bottom
+      var container = Polymer.dom(this.root).querySelectorAll('#displayArea')[0];
+      container.scrollTop = container.scrollHeight;
+      if (container.scrollTop != container.scrollHeight) {
+        var promise = new Promise(function (resolve, reject) {
+          window.setTimeout(
+            function () {
+              resolve();
+            }, 100);
+        });
+        /* DELAY */
+        var me = this;
+        promise.then(function () {
+          container.scrollTop = container.scrollHeight;
+        });
+      }
 
-            //Load chat
-            this.show = e.model.item;
-            this.refreshChat();
-            this.continueRefresh();
-        },
+    },
 
-        /*----------------------------------Comunication methods-----------------------------*/
+    addMSG: function (msg) {
+      //Check if exists
+      for (var i = this.chat.length - 1; i >= 0 && !exists; i--) {
+        var exists = this.chat[i].id == msg.id;
+      }
+      if (exists) return;
 
-        sendMSG: function () {
-            if (this.textArea == null || this.textArea == '') return null;
+      //Check outbound or inbound message
+      message = {};
+      if (msg.from_id == this.user.id) {
+        message.mine = true;
+      } else {
+        message.mine = false;
+      }
 
-            var me = this;
-            telegramApi.sendMessage(this.getId(this.show.peer), this.textArea).then(
-                function (response) {
-                    me.refreshChat();
-                }
-            );
+      //Text
+      message.text = msg.message;
 
-            //Manual insert
-            var msg = {};
-            msg.message = this.textArea;
-            msg.from_id = this.user.id;
-            msg.date = new Date();
-            this.addMSG(msg);
-            this.textArea = '';
-        },
+      //Parse date
+      var date = new Date(msg.date * 1000);
+      message.date = date.getDate() + '/' + (date.getMonth() + 1) + '/' + date.getFullYear() + ' ' +
+        date.toLocaleTimeString();
 
-        subscribe: function (peer) {
-            var id = this.getId(peer);
-            var me = this;
-            telegramApi.subscribe(id,
-                function (response) {
-                    //Notifications callback
-                    if (response._ == 'updates') {
-                        for (var i = response.updates.length - 1; i >= 0; i--) {
-                            if (response.updates[i]._ == 'updateNewMessage') {
-                                //Identify target chat
-                                var msg = response.updates[i].message;
-                                if (msg.from_id == me.user.id) {
-                                    var id = me.getId(msg.to_id);
-                                } else {
-                                    var id = msg.from_id;
-                                }
-                                //If its the active chat refresh it
-                                if (me.show.chat.user.id == id) {
-                                    me.refreshChat();
-                                } else {
-                                    //GIVE FEEDBACK TO USER ON CHAT LIST
-                                }
+      //Set id
+      message.id = msg.id;
 
-                            }
-                        }
-                    } else if (response._ == 'updateShortMessage') {
-                        if (response.user_id == me.user.id) {
-                            //unlucky: Cannot identify the chat if its an outbound message
-                        }
-                        //If its the active chat refresh it
-                        else if (me.show.chat.user.id == response.user_id) {
-                            me.refreshChat();
-                        } else {
-                            //GIVE FEEDBACK TO USER ON CHAT LIST
-                        }
-                    }
-                });
-        },
+      this.push('chat', message);
 
-        /*-------------------------------Refresh chat history-------------------------------*/
+    },
 
-        /* refreshChat():
-              Update the active chat history
-        */
-        refreshChat: function () {
-            //Get messages
-            var user = this.show.chat.user;
-            if (user._ == 'user') {
-                var type = 'user';
-            } else {
-                var type = 'chat';
-            }
+    // Events callback
+    _openSelector: function () {
+      this._openedSelector = true;
+    },
+    _closeSelector: function () {
+      this._openedSelector = false;
+    },
+    _selectCountry: function (e) {
+      var item = e.model.item;
+      this.country = item.name;
+      this.countryCode = item.number;
+      this._openedSelector = false;
+    },
 
-            var me = this;
-            telegramApi.getHistory({
-                id: user.id,
-                take: 50,
-                type: type
-            }).then(function (data) {
-                //Update view
-                me.show.chat.messages = data.messages;
-                me.chat = [];
-                for (var i = data.messages.length - 1; i >= 0; i--) {
-                    me.addMSG(data.messages[i]);
-                }
-                me.fixBottom();
-            });
-        },
+    // Filter country
+    filterCountry: function (country) {
+      if (!country) {
+        return null;
+      }
+      return function (item) {
+        var name = item.name.toLowerCase()
+        country = country.toLowerCase();
+        return name.indexOf(country) != -1;
+      }
+    },
 
-        /* continueRefresh():
-            Refresh the chat every minute
-        */
-        continueRefresh: function () {
-            var promise = new Promise(function (resolve, reject) {
-                window.setTimeout(
-                    function () {
-                        resolve();
-                    }, 60000);
-            });
-            /* DELAY */
-            var me = this;
-            promise.then(function () {
-                if (me.show) {
-                    me.refreshChat();
-                    me.continueRefresh();
-                }
-            });
-        },
-
-        /*----------------------------------Display methods----------------------------------*/
-
-        focusChat: function (e) {
-            var container = Polymer.dom(this.root).querySelectorAll('#style-3')[0];
-            var height = (container.scrollHeight / (this.chats.length + 1)) * (e.model.index - 1.5);
-            container.scrollTop = height;
-        },
-
-        fixBottom: function () {
-            //Fix scroll bar bottom
-            var container = Polymer.dom(this.root).querySelectorAll('#displayArea')[0];
-            container.scrollTop = container.scrollHeight;
-            if (container.scrollTop != container.scrollHeight) {
-                var promise = new Promise(function (resolve, reject) {
-                    window.setTimeout(
-                        function () {
-                            resolve();
-                        }, 100);
-                });
-                /* DELAY */
-                var me = this;
-                promise.then(function () {
-                    container.scrollTop = container.scrollHeight;
-                });
-            }
-
-        },
-
-        addMSG: function (msg) {
-            //Check if exists
-            for (var i = this.chat.length - 1; i >= 0 && !exists; i--) {
-                var exists = this.chat[i].id == msg.id;
-            }
-            if (exists) return;
-
-            //Check outbound or inbound message
-            message = {};
-            if (msg.from_id == this.user.id) {
-                message.mine = true;
-            } else {
-                message.mine = false;
-            }
-
-            //Text
-            message.text = msg.message;
-
-            //Parse date
-            var date = new Date(msg.date * 1000);
-            message.date = date.getDate() + '/' + (date.getMonth() + 1) + '/' + date.getFullYear() + ' ' +
-                date.toLocaleTimeString();
-
-            //Set id
-            message.id = msg.id;
-
-            this.push('chat', message);
-
-        },
-
-        // Events callback
-        _openSelector: function () {
-            this._openedSelector = true;
-        },
-        _closeSelector: function () {
-            this._openedSelector = false;
-        },
-        _selectCountry: function (e) {
-            var item = e.model.item;
-            this.country = item.name;
-            this.countryCode = item.number;
-            this._openedSelector = false;
-        },
-
-        // Filter country
-        filterCountry: function (country) {
-            if (!country) {
-                return null;
-            }
-            return function (item) {
-                var name = item.name.toLowerCase()
-                country = country.toLowerCase();
-                return name.indexOf(country) != -1;
-            }
-        },
-
-    });
+  });
 </script>
