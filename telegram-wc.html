@@ -21,6 +21,7 @@ Example:
 <link rel="import" href="bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="bower_components/paper-styles/shadow.html">
 <link rel="import" href="bower_components/paper-button/paper-button.html">
+
 <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
 <script src="bower_components/telegram-api/dist/telegramApi.js"></script>
 
@@ -29,9 +30,8 @@ Example:
   <template>
 
     <style is="custom-style" include="iron-flex iron-flex-alignment">
-
       :host{
-        display: block;
+        display: inline-block;
         width: 400px;
         height: 400px;
         --telegram-background: #5682a3;
@@ -39,10 +39,18 @@ Example:
         position: relative;
         font-family: Tahoma, sans-serif, Arial, Helvetica;
         background-color: #e7ebf0;
+        border: 1px solid #d2d2d2;
+        border-radius:5px;
       }
-
+      :host[logged]{
+        background-color:white;
+      }
+      .divisor {
+        border:none;
+        border-bottom:1px solid #d2d2d2;
+        margin:0;
+      }
       /* HEADER */
-
       paper-toolbar.toolbar{
         --paper-toolbar-background: var(--telegram-background);
         --paper-toolbar-title:{
@@ -52,106 +60,60 @@ Example:
           overflow: visible;
         }
       }
+      .icon {
+        width: 40px;
+        height: 40px;
+      }
+      paper-icon-button.icon{
+        width: 24px;
+        height: 24px;
+      }
       paper-icon-button {
         padding: 0;
         margin-right: 8px;
       }
-      /* SIDE BAR CONTACTS */
-
-      .contacts{
-        display: inline-block;
-        position: absolute;
-        left: 0;
-        width: 36px;
-        height: calc(100% - 64px);
-        background: var(--paper-grey-200);
-        padding: 2px;
-        transition: .5s ease;
-        z-index: 1;
-        overflow: hidden;
+      /* CONTACTS VIEW */
+      .contacts {
+        padding:6px 12px;
+        background-color:white;
+        cursor:pointer;
       }
-
-      .contact{
-        display: flex;
-        cursor: pointer;
-        margin-bottom: 7px;
-        max-height: 36px;
-      }
-
-      .contact .profImg, iron-icon{
-        display: inline-table;
-        width: 36px;
-        border-radius: 18px;
-      }
-
-      .contactSelected{
-        background: var(--background);
-        color: #ffffff;
-      }
-
-      .contactSelected:hover{
-        background: var(--background) !important;
-      }
-
-      .contacts iron-icon{
-        height: 30px;
-        color: var(--background);
-      }
-
-      .contactHidden{
-        visibility: hidden;
-        align-self: center;
-        left: 40px;
-        width: 100px;
-        white-space: nowrap;
-        margin-left: 5px;
-      }
-
       .contacts:hover{
-        width: 160px;
-        overflow-y: scroll;
+        background-color:#d2d2d2;
       }
-
-      .contacts:hover .contactHidden{
-        visibility: visible;
+      .profImg {
+        height: 42px;
+        width: 42px;
+        border-radius:50%;
+        margin-right:10px;
       }
-
-      .contact:hover{
-        background: #ffffff;
-      }
-
       #style-3::-webkit-scrollbar-track
       {
         -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
         background-color: var(--paper-grey-200);
       }
-
       #style-3::-webkit-scrollbar
       {
         width: 6px;
         background-color: var(--paper-grey-200);
       }
-
       #style-3::-webkit-scrollbar-thumb
       {
         background-color: var(--background);
       }
 
       /* CHAT AREA */
-
       .chat{
         padding-left: 40px;
         height: calc(100% - 64px);
         background: #ffffff;
       }
-
       .displayArea{
         padding: 10px;
         height: calc(100% - 106px);
         overflow-y: scroll;
         overflow-x: hidden;
       }
-
       .messageIn, .messageOut{
         background: var(--paper-blue-200);
         border-radius: 5px;
@@ -160,30 +122,25 @@ Example:
         max-width: 50%;
         font: 15px Roboto,arial,sans-serif;
       }
-
       .messageIn{
         float: left;
         margin-right: 50%;
       }
-
       .messageOut{
         float: right;
         margin-left: 50%;
       }
-
       .date{
         font: 10px Roboto,arial,sans-serif;
         display: inherit;
         margin-bottom: 4px;
       }
-
       .sendArea{
         position: absolute;
         bottom: 0;
         padding: 10px;
         display: flex;
       }
-
       .input{
         width: calc(100% - 42px);
         resize: none;
@@ -192,14 +149,11 @@ Example:
         margin-right: 10px;
         padding: 5px;
       }
-
       .send{
         align-self: center;
         color: var(--background);
       }
-
       /* Login menus */
-
       .login{
         padding:8px 16px;
         color: var(--paper-grey-700);
@@ -207,21 +161,17 @@ Example:
         height: calc(100% - 90px);
         display: flex;
       }
-
       .loginMenu{
         padding: 0 18px 8px 18px;
         width: 100%;
         background-color:white; 
       }
-
       .loginMenu span{
         display: inline-table;    
       }
-
       .loginMenu input{
         width: 60%;
       }
-
       .inputContainer{
         position:relative;
       }
@@ -293,7 +243,12 @@ Example:
 
 <!-- Header -->
 <paper-toolbar class="toolbar">
-  <img src="icon.png"></img>
+  <template is="dom-if" if="{{!selected}}">
+    <img src="icon.png" class="icon"></img>
+  </template>
+  <template is="dom-if" if="{{selected}}">
+    <paper-icon-button on-click="closeChat"class="icon" icon="arrow-back"></paper-icon-button>
+  </template>
   <p>Telegram</p>
 </paper-toolbar>
 <!-- Login -->
@@ -344,71 +299,31 @@ Example:
 
 <!-- Logged -->
 <template is="dom-if" if="{{logged}}">
-
-  <!-- Contacts/Chats -->
-  <div class="contacts" id="style-3">
-    <div class="contact">
-      <iron-icon icon="search"></iron-icon>
-      <input class="contactHidden" value="{{search_keywords::input}}"></input>
-    </div>
-    <!-- Contacts -->
-    <template is="dom-if" if="{{searching}}">
-      <template is="dom-repeat" items="[[searchResult]]">
-        <div class="contact" on-click="loadContact">
-          <template is="dom-if" if="{{item.image}}">
-            <img class="profImg" src="{{item.image}}">
-          </template>
-          <template is="dom-if" if="{{!item.image}}">
-            <img class="profImg" src="default.png">
-          </template>
-          <span class="contactHidden">{{item.first_name}} {{item.last_name}}</span>
-        </div>
-      </template>
-    </template>
-    <!-- Chats -->
-    <template is="dom-if" if="{{!searching}}">
-      <template is="dom-repeat" items="[[chats]]" id="chatsTemplate">
-        <div id="chat{{item.chat.user.id}}" class="contact" on-click="loadChat">
-          <template is="dom-if" if="{{item.chat.photo}}">
-            <img class="profImg" src="{{item.chat.photo}}">
-          </template>
-          <template is="dom-if" if="{{!item.chat.photo}}">
-            <img class="profImg" src="default.png">
-          </template>
-          <span class="contactHidden">{{item.chat.user.title}} {{item.chat.user.first_name}} {{item.chat.user.last_name}}</span>
-        </div>
-      </template>
-    </template>
-  </div>
-
-  <!-- Chat -->
-  <div class="chat">
-    <div class="displayArea" id="displayArea">
-      <template is="dom-repeat" items="[[chat]]">
-        <template is="dom-if" if="{{item.mine}}">
-          <div class="messageOut">
-            <span class="date">{{item.date}}</span>
-            <span>{{item.text}}</span>
-          </div>
+  <template is="dom-if" if="{{!selected}}">
+    <template is="dom-repeat" items="{{chats}}">
+      <div class="contacts horizontal layout center" on-click="openChat">
+        <template is="dom-if" if="{{item.chat.photo}}">
+          <img class="profImg" src="{{item.chat.photo}}">
         </template>
-        <template is="dom-if" if="{{!item.mine}}">
-          <div class="messageIn">
-            <span class="date">{{item.date}}</span>
-            <span>{{item.text}}</span>
-          </div>
+        <template is="dom-if" if="{{!item.chat.photo}}">
+          <img class="profImg" src="default.png">
         </template>
-      </template>
-    </div>
-    <div class="sendArea">
-      <textarea value="{{textArea::input}}" class="input" rows="3" cols="50"></textarea>
-      <paper-icon-button icon="send" class="send" on-click="sendMSG"></paper-icon-button>
-    </div>
-  </div>
+        <p>{{item.chat.user.title}}{{item.chat.user.first_name}} {{item.chat.user.last_name}}</p>
+      </div>
+      <hr class="divisor">
+    </template>
+    <template is="dom-if" if="{{chats_empty}}">
+      Vacio
+    </template>
+  </template>
+
+  <template is="dom-if" if="{{selected}}">
+    <h1>Selected</h1>
+  </template>
 
 </template>
 
 </template>
-
 </dom-module>
 
 <script>
@@ -420,7 +335,8 @@ Example:
 
       logged: {
         type: Boolean,
-        value: false
+        value: false,
+        reflectToAttribute: true
       },
 
       showCode: {
@@ -484,17 +400,33 @@ Example:
             host: '149.154.171.5',
             port: 80
           }]
-        }
+        },
       },
+      chats: {
+        type: Array,
+        value: function () { return []; },
+        notify: true,
+      },
+      chats_empty: {
+        type: Boolean,
+        computed: '_checkEmpty(chats.length)'
+      },
+      selected: {
+        type: Boolean,
+        value: false
+      }
 
     },
-
+    // Observers
+    _checkEmpty: function (chats) {
+      return chats === 0;
+    },
     //Component lifecycle
     attached: function () {
       var _self = this;
       var url = this.resolveUrl('code.json');
       $.get(url, function (data) {
-        _self.country_codes = data;
+        _self.set('country_codes', data);
       });
       telegramApi.setConfig({
         app: this.app,
@@ -556,13 +488,13 @@ Example:
       this.logged = false;
       this.showCode = false;
       this.show = null;
-      this.chats = null;
+      this.set('chats', []);
       this.chat = null;
       this.user = null;
     },
 
     sendCode: function () {
-      if (!this.phone ||!this.countryCode) return;
+      if (!this.phone || !this.countryCode) return;
 
       var me = this;
       telegramApi.sendCode(this.countryCode + this.phone).then(
@@ -581,7 +513,7 @@ Example:
       if (!this.phone || !this.codeHash || !this.phoneCode || !this.countryCode) return;
 
       var me = this;
-      telegramApi.signIn( (this.countryCode + this.phone), this.codeHash, this.phoneCode).then(
+      telegramApi.signIn((this.countryCode + this.phone), this.codeHash, this.phoneCode).then(
         function (response) {
           // ls
 
@@ -610,7 +542,7 @@ Example:
         function (user) {
           if (user.id) {
             //Logged
-            me.user = user;
+            me.set('user', user);
             me.logged = true;
             me.getContacts();
             me.getDialogs();
@@ -623,7 +555,7 @@ Example:
       var me = this;
       telegramApi.invokeApi('contacts.getContacts', {}).then(
         function (response) {
-          me.contacts = response.users;
+          me.set('contacts', response.users);
           for (var i = me.contacts.length - 1; i >= 0; i--) {
             me.getPhotoContact(me.contacts[i]);
           };
@@ -639,8 +571,8 @@ Example:
       var me = this;
       telegramApi.getDialogs().then(
         function (response) {
-          me.data = response.result;
-          me.chats = [];
+          me.set('data', response.result);
+          me.set('chats', []);
           for (var i = 0; i < response.result.dialogs.length; i++) {
             me.initializeChat(response.result.dialogs[i].peer);
             me.subscribe(response.result.dialogs[i].peer);
@@ -754,7 +686,7 @@ Example:
     },
 
     searchContact: function () {
-      this.searchResult = this.contacts;
+      this.set('searchResult', this.contacts);
       this.searching = true;
     },
 
@@ -913,7 +845,7 @@ Example:
       }).then(function (data) {
         //Update view
         me.show.chat.messages = data.messages;
-        me.chat = [];
+        me.set('chat', []);
         for (var i = data.messages.length - 1; i >= 0; i--) {
           me.addMSG(data.messages[i]);
         }
@@ -998,7 +930,15 @@ Example:
       this.push('chat', message);
 
     },
-
+    openChat: function(e){
+      console.log('TODO abrir chat')
+      this.selected = true;
+      this.set('chat_selected',e.model.item.chat.item);
+    },
+    closeChat: function(){
+      this.selected = false;
+      this.set('chat_selected',{});
+    },
     // Events callback
     _openSelector: function () {
       this._openedSelector = true;
