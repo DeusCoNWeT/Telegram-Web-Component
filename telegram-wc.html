@@ -490,11 +490,11 @@ Example:
     },
 
     //Component lifecycle
-    ready: function () {
+    attached: function () {
       var _self = this;
-      var url = '/' + Polymer.Base.resolveUrl('code.json');
+      var url = this.resolveUrl('code.json');
       $.get(url, function (data) {
-        _self.country_codes = $.parseJSON(data);
+        _self.country_codes = data;
       });
       telegramApi.setConfig({
         app: this.app,
