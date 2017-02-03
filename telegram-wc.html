@@ -63,14 +63,11 @@ Example:
       .icon {
         width: 40px;
         height: 40px;
+        margin-right: 25px;
       }
       paper-icon-button.icon{
-        width: 24px;
-        height: 24px;
-      }
-      paper-icon-button {
-        padding: 0;
-        margin-right: 8px;
+        width: 40px;
+        height: 40px;
       }
       /* CONTACTS VIEW */
       .contacts {
@@ -86,6 +83,10 @@ Example:
         width: 42px;
         border-radius:50%;
         margin-right:10px;
+      }
+      .profImg.small {
+        height: 32px;
+        width: 32px;
       }
       #style-3::-webkit-scrollbar-track
       {
@@ -103,10 +104,16 @@ Example:
       }
 
       /* CHAT AREA */
+      .chat[disabled]{
+        right:
+      }
       .chat{
-        padding-left: 40px;
-        height: calc(100% - 64px);
         background: #ffffff;
+        position:absolute;
+        top:0;left:0;
+        width: 100%;
+        height: 100%;
+
       }
       .displayArea{
         padding: 10px;
@@ -238,18 +245,59 @@ Example:
       .requireCode paper-button{
         margin-top:18px;
       }
+      .animated {
+        -webkit-animation-duration: 0.3s;
+        animation-duration: 0.3s;
+        -webkit-animation-fill-mode: both;
+        animation-fill-mode: both;
+      }
+      @-webkit-keyframes fadeInRight {
+        from {
+          opacity: 0;
+          -webkit-transform: translate3d(100%, 0, 0);
+          transform: translate3d(100%, 0, 0);
+        }
+
+        to {
+          opacity: 1;
+          -webkit-transform: none;
+          transform: none;
+        }
+      }
+
+      @keyframes fadeInRight {
+        from {
+          opacity: 0;
+          -webkit-transform: translate3d(100%, 0, 0);
+          transform: translate3d(100%, 0, 0);
+        }
+
+        to {
+          opacity: 1;
+          -webkit-transform: none;
+          transform: none;
+        }
+      }
+
+      .fadeInRight {
+        -webkit-animation-name: fadeInRight;
+        animation-name: fadeInRight;
+      }
     </style>
 
 
 <!-- Header -->
 <paper-toolbar class="toolbar">
-  <template is="dom-if" if="{{!selected}}">
+  <template is="dom-if" if="{{!logged}}">
     <img src="icon.png" class="icon"></img>
+    <p>Telegram</p>
   </template>
-  <template is="dom-if" if="{{selected}}">
-    <paper-icon-button on-click="closeChat"class="icon" icon="arrow-back"></paper-icon-button>
+
+  <template is="dom-if" if="{{logged}}">
+    <paper-icon-button on-click="openMenu" class="icon" icon="menu"></paper-icon-button>
+    <p>Telegram</p>
   </template>
-  <p>Telegram</p>
+
 </paper-toolbar>
 <!-- Login -->
 <template is="dom-if" if="{{!logged}}">
@@ -299,26 +347,50 @@ Example:
 
 <!-- Logged -->
 <template is="dom-if" if="{{logged}}">
+
   <template is="dom-if" if="{{!selected}}">
     <template is="dom-repeat" items="{{chats}}">
       <div class="contacts horizontal layout center" on-click="openChat">
-        <template is="dom-if" if="{{item.chat.photo}}">
-          <img class="profImg" src="{{item.chat.photo}}">
-        </template>
-        <template is="dom-if" if="{{!item.chat.photo}}">
-          <img class="profImg" src="default.png">
-        </template>
+        <img class="profImg" src="{{item.chat.photo}}">
         <p>{{item.chat.user.title}}{{item.chat.user.first_name}} {{item.chat.user.last_name}}</p>
       </div>
       <hr class="divisor">
     </template>
+
     <template is="dom-if" if="{{chats_empty}}">
       Vacio
     </template>
   </template>
 
+  <!-- chat opened -->
   <template is="dom-if" if="{{selected}}">
-    <h1>Selected</h1>
+    <div class="chat animated fadeInRight">
+      <paper-toolbar class="toolbar">
+        <paper-icon-button on-click="closeChat" class="icon" icon="arrow-back"></paper-icon-button>
+        <img class="profImg small" src="{{user_selected.photo}}">
+        <p>{{user_selected.title}}{{user_selected.first_name}} {{user_selected.last_name}}</p>
+      </paper-toolbar>
+      <div class="displayArea" id="displayArea">
+        <template is="dom-repeat" items="[[chat]]">
+          <template is="dom-if" if="{{item.mine}}">
+            <div class="messageOut">
+              <span class="date">{{item.date}}</span>
+              <span>{{item.text}}</span>
+            </div>
+          </template>
+          <template is="dom-if" if="{{!item.mine}}">
+            <div class="messageIn">
+              <span class="date">{{item.date}}</span>
+              <span>{{item.text}}</span>
+            </div>
+          </template>
+        </template>
+      </div>
+      <div class="sendArea">
+        <textarea value="{{textArea::input}}" class="input" rows="3" cols="50"></textarea>
+        <paper-icon-button icon="send" class="send" on-click="sendMSG"></paper-icon-button>
+      </div>
+    </div>
   </template>
 
 </template>
@@ -414,8 +486,7 @@ Example:
       selected: {
         type: Boolean,
         value: false
-      }
-
+      },
     },
     // Observers
     _checkEmpty: function (chats) {
@@ -653,6 +724,7 @@ Example:
           });
         },
         function (error) {
+          chat.photo = me.resolveUrl('default.png');
           me.push('chats', {
             chat: chat,
             peer: peer
@@ -825,12 +897,10 @@ Example:
 
     /*-------------------------------Refresh chat history-------------------------------*/
 
-    /* refreshChat():
-          Update the active chat history
-    */
-    refreshChat: function () {
+
+    getHistory: function () {
       //Get messages
-      var user = this.show.chat.user;
+      var user = this.user_selected;
       if (user._ == 'user') {
         var type = 'user';
       } else {
@@ -844,8 +914,7 @@ Example:
         type: type
       }).then(function (data) {
         //Update view
-        me.show.chat.messages = data.messages;
-        me.set('chat', []);
+        me.set('chat_messages', []);
         for (var i = data.messages.length - 1; i >= 0; i--) {
           me.addMSG(data.messages[i]);
         }
@@ -853,26 +922,22 @@ Example:
       });
     },
 
-    /* continueRefresh():
+    /* pulling():
         Refresh the chat every minute
     */
-    continueRefresh: function () {
-      var promise = new Promise(function (resolve, reject) {
-        window.setTimeout(
-          function () {
-            resolve();
-          }, 60000);
-      });
-      /* DELAY */
-      var me = this;
-      promise.then(function () {
-        if (me.show) {
-          me.refreshChat();
-          me.continueRefresh();
-        }
-      });
+    pulling: function () {
+      var that = this;
+      this._interval = window.setInterval(function () {
+        that.getHistory();
+      }, 10000)
     },
-
+    removeChat: function () {
+      // stop pulling
+      window.clearInterval(this._interval);
+      this.set('chat_messages', []);
+      this.set('user_selected', undefined);
+      this.selected = false;
+    },
     /*----------------------------------Display methods----------------------------------*/
 
     focusChat: function (e) {
@@ -903,8 +968,8 @@ Example:
 
     addMSG: function (msg) {
       //Check if exists
-      for (var i = this.chat.length - 1; i >= 0 && !exists; i--) {
-        var exists = this.chat[i].id == msg.id;
+      for (var i = this.chat_messages.length - 1; i >= 0 && !exists; i--) {
+        var exists = this.chat_messages[i].id == msg.id;
       }
       if (exists) return;
 
@@ -927,17 +992,18 @@ Example:
       //Set id
       message.id = msg.id;
 
-      this.push('chat', message);
+      this.push('chat_messages', message);
 
     },
-    openChat: function(e){
+    openChat: function (e) {
       console.log('TODO abrir chat')
       this.selected = true;
-      this.set('chat_selected',e.model.item.chat.item);
+      this.set('user_selected', e.model.item.chat.user);
+      this.set('user_selected.photo', e.model.item.chat.photo);
+      this.pulling();
     },
-    closeChat: function(){
-      this.selected = false;
-      this.set('chat_selected',{});
+    closeChat: function () {
+      this.removeChat();
     },
     // Events callback
     _openSelector: function () {
