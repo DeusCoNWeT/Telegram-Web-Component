@@ -104,9 +104,6 @@ Example:
       }
 
       /* CHAT AREA */
-      .chat[disabled]{
-        right:
-      }
       .chat{
         background: #ffffff;
         position:absolute;
@@ -114,6 +111,10 @@ Example:
         width: 100%;
         height: 100%;
 
+      }
+      .chat > .content {
+        background-image: url('http://www.pinsho.com/wp-content/uploads/2013/11/telegram01.jpg');
+        background-size: 100% 100%;
       }
       .displayArea{
         padding: 10px;
@@ -143,22 +144,34 @@ Example:
         margin-bottom: 4px;
       }
       .sendArea{
-        position: absolute;
-        bottom: 0;
-        padding: 10px;
-        display: flex;
+        width: 100%;
+        height: auto;
+        border-top:1px solid #d2d2d2;
+        background-color:white;
+        max-width: 100%;
       }
       .input{
-        width: calc(100% - 42px);
-        resize: none;
         font: 15px Roboto,arial,sans-serif;
         align-self: center;
-        margin-right: 10px;
-        padding: 5px;
+        width: 100%;
+        max-width: calc(100% - 36px);
+      }
+      .input > p {
+        width: 100%;
+        padding:8px;
+        max-width: 100%;
+        overflow:auto;
+        max-height: 100px;
+        word-wrap: break-word;
+        word-break: break-all;
+        margin:0;
       }
       .send{
         align-self: center;
-        color: var(--background);
+        color: #90CAF9;
+        width: 36px;
+        height: 36px;
+        padding:6px;
       }
       /* Login menus */
       .login{
@@ -363,32 +376,40 @@ Example:
   </template>
 
   <!-- chat opened -->
-  <template is="dom-if" if="{{selected}}">
-    <div class="chat animated fadeInRight">
+  <template is="dom-if" if="{{user_selected}}">
+    <div id="chatContainer" class="chat animated fadeInRight vertical layout">
       <paper-toolbar class="toolbar">
         <paper-icon-button on-click="closeChat" class="icon" icon="arrow-back"></paper-icon-button>
         <img class="profImg small" src="{{user_selected.photo}}">
         <p>{{user_selected.title}}{{user_selected.first_name}} {{user_selected.last_name}}</p>
       </paper-toolbar>
-      <div class="displayArea" id="displayArea">
-        <template is="dom-repeat" items="[[chat]]">
-          <template is="dom-if" if="{{item.mine}}">
-            <div class="messageOut">
-              <span class="date">{{item.date}}</span>
-              <span>{{item.text}}</span>
-            </div>
+      <div class="content vertical layout flex">
+
+        <div class="displayArea flex" id="displayArea">
+          <template is="dom-repeat" items="[[chat_messages]]">
+            <template is="dom-if" if="{{item.mine}}">
+              <div class="messageOut">
+                <span class="date">{{item.date}}</span>
+                <span>{{item.text}}</span>
+              </div>
+            </template>
+            <template is="dom-if" if="{{!item.mine}}">
+              <div class="messageIn">
+                <span class="date">{{item.date}}</span>
+                <span>{{item.text}}</span>
+              </div>
+            </template>
           </template>
-          <template is="dom-if" if="{{!item.mine}}">
-            <div class="messageIn">
-              <span class="date">{{item.date}}</span>
-              <span>{{item.text}}</span>
-            </div>
-          </template>
-        </template>
-      </div>
-      <div class="sendArea">
-        <textarea value="{{textArea::input}}" class="input" rows="3" cols="50"></textarea>
-        <paper-icon-button icon="send" class="send" on-click="sendMSG"></paper-icon-button>
+        </div>
+
+        <div class="sendArea horizontal layout">
+          <div class="input flex horizontal layout">
+            <p contenteditable="true" class="flex" on-focus="removePlaceholder"
+             on-blur="checkPlaceholder" on-keydown="updateTextMessage">{{placeholder}}</p>
+          </div>
+          <paper-icon-button icon="send" class="send" on-click="sendMSG"></paper-icon-button>
+        </div>
+     
       </div>
     </div>
   </template>
@@ -487,6 +508,13 @@ Example:
         type: Boolean,
         value: false
       },
+      text_message: {
+        type:String
+      },
+      placeholder: {
+        type:String,
+        value: 'Message'
+      }
     },
     // Observers
     _checkEmpty: function (chats) {
@@ -558,7 +586,6 @@ Example:
       telegramApi.logOut();
       this.logged = false;
       this.showCode = false;
-      this.show = null;
       this.set('chats', []);
       this.chat = null;
       this.user = null;
@@ -762,86 +789,13 @@ Example:
       this.searching = true;
     },
 
-    /*------------------------------------Load chat---------------------------------*/
-
-    loadContact: function (e) {
-      this.searching = false;
-      this.search_keywords = '';
-      var user = e.model.item;
-      var exists = false;
-      for (var i = this.chats.length - 1; i >= 0 && !exists; i--) {
-        //If it exists
-        if (this.chats[i].chat.user.id == user.id) {
-          exists = true;
-          var fakeEvent = {
-            model: {
-              item: this.chats[i],
-              index: i
-            }
-          };
-          this.loadChat(fakeEvent);
-        }
-      }
-      if (!exists) {
-        var chat = {
-          messages: [],
-          user: user
-        };
-        var peer = {
-          _: 'peerUser',
-          user_id: user.id
-        };
-        this.push('chats', {
-          chat: chat,
-          peer: peer
-        });
-
-        //Set selected style
-        var id = '#chatsTemplate';
-        var div = Polymer.dom(this.root).querySelectorAll(id)[0];
-        div.render();
-
-        var fakeEvent = {
-          model: {
-            item: {
-              chat: chat,
-              peer: peer
-            },
-            index: this.chats.length - 1
-          }
-        };
-        this.loadChat(fakeEvent);
-        this.subscribe(peer);
-      }
-    },
-
-    loadChat: function (e) {
-      var chat = e.model.item.chat;
-
-      //Set selected style
-      var id = '#chat' + chat.user.id;
-      var div = Polymer.dom(this.root).querySelectorAll(id)[0];
-      if (this.show) {
-        var id = '#chat' + this.show.chat.user.id;
-        var divOld = Polymer.dom(this.root).querySelectorAll(id)[0];
-        divOld.className = div.className;
-      }
-      div.className += " contactSelected";
-      this.focusChat(e);
-
-      //Load chat
-      this.show = e.model.item;
-      this.refreshChat();
-      this.continueRefresh();
-    },
-
     /*----------------------------------Comunication methods-----------------------------*/
 
     sendMSG: function () {
-      if (this.textArea == null || this.textArea == '') return null;
+      if (!this.text_message) return null;
 
       var me = this;
-      telegramApi.sendMessage(this.getId(this.show.peer), this.textArea).then(
+      telegramApi.sendMessage(this.getId(this.user_selected.peer), this.text_message).then(
         function (response) {
           me.refreshChat();
         }
@@ -849,11 +803,11 @@ Example:
 
       //Manual insert
       var msg = {};
-      msg.message = this.textArea;
+      msg.message = this.text_message;
       msg.from_id = this.user.id;
       msg.date = new Date();
       this.addMSG(msg);
-      this.textArea = '';
+      this.text_message = this.placeholder;
     },
 
     subscribe: function (peer) {
@@ -900,6 +854,7 @@ Example:
 
     getHistory: function () {
       //Get messages
+      var init = new Date();
       var user = this.user_selected;
       if (user._ == 'user') {
         var type = 'user';
@@ -914,6 +869,7 @@ Example:
         type: type
       }).then(function (data) {
         //Update view
+        console.log(new Date() - init);
         me.set('chat_messages', []);
         for (var i = data.messages.length - 1; i >= 0; i--) {
           me.addMSG(data.messages[i]);
@@ -934,17 +890,11 @@ Example:
     removeChat: function () {
       // stop pulling
       window.clearInterval(this._interval);
+      this.selected = false;
       this.set('chat_messages', []);
       this.set('user_selected', undefined);
-      this.selected = false;
     },
     /*----------------------------------Display methods----------------------------------*/
-
-    focusChat: function (e) {
-      var container = Polymer.dom(this.root).querySelectorAll('#style-3')[0];
-      var height = (container.scrollHeight / (this.chats.length + 1)) * (e.model.index - 1.5);
-      container.scrollTop = height;
-    },
 
     fixBottom: function () {
       //Fix scroll bar bottom
@@ -997,20 +947,18 @@ Example:
     },
     openChat: function (e) {
       console.log('TODO abrir chat')
-      this.selected = true;
       this.set('user_selected', e.model.item.chat.user);
       this.set('user_selected.photo', e.model.item.chat.photo);
+      this.getHistory();
       this.pulling();
+      this.selected = true;
     },
     closeChat: function () {
       this.removeChat();
     },
-    // Events callback
+    /*--------------------------------List country callback-----------------------------*/
     _openSelector: function () {
       this._openedSelector = true;
-    },
-    _closeSelector: function () {
-      this._openedSelector = false;
     },
     _selectCountry: function (e) {
       var item = e.model.item;
@@ -1030,6 +978,27 @@ Example:
         return name.indexOf(country) != -1;
       }
     },
-
+    /*----------------------------------Input text methods ----------------------------------*/
+    removePlaceholder: function(e){
+      var target = e.currentTarget;
+      var text = target.innerHTML.replace(/(\r\n|\n|\r|\t)/gm,"");;
+      target.innerHTML = text === this.placeholder ? '': text;
+    },
+    checkPlaceholder: function(e){
+      var target = e.currentTarget;
+      target.innerHTML = target.innerHTML || this.placeholder;
+    },
+    updateTextMessage: function(e){
+      var code = e.keyCode;
+      var text = e.currentTarget.innerHTML;
+      if (code === 13){
+        // send message
+        // Prevent default 
+        e.preventDefault();
+        this.sendMSG();
+      } else {
+        this.text_message = text;
+      }
+    },
   });
 </script>
