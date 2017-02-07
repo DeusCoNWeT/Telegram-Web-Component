@@ -34,7 +34,6 @@ Example:
 
     <style is="custom-style" include="iron-flex iron-flex-alignment">
       :host{
-        display: inline-block;
         width: 400px;
         height: 400px;
         --telegram-background: #5682a3;
@@ -44,6 +43,14 @@ Example:
         background-color: #e7ebf0;
         border: 1px solid #d2d2d2;
         border-radius:5px;
+        /* vertical layout*/
+        -ms-flex-direction: column;
+        -webkit-flex-direction: column;
+        flex-direction: column;
+        display: flex;
+      }
+      .container {
+        overflow:auto;
       }
       :host[logged]{
         background-color:white;
@@ -91,6 +98,9 @@ Example:
         height: 32px;
         width: 32px;
       }
+      .emptyContacts{
+        height: 100%;
+      }
       ::-webkit-scrollbar-track
       {
         -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
@@ -130,7 +140,7 @@ Example:
         padding: 10px;
         margin-bottom: 10px;
         max-width: 50%;
-        font: 15px Roboto,arial,sans-serif;
+        font: 13px Roboto,arial,sans-serif;
         position: relative;
       }
       .messageIn{
@@ -210,7 +220,8 @@ Example:
         padding:8px 16px;
         color: var(--paper-grey-700);
         font: 15px Roboto,arial,sans-serif;
-        height: calc(100% - 90px);
+        height: 100%;
+        box-sizing: border-box;
         display: flex;
       }
       .loginMenu{
@@ -281,6 +292,9 @@ Example:
         margin-top:12px;
         float:right;
       }
+      .loginMenu .button.sendcode {
+        float: none;
+      }
       .requireCode {
         text-align: center;
       }
@@ -289,6 +303,11 @@ Example:
       }
       .requireCode paper-button{
         margin-top:18px;
+      }
+      /* Search bar */
+      #contactSearch {
+        --paper-input-container-focus-color: #d2d2d2;
+        --paper-input-container-input-color: #d2d2d2;
       }
       /* ANIMATIONS */
       .animated {
@@ -341,114 +360,142 @@ Example:
 
   <template is="dom-if" if="{{logged}}">
     <paper-icon-button on-click="openMenu" class="icon" icon="menu"></paper-icon-button>
-    <p class="flex">Telegram</p>
-    <paper-icon-button icon="search" class="icon"></paper-icon-button>
+    <template is="dom-if" if="{{!searching}}">
+      <p class="flex">Telegram</p>
+    </template>
+    <paper-input no-label-float class="flex self-center" hidden$="{{!searching}}"on-blur="checkCloseSearch" value="{{search_keywords}}" id="contactSearch"></paper-input>
+    <template is="dom-if" if="{{!searching}}">
+      <paper-icon-button icon="search" id="searchIcon"class="icon" on-click="searchContact"></paper-icon-button>
+    </template>
   </template>
 
 </paper-toolbar>
-<!-- Login -->
-<template is="dom-if" if="{{!logged}}">
-  <!-- Phone and code -->
-  <div class="login" hidden="{{showCode}}">
-    <div class="loginMenu">
-      <p class="bold">Register</p>
-      <p class="subtitle">Please, select your country and introduce your phone number. You will receive a code of telegram app</p>
-      <div class="inputContainer">
-        <!-- Search country code -->
-        <label for="country" class="subtitle">Country</label>
-        <paper-input value="{{country}}" no-label-float focused="{{_openedSelector}}">
-        </paper-input>
-        <template is="dom-if" if="{{_openedSelector}}">
-          <ul class="country-list" on-focus="_openSelector">
-            <template is="dom-repeat" items="{{country_codes}}" filter="{{filterCountry(country)}}">
-              <li on-mousedown="_selectCountry" tabindex="0">{{item.name}}</li>
-            </template>
-          </ul>
-        </template>
-        <!--  END search code-->
-        <div class="phoneContainer horizontal layout ">
-          <div>
-            <label for="code" class="subtitle">Code</label>
-            <paper-input name="code" value="{{countryCode}}" class="code" no-label-float>
-              <div prefix>+</div>
-            </paper-input>
-          </div>
-          <div class="flex">
-            <label for="phonenumber" class="subtitle">Phone Number</label>
-            <paper-input name="phonenumber" value="{{phone}}" class="phonenumber" no-label-float></paper-input>
-          </div>
-        </div>
-        <paper-button on-click="sendCode" class="button">Send</paper-button>
-      </div>
-    </div>
-  </div>
-  <div class="login requireCode" hidden="{{!showCode}}">
-    <div class="loginMenu">
-      <p class="bold">+{{countryCode}} {{phone}}</p>
-      <p class="subtitle flex">Enter the code you have received</p>
-      <paper-input name="phoneCode" value="{{phoneCode}}" label="Insert your code here"></paper-input>
-      <paper-button raised on-click="login" class="button">Send Code</paper-button>
-    </div>
-  </div>
-</template>
-
-<!-- Logged -->
-<template is="dom-if" if="{{logged}}">
-
-  <template is="dom-if" if="{{!selected}}">
-    <template is="dom-repeat" items="{{chats}}">
-      <div class="contacts horizontal layout center" on-click="openChat">
-        <img class="profImg" src="{{item.chat.photo}}">
-        <p>{{item.chat.user.title}}{{item.chat.user.first_name}} {{item.chat.user.last_name}}</p>
-      </div>
-      <hr class="divisor">
-    </template>
-
-    <template is="dom-if" if="{{chats_empty}}">
-      Vacio
-    </template>
-  </template>
-
-  <!-- chat opened -->
-  <template is="dom-if" if="{{user_selected}}">
-    <div id="chatContainer" class="chat animated fadeInRight vertical layout">
-      <paper-toolbar class="toolbar">
-        <paper-icon-button on-click="closeChat" class="icon" icon="arrow-back"></paper-icon-button>
-        <img class="profImg small" src="{{user_selected.photo}}">
-        <p>{{user_selected.title}}{{user_selected.first_name}} {{user_selected.last_name}}</p>
-      </paper-toolbar>
-      <div class="content vertical layout flex">
-
-        <div class="displayArea flex" id="displayArea">
-          <template is="dom-repeat" items="[[chat_messages]]">
-            <template is="dom-if" if="{{item.mine}}">
-              <div class="messageOut">
-                <span class="date">{{item.date}}</span>
-                <span>{{item.text}}</span>
-              </div>
-            </template>
-            <template is="dom-if" if="{{!item.mine}}">
-              <div class="messageIn">
-                <span class="date">{{item.date}}</span>
-                <span>{{item.text}}</span>
-              </div>
-            </template>
+<div class="container flex">
+  <!-- Login -->
+  <template is="dom-if" if="{{!logged}}">
+    <!-- Phone and code -->
+    <div class="login" hidden="{{showCode}}">
+      <div class="loginMenu vertical layout">
+        <p class="bold">Register</p>
+        <p class="subtitle">Please, select your country and introduce your phone number. You will receive a code of telegram app</p>
+        <div class="inputContainer">
+          <!-- Search country code -->
+          <label for="country" class="subtitle">Country</label>
+          <paper-input value="{{country}}" no-label-float focused="{{_openedSelector}}">
+          </paper-input>
+          <template is="dom-if" if="{{_openedSelector}}">
+            <ul class="country-list" on-focus="_openSelector">
+              <template is="dom-repeat" items="{{country_codes}}" filter="{{filterCountry(country)}}">
+                <li on-mousedown="_selectCountry" tabindex="0">{{item.name}}</li>
+              </template>
+            </ul>
           </template>
-        </div>
-
-        <div class="sendArea horizontal layout">
-          <div class="input flex horizontal layout">
-            <p contenteditable="true" class="flex" on-focus="removePlaceholder" on-blur="checkPlaceholder" on-keypress="updateTextMessage">{{placeholder}}</p>
+          <!--  END search code-->
+          <div class="phoneContainer horizontal layout ">
+            <div>
+              <label for="code" class="subtitle">Code</label>
+              <paper-input name="code" value="{{countryCode}}" class="code" no-label-float>
+                <div prefix>+</div>
+              </paper-input>
+            </div>
+            <div class="flex">
+              <label for="phonenumber" class="subtitle">Phone Number</label>
+              <paper-input name="phonenumber" value="{{phone}}" class="phonenumber" id="phoneNumber" no-label-float tabindex="0"></paper-input>
+            </div>
           </div>
-          <paper-icon-button icon="send" class="send" disabled="[[disable_send]]" on-click="sendMSG"></paper-icon-button>
+          <paper-button on-click="sendCode" class="button">Send</paper-button>
         </div>
-
+      </div>
+    </div>
+    <div class="login requireCode" hidden="{{!showCode}}">
+      <div class="loginMenu">
+        <p class="bold">+{{countryCode}} {{phone}}</p>
+        <p class="subtitle flex">Enter the code you have received</p>
+        <paper-input name="phoneCode" value="{{phoneCode}}" label="Insert your code here"></paper-input>
+        <paper-button raised on-click="login" class="button sendcode">Send Code</paper-button>
       </div>
     </div>
   </template>
 
-</template>
+  <!-- Logged -->
+  <template is="dom-if" if="{{logged}}">
 
+    <!-- if Chat is closed -->
+    <template is="dom-if" if="{{!selected}}">
+      <template is="dom-if" if="{{!searching}}">
+        <template is="dom-repeat" items="{{chats}}">
+          <div class="contacts horizontal layout center" on-click="openChat">
+            <img class="profImg" src="{{item.chat.photo}}">
+            <p>{{item.chat.user.title}}{{item.chat.user.first_name}} {{item.chat.user.last_name}}</p>
+          </div>
+          <hr class="divisor">
+        </template>
+      </template>
+      <template is="dom-if" if="{{searching}}">
+        <template is="dom-repeat" items="{{contacts}}" filter="{{filterContact(search_keywords)}}" rendered-item-count="{{nContactsFound}}">
+          <div class="contacts horizontal layout center" on-click="loadContact">
+            <template is="dom-if" if="{{item.image}}">
+              <img class="profImg" src="{{item.image}}">
+            </template>
+            <template is="dom-if" if="{{!item.image}}">
+              <img class="profImg" src="default.png">
+            </template>
+            <p>{{item.title}}{{item.first_name}} {{item.last_name}}</p>
+          </div>
+          <hr class="divisor">
+        </template>
+        <template is="dom-if" if="{{showNoContacts}}">
+          <div class="vertical layout center-center emptyContacts">
+            <p class="title">No results</p>
+          </div>
+        </template>
+      </template>
+      <template is="dom-if" if="{{chats_empty}}">
+        Vacio
+      </template>
+    </template>
+
+    <!-- chat opened -->
+    <template is="dom-if" if="{{user_selected}}">
+      <div id="chatContainer" class="chat animated fadeInRight vertical layout">
+        <paper-toolbar class="toolbar">
+          <paper-icon-button on-click="closeChat" class="icon" icon="arrow-back"></paper-icon-button>
+          <img class="profImg small" src="{{user_selected.photo}}">
+          <p>{{user_selected.title}}{{user_selected.first_name}} {{user_selected.last_name}}</p>
+        </paper-toolbar>
+        <div class="content vertical layout flex">
+
+          <div class="displayArea flex" id="displayArea">
+            <template is="dom-repeat" items="[[chat_messages]]">
+              <template is="dom-if" if="{{item.mine}}">
+                <div class="messageOut">
+                  <span class="date">{{item.date}}</span>
+                  <span>{{item.text}}</span>
+                </div>
+              </template>
+              <template is="dom-if" if="{{!item.mine}}">
+                <div class="messageIn">
+                  <span class="date">{{item.date}}</span>
+                  <span>{{item.text}}</span>
+                </div>
+              </template>
+            </template>
+          </div>
+
+          <div class="sendArea horizontal layout">
+            <div class="input flex horizontal layout">
+              <p contenteditable="true" data-placeholder$="{{text_message==placeholder}}" class="flex" on-focus="removePlaceholder" on-blur="checkPlaceholder" on-keypress="updateTextMessage">{{placeholder}}</p>
+            </div>
+            <paper-icon-button icon="send" class="send" disabled="[[disable_send]]" on-click="sendMSG"></paper-icon-button>
+          </div>
+
+        </div>
+      </div>
+    </template>
+
+  </template>
+
+</div>
 </template>
 </dom-module>
 
@@ -477,7 +524,7 @@ Example:
 
       search_keywords: {
         type: String,
-        observer: "search_keywords_changed"
+        value:''
       },
 
       app: {
@@ -544,7 +591,7 @@ Example:
       text_message: {
         type: String,
         value: '',
-        notify:true
+        notify: true
       },
       placeholder: {
         type: String,
@@ -552,15 +599,30 @@ Example:
       },
       disable_send: {
         type: Boolean,
-        computed:'_isTextMessageEmpty(text_message)'
+        computed: '_isTextMessageEmpty(text_message)'
+      },
+      nContactsFound: {
+        type: Boolean,
+        observer: '_checkNContactsFound'
+      },
+      showNoContacts: {
+        type: Boolean,
+        value:true
+      },
+      _isPlaceholder: {
+        type: Boolean,
+        value:true
       }
     },
     // Observers
     _checkEmpty: function (chats) {
       return chats === 0;
     },
-    _isTextMessageEmpty: function(message){
+    _isTextMessageEmpty: function (message) {
       return !message;
+    },
+    _checkNContactsFound: function(newValue, oldValue){
+      this.set('showNoContacts', newValue == 0);
     },
     //Component lifecycle
     attached: function () {
@@ -818,19 +880,65 @@ Example:
 
     /*---------------------------------Search methods-------------------------------*/
 
-    search_keywords_changed: function (e) {
-      if (!this.search_keywords || this.search_keywords == '' || this.search_keywords.length == 0) {
-        this.searching = false;
+    searchContact: function () {
+      this.searching = true;
+      this.$$('#contactSearch').focus();
+    },
+    filterContact:function(keyword){
+      if (!keyword){
+        return null;
       } else {
-        this.searchContact();
+        keyword = keyword.toLowerCase();
+        return function(contact){
+          contact.title = contact.title || '';
+          contact.first_name = contact.first_name ||' ';
+          contact.last_name = contact.last_name ||'' ;
+          var full_name = (contact.title + ' ' + contact.first_name + ' ' + contact.last_name).toLowerCase();
+
+          return (full_name.indexOf(keyword) != -1);
+        };
       }
     },
-
-    searchContact: function () {
-      this.set('searchResult', this.contacts);
-      this.searching = true;
+    checkCloseSearch: function(e){
+      var isInput = e.currentTarget === this.$$('#contactSearch') && !e.detail;
+      if (!this.search_keywords && !isInput){
+        this.searching = false;
+      }
     },
-
+    /*------------------------------------Load chat---------------------------------*/
+    loadContact: function (e) {
+      this.searching = false;
+      this.search_keywords = '';
+      var user = e.model.item;
+      var exists = false;
+      for (var i = this.chats.length - 1; i >= 0 && !exists; i--) {
+        //If it exists
+        if (this.chats[i].chat.user.id == user.id) {
+          exists = true;
+          var fakeEvent = { model: { item: this.chats[i], index: i } };
+          this.loadChat(fakeEvent);
+        }
+      }
+      if (!exists) {
+        var chat = {
+          messages: [],
+          user: user,
+          photo: user.image || this.resolveUrl('default.png')
+        };
+        var peer = {
+          _: 'peerUser',
+          user_id: user.id
+        };
+        this.push('chats', { chat: chat, peer: peer });
+        // //Set selected style
+        // var id = '#chatsTemplate';
+        // var div = Polymer.dom(this.root).querySelectorAll(id)[0];
+        // div.render();
+        var fakeEvent = { model: { item: { chat: chat, peer: peer }, index: this.chats.length - 1 } };
+        this.openChat(fakeEvent);
+        this.subscribe(peer);
+      }
+    },
     /*----------------------------------Comunication methods-----------------------------*/
 
     sendMSG: function () {
@@ -915,7 +1023,7 @@ Example:
         for (var i = data.messages.length - 1; i >= 0; i--) {
           me.addMSG(data.messages[i]);
         }
-        if (!avoid_fix)me.fixBottom();
+        if (!avoid_fix) me.fixBottom();
       });
     },
 
@@ -1007,6 +1115,7 @@ Example:
       this.country = item.name;
       this.countryCode = item.number;
       this._openedSelector = false;
+      this.$$('#phoneNumber').$.input.focus();
     },
 
     // Filter country
@@ -1025,10 +1134,12 @@ Example:
       var target = e.currentTarget;
       var text = target.innerHTML;
       target.innerHTML = text === this.placeholder ? '' : text;
+      this._isPlaceholder = false;
     },
     checkPlaceholder: function (e) {
       var target = e.currentTarget;
       target.innerHTML = target.innerHTML || this.placeholder;
+      this._isPlaceholder = target.innerHTML == this.placeholder;
     },
 
     updateTextMessage: function (e) {
