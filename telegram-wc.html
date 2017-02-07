@@ -12,6 +12,9 @@ Example:
 <link rel="import" href="bower_components/polymer/polymer.html">
 <link rel="import" href="bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="bower_components/iron-icons/iron-icons.html">
+
+<link rel="import" href="bower_components/iron-icons/av-icons.html">
+
 <link rel="import" href="bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="bower_components/paper-button/paper-button.html">
 <link rel="import" href="bower_components/paper-icon-button/paper-icon-button.html">
@@ -60,7 +63,7 @@ Example:
           overflow: visible;
         }
       }
-      .icon {
+      .icon[icon="menu"] {
         width: 40px;
         height: 40px;
         margin-right: 25px;
@@ -88,19 +91,19 @@ Example:
         height: 32px;
         width: 32px;
       }
-      #style-3::-webkit-scrollbar-track
+      ::-webkit-scrollbar-track
       {
         -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
         background-color: var(--paper-grey-200);
       }
-      #style-3::-webkit-scrollbar
+      ::-webkit-scrollbar
       {
         width: 6px;
         background-color: var(--paper-grey-200);
       }
-      #style-3::-webkit-scrollbar-thumb
+      ::-webkit-scrollbar-thumb
       {
-        background-color: var(--background);
+        background-color: #42749b;
       }
 
       /* CHAT AREA */
@@ -123,20 +126,44 @@ Example:
         overflow-x: hidden;
       }
       .messageIn, .messageOut{
-        background: var(--paper-blue-200);
         border-radius: 5px;
         padding: 10px;
         margin-bottom: 10px;
         max-width: 50%;
         font: 15px Roboto,arial,sans-serif;
+        position: relative;
       }
       .messageIn{
         float: left;
         margin-right: 50%;
+        background: white;
+      }
+      .messageIn:before{
+        content: "";
+        position: absolute;
+        width: 0;
+        height: 0;
+        border-bottom: 12px solid white;
+        border-right: 21px solid transparent;
+        border-left: 20px solid transparent;
+        bottom: 0;
+        left:-5px;
       }
       .messageOut{
         float: right;
+        background-color:#DCF8C6;
         margin-left: 50%;
+      }
+      .messageOut:before{
+        content: "";
+        position: absolute;
+        width: 0;
+        height: 0;
+        border-bottom: 5px solid #DCF8C6;
+        border-right: 3px solid transparent;
+        border-left: 19px solid transparent;
+        bottom: 0;
+        right: -3px;
       }
       .date{
         font: 10px Roboto,arial,sans-serif;
@@ -167,11 +194,16 @@ Example:
         margin:0;
       }
       .send{
-        align-self: center;
-        color: #90CAF9;
-        width: 36px;
-        height: 36px;
-        padding:6px;
+        --paper-icon-button: {
+          align-self: center;
+          color: #42749b;
+          width: 36px;
+          height: 36px;
+          padding:8px;
+        };
+        --paper-icon-button-disabled: {
+          color:#333;
+        };
       }
       /* Login menus */
       .login{
@@ -258,6 +290,7 @@ Example:
       .requireCode paper-button{
         margin-top:18px;
       }
+      /* ANIMATIONS */
       .animated {
         -webkit-animation-duration: 0.3s;
         animation-duration: 0.3s;
@@ -308,7 +341,8 @@ Example:
 
   <template is="dom-if" if="{{logged}}">
     <paper-icon-button on-click="openMenu" class="icon" icon="menu"></paper-icon-button>
-    <p>Telegram</p>
+    <p class="flex">Telegram</p>
+    <paper-icon-button icon="search" class="icon"></paper-icon-button>
   </template>
 
 </paper-toolbar>
@@ -404,12 +438,11 @@ Example:
 
         <div class="sendArea horizontal layout">
           <div class="input flex horizontal layout">
-            <p contenteditable="true" class="flex" on-focus="removePlaceholder"
-             on-blur="checkPlaceholder" on-keydown="updateTextMessage">{{placeholder}}</p>
+            <p contenteditable="true" class="flex" on-focus="removePlaceholder" on-blur="checkPlaceholder" on-keypress="updateTextMessage">{{placeholder}}</p>
           </div>
-          <paper-icon-button icon="send" class="send" on-click="sendMSG"></paper-icon-button>
+          <paper-icon-button icon="send" class="send" disabled="[[disable_send]]" on-click="sendMSG"></paper-icon-button>
         </div>
-     
+
       </div>
     </div>
   </template>
@@ -509,16 +542,25 @@ Example:
         value: false
       },
       text_message: {
-        type:String
+        type: String,
+        value: '',
+        notify:true
       },
       placeholder: {
-        type:String,
+        type: String,
         value: 'Message'
+      },
+      disable_send: {
+        type: Boolean,
+        computed:'_isTextMessageEmpty(text_message)'
       }
     },
     // Observers
     _checkEmpty: function (chats) {
       return chats === 0;
+    },
+    _isTextMessageEmpty: function(message){
+      return !message;
     },
     //Component lifecycle
     attached: function () {
@@ -797,7 +839,7 @@ Example:
       var me = this;
       telegramApi.sendMessage(this.getId(this.user_selected.peer), this.text_message).then(
         function (response) {
-          me.refreshChat();
+          me.getHistory();
         }
       );
 
@@ -807,7 +849,7 @@ Example:
       msg.from_id = this.user.id;
       msg.date = new Date();
       this.addMSG(msg);
-      this.text_message = this.placeholder;
+      this.fixBottom();
     },
 
     subscribe: function (peer) {
@@ -828,7 +870,7 @@ Example:
                 }
                 //If its the active chat refresh it
                 if (me.show.chat.user.id == id) {
-                  me.refreshChat();
+                  me.getHistory();
                 } else {
                   //GIVE FEEDBACK TO USER ON CHAT LIST
                 }
@@ -841,7 +883,7 @@ Example:
             }
             //If its the active chat refresh it
             else if (me.show.chat.user.id == response.user_id) {
-              me.refreshChat();
+              me.getHistory();
             } else {
               //GIVE FEEDBACK TO USER ON CHAT LIST
             }
@@ -852,7 +894,7 @@ Example:
     /*-------------------------------Refresh chat history-------------------------------*/
 
 
-    getHistory: function () {
+    getHistory: function (avoid_fix) {
       //Get messages
       var init = new Date();
       var user = this.user_selected;
@@ -869,12 +911,11 @@ Example:
         type: type
       }).then(function (data) {
         //Update view
-        console.log(new Date() - init);
         me.set('chat_messages', []);
         for (var i = data.messages.length - 1; i >= 0; i--) {
           me.addMSG(data.messages[i]);
         }
-        me.fixBottom();
+        if (!avoid_fix)me.fixBottom();
       });
     },
 
@@ -884,7 +925,7 @@ Example:
     pulling: function () {
       var that = this;
       this._interval = window.setInterval(function () {
-        that.getHistory();
+        that.getHistory(true);
       }, 10000)
     },
     removeChat: function () {
@@ -898,7 +939,7 @@ Example:
 
     fixBottom: function () {
       //Fix scroll bar bottom
-      var container = Polymer.dom(this.root).querySelectorAll('#displayArea')[0];
+      var container = this.$$('#displayArea');
       container.scrollTop = container.scrollHeight;
       if (container.scrollTop != container.scrollHeight) {
         var promise = new Promise(function (resolve, reject) {
@@ -949,6 +990,7 @@ Example:
       console.log('TODO abrir chat')
       this.set('user_selected', e.model.item.chat.user);
       this.set('user_selected.photo', e.model.item.chat.photo);
+      this.set('user_selected.peer', e.model.item.peer);
       this.getHistory();
       this.pulling();
       this.selected = true;
@@ -979,26 +1021,30 @@ Example:
       }
     },
     /*----------------------------------Input text methods ----------------------------------*/
-    removePlaceholder: function(e){
+    removePlaceholder: function (e) {
       var target = e.currentTarget;
-      var text = target.innerHTML.replace(/(\r\n|\n|\r|\t)/gm,"");;
-      target.innerHTML = text === this.placeholder ? '': text;
+      var text = target.innerHTML;
+      target.innerHTML = text === this.placeholder ? '' : text;
     },
-    checkPlaceholder: function(e){
+    checkPlaceholder: function (e) {
       var target = e.currentTarget;
       target.innerHTML = target.innerHTML || this.placeholder;
     },
-    updateTextMessage: function(e){
+
+    updateTextMessage: function (e) {
       var code = e.keyCode;
-      var text = e.currentTarget.innerHTML;
-      if (code === 13){
+      var text = e.currentTarget.innerHTML + String.fromCharCode(code);
+      this.text_message = text;
+      if (code === 13) {
         // send message
-        // Prevent default 
+        // Prevent navigator add <div>br</div>
         e.preventDefault();
         this.sendMSG();
-      } else {
-        this.text_message = text;
+        e.currentTarget.innerHTML = this.placeholder;
+        e.currentTarget.blur();
+        this.text_message = '';
       }
     },
+    /*---------------------------------- Left menu ----------------------------------*/
   });
 </script>
