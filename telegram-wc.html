@@ -707,9 +707,6 @@ Example:
     },
 
     dettached: function () {
-      if (this._interval) {
-        window.clearInterval(this._interval);
-      }
       this.logout();
     },
 
@@ -793,7 +790,16 @@ Example:
       var me = this;
       telegramApi.invokeApi('contacts.getContacts', {}).then(
         function (response) {
-          me.set('contacts', response.users);
+          // sort contacts by first name
+          me.set('contacts', response.users.sort(function(contact1, contact2){
+            // avoid space
+            var first_name1 = contact1.first_name.replace(" ","");
+            var first_name2 = contact2.first_name.replace(" ","");
+            
+            if(first_name1 < first_name2) return -1;
+            if(first_name1 > first_name2) return 1;
+            return 0;
+          }));
           for (var i = me.contacts.length - 1; i >= 0; i--) {
             me.getPhotoContact(me.contacts[i]);
           };
@@ -814,11 +820,15 @@ Example:
           for (var i = 0; i < response.result.dialogs.length; i++) {
             me.initializeChat(response.result.dialogs[i].peer);
             me.subscribe(response.result.dialogs[i].peer);
+            me.getHistoryUser(response.result.dialogs[i].chat.user,function(response){
+              console.log(response)
+              me.set('chats.'+i+'.chat.chat_messages',response)
+            });
           };
+
         }
       );
     },
-
 
     /*----------------------------------Load component--------------------------------*/
 
@@ -914,7 +924,6 @@ Example:
         }
       );
     },
-
     /*---------------------------------Search methods-------------------------------*/
 
     searchContact: function () {
@@ -943,6 +952,7 @@ Example:
       }
     },
     /*------------------------------------Load chat---------------------------------*/
+
     loadContact: function (e) {
       this.searching = false;
       this.search_keywords = '';
@@ -1008,7 +1018,6 @@ Example:
             for (var i = updates.length - 1; i >= 0; i--) {
               var update = updates[i]
               switch (update._) {
-
                 case 'updateNewMessage':
                   //Identify target chat
                   var msg = update.message;
@@ -1018,7 +1027,7 @@ Example:
                     var id = msg.from_id;
                   }
                   //If its the active chat refresh it
-                  if (me.show.chat.user.id == id) {
+                  if (me.user_selected.id == id) {
                     me.getHistory();
                   } else {
                     //GIVE FEEDBACK TO USER ON CHAT LIST
@@ -1036,7 +1045,7 @@ Example:
               //unlucky: Cannot identify the chat if its an outbound message
             }
             //If its the active chat refresh it
-            else if (me.show.chat.user.id == response.user_id) {
+            else if (me.user_selected.user.id == response.user_id) {
               me.getHistory();
             } else {
               //GIVE FEEDBACK TO USER ON CHAT LIST
@@ -1047,11 +1056,22 @@ Example:
 
     /*-------------------------------Refresh chat history-------------------------------*/
 
-
-    getHistory: function (avoid_fix) {
+    getHistoryUser: function(user,cb){
+      if (user._ == 'user') {
+        var type = 'user';
+      } else {
+        var type = 'chat';
+      }
+      var me = this;
+      telegramApi.getHistory({
+        id: user.id,
+        take: 50,
+        type: type
+      }).then(cb,cb);
+    },
+    getHistory: function (user) {
       //Get messages
-      var init = new Date();
-      var user = this.user_selected;
+      var user = user || this.user_selected;
       if (user._ == 'user') {
         var type = 'user';
       } else {
@@ -1067,29 +1087,20 @@ Example:
         //Update view
         me.set('chat_messages', []);
         for (var i = data.messages.length - 1; i >= 0; i--) {
+          
           me.addMSG(data.messages[i]);
         }
         if (!avoid_fix) me.fixBottom();
       });
     },
 
-    /* pulling():
-        Refresh the chat every minute
-    */
-    pulling: function () {
-      var that = this;
-      this._interval = window.setInterval(function () {
-        that.getHistory(true);
-        that.refreshStatus();
-      }, 1000)
-    },
     removeChat: function () {
       // stop pulling
-      window.clearInterval(this._interval);
       this.selected = false;
       this.set('chat_messages', []);
       this.set('user_selected', undefined);
     },
+
     refreshStatus: function (user_id, status) {
       var that = this;
       // chats
@@ -1106,7 +1117,7 @@ Example:
         }
       });
       // user_selected
-      if (this.user_selected.id == user_id) {
+      if (this.user_selected && this.user_selected.id == user_id) {
         that.set('user_selected.status', status);
       }
     },
