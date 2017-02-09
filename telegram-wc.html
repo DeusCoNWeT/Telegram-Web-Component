@@ -219,6 +219,12 @@ Example:
       .status{
         font-size:10px;
       }
+      .groupicon{
+        width: 20px;
+        height: 20px;
+        padding-bottom: 3px;
+        margin-right: 2px;
+      }
       /* Login menus */
       .login{
         padding:8px 16px;
@@ -367,9 +373,10 @@ Example:
     <template is="dom-if" if="{{!searching}}">
       <p class="flex">Telegram</p>
     </template>
-    <paper-input no-label-float class="flex self-center" hidden$="{{!searching}}"on-blur="checkCloseSearch" value="{{search_keywords}}" id="contactSearch"></paper-input>
+    <paper-input no-label-float class="flex self-center" hidden$="{{!searching}}" on-blur="checkCloseSearch" value="{{search_keywords}}"
+      id="contactSearch"></paper-input>
     <template is="dom-if" if="{{!searching}}">
-      <paper-icon-button icon="search" id="searchIcon"class="icon" on-click="searchContact"></paper-icon-button>
+      <paper-icon-button icon="search" id="searchIcon" class="icon" on-click="searchContact"></paper-icon-button>
     </template>
   </template>
 
@@ -430,7 +437,12 @@ Example:
         <template is="dom-repeat" items="{{chats}}">
           <div class="contacts horizontal layout center" on-click="openChat">
             <img class="profImg" src="{{item.chat.photo}}">
-            <p>{{item.chat.user.title}}{{item.chat.user.first_name}} {{item.chat.user.last_name}}</p>
+            <template is="dom-if" if="{{item.chat.user.title}}">
+              <p><iron-icon icon="supervisor-account" class="groupicon"></iron-icon>{{item.chat.user.title}}</p>
+            </template>
+            <template is="dom-if" if="{{item.chat.user.first_name}}">
+              <p>{{item.chat.user.first_name}} {{item.chat.user.last_name}}</p>
+            </template>
           </div>
           <hr class="divisor">
         </template>
@@ -455,7 +467,10 @@ Example:
         </template>
       </template>
       <template is="dom-if" if="{{chats_empty}}">
-        Vacio
+        <!-- TODO loading info -->
+          <div class="vertical layout center-center emptyContacts">
+            <p class="title">No results</p>
+          </div>
       </template>
     </template>
 
@@ -466,7 +481,12 @@ Example:
           <paper-icon-button on-click="closeChat" class="icon" icon="arrow-back"></paper-icon-button>
           <img class="profImg small" src="{{user_selected.photo}}">
           <div class="vertical layout">
-            <span>{{user_selected.title}}{{user_selected.first_name}} {{user_selected.last_name}}</span>
+            <template is="dom-if" if="{{user_selected.first_name}}">
+              <span>{{user_selected.first_name}} {{user_selected.last_name}}</span>
+            </template>
+            <template is="dom-if" if="{{user_selected.title}}">
+              <span><iron-icon icon="supervisor-account" class="groupicon"></iron-icon>{{user_selected.title}}</span>
+            </template>
             <span class="status">{{_getStatus(user_selected.status)}}</span>
           </div>
 
@@ -492,7 +512,8 @@ Example:
 
           <div class="sendArea horizontal layout">
             <div class="input flex horizontal layout">
-              <p contenteditable="true" data-placeholder$="{{text_message==placeholder}}" class="flex" on-focus="removePlaceholder" on-blur="checkPlaceholder" on-keypress="updateTextMessage">{{placeholder}}</p>
+              <p contenteditable="true" data-placeholder$="{{text_message==placeholder}}" class="flex" on-focus="removePlaceholder" on-blur="checkPlaceholder"
+                on-keypress="updateTextMessage">{{placeholder}}</p>
             </div>
             <paper-icon-button icon="send" class="send" disabled="[[disable_send]]" on-click="sendMSG"></paper-icon-button>
           </div>
@@ -532,7 +553,7 @@ Example:
 
       search_keywords: {
         type: String,
-        value:''
+        value: ''
       },
 
       app: {
@@ -615,11 +636,15 @@ Example:
       },
       showNoContacts: {
         type: Boolean,
-        value:true
+        value: true
       },
       _isPlaceholder: {
         type: Boolean,
-        value:true
+        value: true
+      },
+      user_selected: {
+        type:Object,
+        notify:true
       }
     },
     // Observers
@@ -629,7 +654,7 @@ Example:
     _isTextMessageEmpty: function (message) {
       return !message;
     },
-    _checkNContactsFound: function(newValue, oldValue){
+    _checkNContactsFound: function (newValue, oldValue) {
       this.set('showNoContacts', newValue == 0);
     },
     //Component lifecycle
@@ -682,7 +707,7 @@ Example:
     },
 
     dettached: function () {
-      if(this._interval){
+      if (this._interval) {
         window.clearInterval(this._interval);
       }
       this.logout();
@@ -846,7 +871,8 @@ Example:
     },
 
     getPhoto: function (chat, peer) {
-      if (!chat.user.photo) {
+      if (!chat.user.photo || chat.user.photo._ == "chatPhotoEmpty") {
+        chat.photo = this.resolveUrl('default.png');
         this.push('chats', {
           chat: chat,
           peer: peer
@@ -895,24 +921,24 @@ Example:
       this.searching = true;
       this.$$('#contactSearch').focus();
     },
-    filterContact:function(keyword){
-      if (!keyword){
+    filterContact: function (keyword) {
+      if (!keyword) {
         return null;
       } else {
         keyword = keyword.toLowerCase();
-        return function(contact){
+        return function (contact) {
           contact.title = contact.title || '';
-          contact.first_name = contact.first_name ||' ';
-          contact.last_name = contact.last_name ||'' ;
+          contact.first_name = contact.first_name || ' ';
+          contact.last_name = contact.last_name || '';
           var full_name = (contact.title + ' ' + contact.first_name + ' ' + contact.last_name).toLowerCase();
 
           return (full_name.indexOf(keyword) != -1);
         };
       }
     },
-    checkCloseSearch: function(e){
+    checkCloseSearch: function (e) {
       var isInput = e.currentTarget === this.$$('#contactSearch') && !e.detail;
-      if (!this.search_keywords && !isInput){
+      if (!this.search_keywords && !isInput) {
         this.searching = false;
       }
     },
@@ -977,26 +1003,35 @@ Example:
       telegramApi.subscribe(id,
         function (response) {
           //Notifications callback
-          if (response._ == 'updates') {
-            for (var i = response.updates.length - 1; i >= 0; i--) {
-              if (response.updates[i]._ == 'updateNewMessage') {
-                //Identify target chat
-                var msg = response.updates[i].message;
-                if (msg.from_id == me.user.id) {
-                  var id = me.getId(msg.to_id);
-                } else {
-                  var id = msg.from_id;
-                }
-                //If its the active chat refresh it
-                if (me.show.chat.user.id == id) {
-                  me.getHistory();
-                } else {
-                  //GIVE FEEDBACK TO USER ON CHAT LIST
-                }
+          if (response.updates || response.update) {
+            var updates= response.updates || [response.update];
+            for (var i = updates.length - 1; i >= 0; i--) {
+              var update = updates[i]
+              switch (update._) {
 
+                case 'updateNewMessage':
+                  //Identify target chat
+                  var msg = update.message;
+                  if (msg.from_id == me.user.id) {
+                    var id = me.getId(msg.to_id);
+                  } else {
+                    var id = msg.from_id;
+                  }
+                  //If its the active chat refresh it
+                  if (me.show.chat.user.id == id) {
+                    me.getHistory();
+                  } else {
+                    //GIVE FEEDBACK TO USER ON CHAT LIST
+                  }
+                  break;
+                  
+                case 'updateUserStatus':
+                  me.refreshStatus(update.user_id, update.status);
+                  break;
               }
             }
-          } else if (response._ == 'updateShortMessage') {
+          }
+          if (response._ == 'updateShortMessage') {
             if (response.user_id == me.user.id) {
               //unlucky: Cannot identify the chat if its an outbound message
             }
@@ -1006,16 +1041,6 @@ Example:
             } else {
               //GIVE FEEDBACK TO USER ON CHAT LIST
             }
-          }
-          // Update Status
-          if (response.updates || response.update){
-            var news = response.updates || [response.update];
-            news.forEach(function(update){
-              console.log('Recibido: ', update._)
-              if (update._ == "updateUserStatus"){
-                me.refreshStatus(update.user_id,update.status);
-              }
-            });
           }
         });
     },
@@ -1065,14 +1090,25 @@ Example:
       this.set('chat_messages', []);
       this.set('user_selected', undefined);
     },
-    refreshStatus: function(user_id, status){
-      var that = this;    
-      this.chats.forEach(function(chat,index){
+    refreshStatus: function (user_id, status) {
+      var that = this;
+      // chats
+      this.chats.forEach(function (chat, index) {
         var user = chat.chat.user;
-        if (user.id == user_id){
-          that.set('chats.'+index +'.chat.user.status',status);
+        if (user.id == user_id) {
+          that.set('chats.' + index + '.chat.user.status', status);
         }
       });
+      // contact
+      this.contacts.forEach(function (contact, index) {
+        if (contact.id == user_id) {
+          that.set('contacts.' + index + '.status', status);
+        }
+      });
+      // user_selected
+      if (this.user_selected.id == user_id) {
+        that.set('user_selected.status', status);
+      }
     },
     /*----------------------------------Display methods----------------------------------*/
 
@@ -1187,17 +1223,17 @@ Example:
         this.text_message = '';
       }
     },
-    _getStatus: function(status){
+    _getStatus: function (status) {
       var current_status = '';
-      if (status){
-        if (status._ == 'userStatusOnline'){
-          current_status =   "Connected";
-        } else if (status._ == 'userStatusRecently'){
+      if (status) {
+        if (status._ == 'userStatusOnline') {
+          current_status = "Connected";
+        } else if (status._ == 'userStatusRecently') {
           current_status = "last seen recently"
-        }else {
-          var time = status.was_online*1000;
+        } else {
+          var time = status.was_online * 1000;
           var dif = new Date() - time;
-          if (dif < 24*60*60*1000){
+          if (dif < 24 * 60 * 60 * 1000) {
             current_status = "last seen " + moment(time).fromNow();
           } else {
             current_status = "last seen " + moment(time).format('D MMM. YYYY');
