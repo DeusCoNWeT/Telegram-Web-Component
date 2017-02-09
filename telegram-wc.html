@@ -25,6 +25,7 @@ Example:
 <link rel="import" href="bower_components/paper-styles/shadow.html">
 <link rel="import" href="bower_components/paper-button/paper-button.html">
 
+<script src="bower_components/moment/min/moment.min.js"></script>
 <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
 <script src="bower_components/telegram-api/dist/telegramApi.js"></script>
 
@@ -214,6 +215,9 @@ Example:
         --paper-icon-button-disabled: {
           color:#333;
         };
+      }
+      .status{
+        font-size:10px;
       }
       /* Login menus */
       .login{
@@ -433,7 +437,7 @@ Example:
       </template>
       <template is="dom-if" if="{{searching}}">
         <template is="dom-repeat" items="{{contacts}}" filter="{{filterContact(search_keywords)}}" rendered-item-count="{{nContactsFound}}">
-          <div class="contacts horizontal layout center" on-click="loadContact">
+          <div class="contacts horizontal layout center" on-mousedown="loadContact">
             <template is="dom-if" if="{{item.image}}">
               <img class="profImg" src="{{item.image}}">
             </template>
@@ -461,7 +465,11 @@ Example:
         <paper-toolbar class="toolbar">
           <paper-icon-button on-click="closeChat" class="icon" icon="arrow-back"></paper-icon-button>
           <img class="profImg small" src="{{user_selected.photo}}">
-          <p>{{user_selected.title}}{{user_selected.first_name}} {{user_selected.last_name}}</p>
+          <div class="vertical layout">
+            <span>{{user_selected.title}}{{user_selected.first_name}} {{user_selected.last_name}}</span>
+            <span class="status">{{_getStatus(user_selected.status)}}</span>
+          </div>
+
         </paper-toolbar>
         <div class="content vertical layout flex">
 
@@ -674,6 +682,9 @@ Example:
     },
 
     dettached: function () {
+      if(this._interval){
+        window.clearInterval(this._interval);
+      }
       this.logout();
     },
 
@@ -996,6 +1007,16 @@ Example:
               //GIVE FEEDBACK TO USER ON CHAT LIST
             }
           }
+          // Update Status
+          if (response.updates || response.update){
+            var news = response.updates || [response.update];
+            news.forEach(function(update){
+              console.log('Recibido: ', update._)
+              if (update._ == "updateUserStatus"){
+                me.refreshStatus(update.user_id,update.status);
+              }
+            });
+          }
         });
     },
 
@@ -1034,7 +1055,8 @@ Example:
       var that = this;
       this._interval = window.setInterval(function () {
         that.getHistory(true);
-      }, 10000)
+        that.refreshStatus();
+      }, 1000)
     },
     removeChat: function () {
       // stop pulling
@@ -1042,6 +1064,15 @@ Example:
       this.selected = false;
       this.set('chat_messages', []);
       this.set('user_selected', undefined);
+    },
+    refreshStatus: function(user_id, status){
+      var that = this;    
+      this.chats.forEach(function(chat,index){
+        var user = chat.chat.user;
+        if (user.id == user_id){
+          that.set('chats.'+index +'.chat.user.status',status);
+        }
+      });
     },
     /*----------------------------------Display methods----------------------------------*/
 
@@ -1100,7 +1131,7 @@ Example:
       this.set('user_selected.photo', e.model.item.chat.photo);
       this.set('user_selected.peer', e.model.item.peer);
       this.getHistory();
-      this.pulling();
+      //this.pulling();
       this.selected = true;
     },
     closeChat: function () {
@@ -1156,6 +1187,25 @@ Example:
         this.text_message = '';
       }
     },
+    _getStatus: function(status){
+      var current_status = '';
+      if (status){
+        if (status._ == 'userStatusOnline'){
+          current_status =   "Connected";
+        } else if (status._ == 'userStatusRecently'){
+          current_status = "last seen recently"
+        }else {
+          var time = status.was_online*1000;
+          var dif = new Date() - time;
+          if (dif < 24*60*60*1000){
+            current_status = "last seen " + moment(time).fromNow();
+          } else {
+            current_status = "last seen " + moment(time).format('D MMM. YYYY');
+          }
+        }
+      }
+      return current_status;
+    }
     /*---------------------------------- Left menu ----------------------------------*/
   });
 </script>
