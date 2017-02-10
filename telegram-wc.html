@@ -40,7 +40,7 @@ Example:
         --telegram-background: #5682a3;
         overflow: hidden;
         position: relative;
-        font-family: Tahoma, sans-serif, Arial, Helvetica;
+        font: 14px/18px Tahoma,sans-serif,Arial,Helvetica;
         background-color: #e7ebf0;
         border: 1px solid #d2d2d2;
         border-radius:5px;
@@ -88,6 +88,14 @@ Example:
       }
       .contacts:hover{
         background-color:#d2d2d2;
+      }
+      .contacts .name {
+        margin:2px 0;
+      }
+      .contacts .chatPreview{
+        font-size:12px;
+        margin:0;
+        color:#797979;
       }
       .profImg {
         height: 42px;
@@ -437,12 +445,16 @@ Example:
         <template is="dom-repeat" items="{{chats}}">
           <div class="contacts horizontal layout center" on-click="openChat">
             <img class="profImg" src="{{item.chat.photo}}">
-            <template is="dom-if" if="{{item.chat.user.title}}">
-              <p><iron-icon icon="supervisor-account" class="groupicon"></iron-icon>{{item.chat.user.title}}</p>
-            </template>
-            <template is="dom-if" if="{{item.chat.user.first_name}}">
-              <p>{{item.chat.user.first_name}} {{item.chat.user.last_name}}</p>
-            </template>
+            <div class="vertical layout displayName">
+              <template is="dom-if" if="{{item.chat.user.title}}">
+                <p class="name">
+                  <iron-icon icon="supervisor-account" class="groupicon"></iron-icon>{{item.chat.user.title}}</p>
+              </template>
+              <template is="dom-if" if="{{item.chat.user.first_name}}">
+                <p class="name">{{item.chat.user.first_name}} {{item.chat.user.last_name}}</p>
+              </template>
+              <p class="chatPreview">{{item.chat.chat_messages.0.text}}</p>
+            </div>
           </div>
           <hr class="divisor">
         </template>
@@ -468,9 +480,9 @@ Example:
       </template>
       <template is="dom-if" if="{{chats_empty}}">
         <!-- TODO loading info -->
-          <div class="vertical layout center-center emptyContacts">
-            <p class="title">No results</p>
-          </div>
+        <div class="vertical layout center-center emptyContacts">
+          <p class="title">No results</p>
+        </div>
       </template>
     </template>
 
@@ -494,7 +506,7 @@ Example:
         <div class="content vertical layout flex">
 
           <div class="displayArea flex" id="displayArea">
-            <template is="dom-repeat" items="[[chat_messages]]">
+            <template is="dom-repeat" items="[[user_selected.chat_messages]]">
               <template is="dom-if" if="{{item.mine}}">
                 <div class="messageOut">
                   <span class="date">{{item.date}}</span>
@@ -643,8 +655,8 @@ Example:
         value: true
       },
       user_selected: {
-        type:Object,
-        notify:true
+        type: Object,
+        notify: true
       }
     },
     // Observers
@@ -791,13 +803,13 @@ Example:
       telegramApi.invokeApi('contacts.getContacts', {}).then(
         function (response) {
           // sort contacts by first name
-          me.set('contacts', response.users.sort(function(contact1, contact2){
+          me.set('contacts', response.users.sort(function (contact1, contact2) {
             // avoid space
-            var first_name1 = contact1.first_name.replace(" ","");
-            var first_name2 = contact2.first_name.replace(" ","");
-            
-            if(first_name1 < first_name2) return -1;
-            if(first_name1 > first_name2) return 1;
+            var first_name1 = contact1.first_name.replace(" ", "");
+            var first_name2 = contact2.first_name.replace(" ", "");
+
+            if (first_name1 < first_name2) return -1;
+            if (first_name1 > first_name2) return 1;
             return 0;
           }));
           for (var i = me.contacts.length - 1; i >= 0; i--) {
@@ -817,13 +829,12 @@ Example:
         function (response) {
           me.set('data', response.result);
           me.set('chats', []);
-          for (var i = 0; i < response.result.dialogs.length; i++) {
-            me.initializeChat(response.result.dialogs[i].peer);
-            me.subscribe(response.result.dialogs[i].peer);
-            me.getHistoryUser(response.result.dialogs[i].chat.user,function(response){
-              console.log(response)
-              me.set('chats.'+i+'.chat.chat_messages',response)
-            });
+          var dialogs = response.result.dialogs;
+          for (var i = 0; i < dialogs.length; i++) {
+            // add to chats
+            me.initializeChat(dialogs[i].peer);
+            // subscribe modifications
+            me.subscribe(dialogs[i].peer);
           };
 
         }
@@ -836,9 +847,10 @@ Example:
       /* Object stored on array 'chats' show on sidebar:
         {
           - Chat:
-              - messages[] (chat history)
+              - chat_messages[] (chat history)
               - photo (String type image/jpeg)
               - user (user talking with)
+              - participants (if group)
           - Peer:
               - _ (type of peer: peerUser, peerChannel, peerChat)
               - id (user_id, channel_id, chat_id)
@@ -846,7 +858,25 @@ Example:
       */
       var chat = {};
       chat.user = this.searchUser(peer);
-      if (chat.user.first_name || chat.user.title) this.getPhoto(chat, peer);
+      var that = this;
+      if (chat.user.first_name || chat.user.title) {
+        this.getPhoto(chat, peer).then(function (chat) {
+          // take chat messages
+          that.getHistoryUser(chat.chat.user).then(function (response) {
+            console.log(response);
+            chat.chat.chat_messages = that.getMSGs(response.messages);
+            // if group, add participants
+            if (response.users.length > 0) {
+              chat.participants = response.users;
+            }
+            that.push('chats', chat);
+          },
+            function (error) {
+              console.err(error);
+              this.push('chats', chat);
+            })
+        });
+      }
     },
 
     getId: function (peer) {
@@ -879,37 +909,39 @@ Example:
         }
       };
     },
-
+    // Return a promise with object {chat:chat,peer:peer}
     getPhoto: function (chat, peer) {
-      if (!chat.user.photo || chat.user.photo._ == "chatPhotoEmpty") {
-        chat.photo = this.resolveUrl('default.png');
-        this.push('chats', {
-          chat: chat,
-          peer: peer
-        });
-        return;
-      }
-
-      var photo = chat.user.photo.photo_small;
-
-      var me = this;
-      telegramApi.getPhoto('base64', photo).then(
-        function (result) {
-          chat.photo = result;
-          me.push('chats', {
+      return new Promise(function (resolve, reject) {
+        if (!chat.user.photo || chat.user.photo._ == "chatPhotoEmpty") {
+          chat.photo = this.resolveUrl('default.png');
+          resolve({
             chat: chat,
             peer: peer
           });
-        },
-        function (error) {
-          chat.photo = me.resolveUrl('default.png');
-          me.push('chats', {
-            chat: chat,
-            peer: peer
-          });
+          return;
         }
-      );
 
+        var photo = chat.user.photo.photo_small;
+
+        var me = this;
+        telegramApi.getPhoto('base64', photo).then(
+          function (result) {
+            chat.photo = result;
+
+            resolve({
+              chat: chat,
+              peer: peer
+            });
+          },
+          function (error) {
+            chat.photo = me.resolveUrl('default.png');
+            resolve({
+              chat: chat,
+              peer: peer
+            });
+          }
+        );
+      }.bind(this));
     },
 
     getPhotoContact: function (user) {
@@ -1004,7 +1036,7 @@ Example:
       msg.from_id = this.user.id;
       msg.date = new Date();
       this.addMSG(msg);
-      this.fixBottom();
+      // this.fixBottom();
     },
 
     subscribe: function (peer) {
@@ -1014,7 +1046,7 @@ Example:
         function (response) {
           //Notifications callback
           if (response.updates || response.update) {
-            var updates= response.updates || [response.update];
+            var updates = response.updates || [response.update];
             for (var i = updates.length - 1; i >= 0; i--) {
               var update = updates[i]
               switch (update._) {
@@ -1033,7 +1065,7 @@ Example:
                     //GIVE FEEDBACK TO USER ON CHAT LIST
                   }
                   break;
-                  
+
                 case 'updateUserStatus':
                   me.refreshStatus(update.user_id, update.status);
                   break;
@@ -1056,18 +1088,20 @@ Example:
 
     /*-------------------------------Refresh chat history-------------------------------*/
 
-    getHistoryUser: function(user,cb){
-      if (user._ == 'user') {
-        var type = 'user';
-      } else {
-        var type = 'chat';
-      }
-      var me = this;
-      telegramApi.getHistory({
-        id: user.id,
-        take: 50,
-        type: type
-      }).then(cb,cb);
+    getHistoryUser: function (user, cb) {
+      return new Promise(function (resolve, reject) {
+        if (user._ == 'user') {
+          var type = 'user';
+        } else {
+          var type = 'chat';
+        }
+        var me = this;
+        telegramApi.getHistory({
+          id: user.id,
+          take: 50,
+          type: type
+        }).then(resolve, reject);
+      });
     },
     getHistory: function (user) {
       //Get messages
@@ -1087,13 +1121,35 @@ Example:
         //Update view
         me.set('chat_messages', []);
         for (var i = data.messages.length - 1; i >= 0; i--) {
-          
+
           me.addMSG(data.messages[i]);
         }
-        if (!avoid_fix) me.fixBottom();
       });
     },
+    getMSGs: function (msgs) {
+      var messages = [];
+      msgs.forEach(function (msg) {
+        message = {};
+        if (msg.from_id == this.user.id) {
+          message.mine = true;
+        } else {
+          message.mine = false;
+        }
 
+        //Text
+        message.text = msg.message;
+
+        //Parse date
+        var date = new Date(msg.date * 1000);
+        message.date = date.getDate() + '/' + (date.getMonth() + 1) + '/' + date.getFullYear() + ' ' +
+          date.toLocaleTimeString();
+
+        //Set id
+        message.id = msg.id;
+        messages.push(message);
+      }.bind(this));
+      return messages;
+    },
     removeChat: function () {
       // stop pulling
       this.selected = false;
@@ -1126,22 +1182,24 @@ Example:
     fixBottom: function () {
       //Fix scroll bar bottom
       var container = this.$$('#displayArea');
-      container.scrollTop = container.scrollHeight;
-      if (container.scrollTop != container.scrollHeight) {
-        var promise = new Promise(function (resolve, reject) {
-          window.setTimeout(
-            function () {
-              resolve();
-            }, 100);
-        });
-        /* DELAY */
-        var me = this;
-        promise.then(function () {
-          container.scrollTop = container.scrollHeight;
-        });
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+        if (container.scrollTop != container.scrollHeight) {
+          var promise = new Promise(function (resolve, reject) {
+            window.setTimeout(
+              function () {
+                resolve();
+              }, 100);
+          });
+          /* DELAY */
+          var me = this;
+          promise.then(function () {
+            container.scrollTop = container.scrollHeight;
+          });
+        }
       }
-
     },
+
 
     addMSG: function (msg) {
       //Check if exists
@@ -1173,13 +1231,14 @@ Example:
 
     },
     openChat: function (e) {
-      console.log('TODO abrir chat')
       this.set('user_selected', e.model.item.chat.user);
       this.set('user_selected.photo', e.model.item.chat.photo);
       this.set('user_selected.peer', e.model.item.peer);
-      this.getHistory();
-      //this.pulling();
+      this.set('user_selected.chat_messages', e.model.item.chat.chat_messages);
       this.selected = true;
+      var that = this;
+      window.setTimeout(function(){that.fixBottom();},100);
+      
     },
     closeChat: function () {
       this.removeChat();
