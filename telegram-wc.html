@@ -506,7 +506,7 @@ Example:
         <div class="content vertical layout flex">
 
           <div class="displayArea flex" id="displayArea">
-            <template is="dom-repeat" items="[[user_selected.chat_messages]]">
+            <template is="dom-repeat" items="[[_getReverse(user_selected.chat_messages)]]" id="chatMessages">
               <template is="dom-if" if="{{item.mine}}">
                 <div class="messageOut">
                   <span class="date">{{item.date}}</span>
@@ -863,7 +863,6 @@ Example:
         this.getPhoto(chat, peer).then(function (chat) {
           // take chat messages
           that.getHistoryUser(chat.chat.user).then(function (response) {
-            console.log(response);
             chat.chat.chat_messages = that.getMSGs(response.messages);
             // if group, add participants
             if (response.users.length > 0) {
@@ -1020,23 +1019,27 @@ Example:
     },
     /*----------------------------------Comunication methods-----------------------------*/
 
-    sendMSG: function () {
-      if (!this.text_message) return null;
+    sendMSG: function (text) {
+      var text = text || this.text_message;
+      if (!text) return null;
 
       var me = this;
-      telegramApi.sendMessage(this.getId(this.user_selected.peer), this.text_message).then(
+      telegramApi.sendMessage(this.getId(this.user_selected.peer), text).then(
         function (response) {
-          me.getHistory();
+          message = {
+            mine: true,
+            text: text
+          };
+          //Parse date
+          var date = new Date();
+          message.date = date.getDate() + '/' + (date.getMonth() + 1) + '/' + date.getFullYear() + ' ' +
+            date.toLocaleTimeString();
+
+          me.push('user_selected.chat_messages', message);
+          me.$$('#chatMessages').render();
+          me.fixBottom();
         }
       );
-
-      //Manual insert
-      var msg = {};
-      msg.message = this.text_message;
-      msg.from_id = this.user.id;
-      msg.date = new Date();
-      this.addMSG(msg);
-      // this.fixBottom();
     },
 
     subscribe: function (peer) {
@@ -1232,13 +1235,14 @@ Example:
     },
     openChat: function (e) {
       this.set('user_selected', e.model.item.chat.user);
+      this.set('user_selected._index', e.model.index);
       this.set('user_selected.photo', e.model.item.chat.photo);
       this.set('user_selected.peer', e.model.item.peer);
-      this.set('user_selected.chat_messages', e.model.item.chat.chat_messages);
+      this.set('user_selected.chat_messages', e.model.item.chat.chat_messages || []);
       this.selected = true;
       var that = this;
-      window.setTimeout(function(){that.fixBottom();},100);
-      
+      window.setTimeout(function () { that.fixBottom(); }, 100);
+
     },
     closeChat: function () {
       this.removeChat();
@@ -1287,7 +1291,7 @@ Example:
         // send message
         // Prevent navigator add <div>br</div>
         e.preventDefault();
-        this.sendMSG();
+        this.sendMSG(this.text_message);
         e.currentTarget.innerHTML = this.placeholder;
         e.currentTarget.blur();
         this.text_message = '';
@@ -1311,7 +1315,11 @@ Example:
         }
       }
       return current_status;
-    }
+    },
     /*---------------------------------- Left menu ----------------------------------*/
+    /*------------------------------ Auxiliar functions-------------------------------*/
+    _getReverse: function(list){
+      return list? list.reverse():list;
+    }
   });
 </script>
