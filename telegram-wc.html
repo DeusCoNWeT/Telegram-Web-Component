@@ -442,7 +442,7 @@ Example:
     <!-- if Chat is closed -->
     <template is="dom-if" if="{{!selected}}">
       <template is="dom-if" if="{{!searching}}">
-        <template is="dom-repeat" items="{{chats}}">
+        <template is="dom-repeat" items="{{chats}}" id="chatscontainer" sort="_sortChatByLastMSG">
           <div class="contacts horizontal layout center" on-click="openChat">
             <img class="profImg" src="{{item.chat.photo}}">
             <div class="vertical layout displayName">
@@ -453,7 +453,7 @@ Example:
               <template is="dom-if" if="{{item.chat.user.first_name}}">
                 <p class="name">{{item.chat.user.first_name}} {{item.chat.user.last_name}}</p>
               </template>
-              <p class="chatPreview">{{item.chat.chat_messages.0.text}}</p>
+              <p class="chatPreview">{{item.chat.last_message}}</p>
             </div>
           </div>
           <hr class="divisor">
@@ -468,7 +468,9 @@ Example:
             <template is="dom-if" if="{{!item.image}}">
               <img class="profImg" src="default.png">
             </template>
-            <p>{{item.title}}{{item.first_name}} {{item.last_name}}</p>
+            <div class="vertical layout">
+              <p>{{item.title}}{{item.first_name}} {{item.last_name}}</p>
+            </div>
           </div>
           <hr class="divisor">
         </template>
@@ -678,7 +680,7 @@ Example:
       });
       telegramApi.setConfig({
         app: this.app,
-        server: this.server
+        server: this.server,
       });
       // Extend telegram api
       telegramApi.getPhoto = function (type, photo) {
@@ -793,6 +795,7 @@ Example:
             me.logged = true;
             me.getContacts();
             me.getDialogs();
+            me.subscribe(user.id);
           }
         }
       );
@@ -834,81 +837,55 @@ Example:
             // add to chats
             me.initializeChat(dialogs[i].peer);
             // subscribe modifications
-            me.subscribe(dialogs[i].peer);
+            //me.subscribe(dialogs[i].peer);
           };
 
         }
       );
     },
-
-    /*----------------------------------Load component--------------------------------*/
-
-    initializeChat: function (peer) {
-      /* Object stored on array 'chats' show on sidebar:
-        {
-          - Chat:
-              - chat_messages[] (chat history)
-              - photo (String type image/jpeg)
-              - user (user talking with)
-              - participants (if group)
-          - Peer:
-              - _ (type of peer: peerUser, peerChannel, peerChat)
-              - id (user_id, channel_id, chat_id)
-        }
-      */
-      var chat = {};
-      chat.user = this.searchUser(peer);
-      var that = this;
-      if (chat.user.first_name || chat.user.title) {
-        this.getPhoto(chat, peer).then(function (chat) {
-          // take chat messages
-          that.getHistoryUser(chat.chat.user).then(function (response) {
-            chat.chat.chat_messages = that.getMSGs(response.messages);
-            // if group, add participants
-            if (response.users.length > 0) {
-              chat.participants = response.users;
-            }
-            that.push('chats', chat);
-          },
-            function (error) {
-              console.err(error);
-              this.push('chats', chat);
-            })
-        });
-      }
-    },
-
-    getId: function (peer) {
-      switch (peer._) {
-        case 'peerUser':
-          return peer.user_id;
-          break
-        case 'peerChannel':
-          return peer.channel_id;
-          break
-        case 'peerChat':
-          return peer.chat_id;
-          break
-      }
-    },
-
-    searchUser: function (peer) {
-      var id = this.getId(peer);
+    getChatIndexById: function (id) {
       var found = false;
-      for (var i = this.data.chats.length - 1; i >= 0 && !found; i--) {
-        if (this.data.chats[i].id == id) {
+      var index = -1;
+      for (var i = 0; i < this.chats.length && !found; i++) {
+        var chat_id = this.chats[i].chat.user.id;
+        if (chat_id == id) {
           found = true;
-          return this.data.chats[i]
+          index = i;
         }
       }
-      for (var i = this.data.users.length - 1; i >= 0 && !found; i--) {
-        if (this.data.users[i].id == id) {
-          found = true;
-          return this.data.users[i];
-        }
-      };
+      return index;
     },
-    // Return a promise with object {chat:chat,peer:peer}
+    getContactIndexById: function (id) {
+      var found = false;
+      var index = -1;
+      for (var i = 0; i < this.contacts.length && !found; i++) {
+        var chat_id = this.contacts[i].chat.user.id;
+        if (chat_id == id) {
+          found = true;
+          index = i;
+        }
+      }
+      return index;
+    },
+    _getStatus: function (status) {
+      var current_status = '';
+      if (status) {
+        if (status._ == 'userStatusOnline') {
+          current_status = "Connected";
+        } else if (status._ == 'userStatusRecently') {
+          current_status = "last seen recently"
+        } else {
+          var time = status.was_online * 1000;
+          var dif = new Date() - time;
+          if (dif < 24 * 60 * 60 * 1000) {
+            current_status = "last seen " + moment(time).fromNow();
+          } else {
+            current_status = "last seen " + moment(time).format('D MMM. YYYY');
+          }
+        }
+      }
+      return current_status;
+    },
     getPhoto: function (chat, peer) {
       return new Promise(function (resolve, reject) {
         if (!chat.user.photo || chat.user.photo._ == "chatPhotoEmpty") {
@@ -955,6 +932,78 @@ Example:
         }
       );
     },
+    /*----------------------------------Load component--------------------------------*/
+
+    initializeChat: function (peer) {
+      /* Object stored on array 'chats' show on sidebar:
+        {
+          - Chat:
+              - chat_messages[] (chat history)
+              - photo (String type image/jpeg)
+              - user (user talking with)
+              - participants (if group)
+          - Peer:
+              - _ (type of peer: peerUser, peerChannel, peerChat)
+              - id (user_id, channel_id, chat_id)
+        }
+      */
+      var chat = {};
+      chat.user = this.searchUser(peer);
+      var that = this;
+      if (chat.user.first_name || chat.user.title) {
+        this.getPhoto(chat, peer).then(function (chat) {
+          // take chat messages
+          that.getHistoryUser(chat.chat.user).then(function (response) {
+            chat.chat.chat_messages = that.getMSGs(response.messages);
+            // if group, add participants
+            if (response.users.length > 0) {
+              chat.participants = response.users;
+            }
+            if (response.messages.length > 0) {
+              chat.chat.last_message = response.messages[0].message;
+            }
+            that.push('chats', chat);
+          },
+            function (error) {
+              console.err(error);
+              this.push('chats', chat);
+            })
+        });
+      }
+    },
+
+    getId: function (peer) {
+      switch (peer._) {
+        case 'peerUser':
+          return peer.user_id;
+          break
+        case 'peerChannel':
+          return peer.channel_id;
+          break
+        case 'peerChat':
+          return peer.chat_id;
+          break
+      }
+    },
+
+    searchUser: function (peer) {
+      var id = this.getId(peer);
+      var found = false;
+      for (var i = this.data.chats.length - 1; i >= 0 && !found; i--) {
+        if (this.data.chats[i].id == id) {
+          found = true;
+          return this.data.chats[i]
+        }
+      }
+      for (var i = this.data.users.length - 1; i >= 0 && !found; i--) {
+        if (this.data.users[i].id == id) {
+          found = true;
+          return this.data.users[i];
+        }
+      };
+    },
+    // Return a promise with object {chat:chat,peer:peer}
+
     /*---------------------------------Search methods-------------------------------*/
 
     searchContact: function () {
@@ -994,12 +1043,12 @@ Example:
         if (this.chats[i].chat.user.id == user.id) {
           exists = true;
           var fakeEvent = { model: { item: this.chats[i], index: i } };
-          this.loadChat(fakeEvent);
+          this.open(fakeEvent);
         }
       }
       if (!exists) {
         var chat = {
-          messages: [],
+          chat_messages: [],
           user: user,
           photo: user.image || this.resolveUrl('default.png')
         };
@@ -1009,12 +1058,10 @@ Example:
         };
         this.push('chats', { chat: chat, peer: peer });
         // //Set selected style
-        // var id = '#chatsTemplate';
-        // var div = Polymer.dom(this.root).querySelectorAll(id)[0];
-        // div.render();
+
         var fakeEvent = { model: { item: { chat: chat, peer: peer }, index: this.chats.length - 1 } };
         this.openChat(fakeEvent);
-        this.subscribe(peer);
+        //this.subscribe(peer);
       }
     },
     /*----------------------------------Comunication methods-----------------------------*/
@@ -1036,7 +1083,7 @@ Example:
             date.toLocaleTimeString();
 
           me.push('user_selected.chat_messages', message);
-          me.$$('#chatMessages').render();
+          me.addMSG(me.getId(me.user_selected.peer), message);
           me.fixBottom();
         }
       );
@@ -1044,51 +1091,32 @@ Example:
 
     subscribe: function (peer) {
       var id = this.getId(peer);
+      console.info('Subscrito al peer: ', peer);
       var me = this;
       telegramApi.subscribe(id,
         function (response) {
-          //Notifications callback
-          if (response.updates || response.update) {
-            var updates = response.updates || [response.update];
-            for (var i = updates.length - 1; i >= 0; i--) {
-              var update = updates[i]
-              switch (update._) {
-                case 'updateNewMessage':
-                  //Identify target chat
-                  var msg = update.message;
-                  if (msg.from_id == me.user.id) {
-                    var id = me.getId(msg.to_id);
-                  } else {
-                    var id = msg.from_id;
-                  }
-                  //If its the active chat refresh it
-                  if (me.user_selected.id == id) {
-                    me.getHistory();
-                  } else {
-                    //GIVE FEEDBACK TO USER ON CHAT LIST
-                  }
-                  break;
-
-                case 'updateUserStatus':
-                  me.refreshStatus(update.user_id, update.status);
-                  break;
-              }
-            }
-          }
-          if (response._ == 'updateShortMessage') {
-            if (response.user_id == me.user.id) {
-              //unlucky: Cannot identify the chat if its an outbound message
-            }
-            //If its the active chat refresh it
-            else if (me.user_selected.user.id == response.user_id) {
-              me.getHistory();
-            } else {
-              //GIVE FEEDBACK TO USER ON CHAT LIST
-            }
+          if (me[response._]) {
+            me[response._](response);
+          } else {
+            console.info('Falta implementar manejador para ' + response._);
           }
         });
     },
+    addMSG: function (id, message) {
+      var chat_index = this.getChatIndexById(id);
 
+      if (chat_index == -1) {
+        console.error('No se encontro el chat en la lista. Hay que añadir un nuevo chat');
+        var newChatIndex = this.getContactIndexById(id);
+        return -1;
+      }
+
+      this.unshift('chats.' + chat_index + '.chat.chat_messages', message);
+      this.set('chats.' + chat_index + '.chat.last_message', message.text);
+
+      // force render in order to re-sort chats
+      this.$$('#chatscontainer').render();
+    },
     /*-------------------------------Refresh chat history-------------------------------*/
 
     getHistoryUser: function (user, cb) {
@@ -1106,50 +1134,10 @@ Example:
         }).then(resolve, reject);
       });
     },
-    getHistory: function (user) {
-      //Get messages
-      var user = user || this.user_selected;
-      if (user._ == 'user') {
-        var type = 'user';
-      } else {
-        var type = 'chat';
-      }
-
-      var me = this;
-      telegramApi.getHistory({
-        id: user.id,
-        take: 50,
-        type: type
-      }).then(function (data) {
-        //Update view
-        me.set('chat_messages', []);
-        for (var i = data.messages.length - 1; i >= 0; i--) {
-
-          me.addMSG(data.messages[i]);
-        }
-      });
-    },
     getMSGs: function (msgs) {
       var messages = [];
       msgs.forEach(function (msg) {
-        message = {};
-        if (msg.from_id == this.user.id) {
-          message.mine = true;
-        } else {
-          message.mine = false;
-        }
-
-        //Text
-        message.text = msg.message;
-
-        //Parse date
-        var date = new Date(msg.date * 1000);
-        message.date = date.getDate() + '/' + (date.getMonth() + 1) + '/' + date.getFullYear() + ' ' +
-          date.toLocaleTimeString();
-
-        //Set id
-        message.id = msg.id;
-        messages.push(message);
+        messages.push(this.parseMSG(msg));
       }.bind(this));
       return messages;
     },
@@ -1204,12 +1192,9 @@ Example:
     },
 
 
-    addMSG: function (msg) {
-      //Check if exists
-      for (var i = this.chat_messages.length - 1; i >= 0 && !exists; i--) {
-        var exists = this.chat_messages[i].id == msg.id;
-      }
-      if (exists) return;
+    parseMSG: function (msg) {
+
+      if (!msg) return;
 
       //Check outbound or inbound message
       message = {};
@@ -1226,11 +1211,11 @@ Example:
       var date = new Date(msg.date * 1000);
       message.date = date.getDate() + '/' + (date.getMonth() + 1) + '/' + date.getFullYear() + ' ' +
         date.toLocaleTimeString();
-
+      message.timestamp = date.getTime();
       //Set id
       message.id = msg.id;
 
-      this.push('chat_messages', message);
+      return message;
 
     },
     openChat: function (e) {
@@ -1297,29 +1282,88 @@ Example:
         this.text_message = '';
       }
     },
-    _getStatus: function (status) {
-      var current_status = '';
-      if (status) {
-        if (status._ == 'userStatusOnline') {
-          current_status = "Connected";
-        } else if (status._ == 'userStatusRecently') {
-          current_status = "last seen recently"
-        } else {
-          var time = status.was_online * 1000;
-          var dif = new Date() - time;
-          if (dif < 24 * 60 * 60 * 1000) {
-            current_status = "last seen " + moment(time).fromNow();
-          } else {
-            current_status = "last seen " + moment(time).format('D MMM. YYYY');
-          }
-        }
-      }
-      return current_status;
-    },
+
     /*---------------------------------- Left menu ----------------------------------*/
     /*------------------------------ Auxiliar functions-------------------------------*/
-    _getReverse: function(list){
-      return list? list.reverse():list;
-    }
+    _getReverse: function (list) {
+      return list ? list.reverse() : list;
+    },
+    _sortChatByLastMSG: function (chat1, chat2) {
+      var msg1_time = chat1.chat.chat_messages.length > 0 ? chat1.chat.chat_messages[0].timestamp : -1;
+      var msg2_time = chat2.chat.chat_messages.length > 0 ? chat2.chat.chat_messages[0].timestamp : -1;
+
+      return msg2_time - msg1_time;
+
+    },
+    searchChatId: function (message_id) {
+      var found = false;
+      var index = -1;
+      for (var i = 0; i < this.chats.length && !found; i++) {
+        var messages = this.chats[i].chat.chat_messages;
+        if (messages && messages.length > 0 && messages[0].id == message_id) {
+          found = true;
+          index = i;
+        }
+      }
+      return index;
+    },
+    /*------------------------------ subscribe handler -------------------------------*/
+    updateShort: function (response) {
+      // when status is updated
+      //console.info('TODO manejador de updateShort');
+      if (response.update) {
+        this.refreshStatus(response.update.user_id, response.update.status);
+      } else {
+        console.info('No hay response.update (quiza muchos): ', response);
+
+      }
+    },
+    msgs_ack: function (response) {
+      console.info('TODO manejador de msgs_ack');
+      console.info(response);
+    },
+    msgs_ack: function (response) {
+      // Only say msgs_ack but msg_ids is empty
+      if (response.msg_ids.length > 0) console.info(response);
+    },
+    msg_container: function (response) {
+      // useless. Response to an RPC query
+    },
+    // sent a message
+    updateShortMessage: function (response) {
+      var msg = this.parseMSG(response);
+      this.addMSG(response.user_id || response.chat_id, msg);
+    },
+    updateShortChatMessage: function (response) {
+      var msg = this.parseMSG(response);
+      this.addMSG(response.user_id || response.chat_id, msg);
+    },
+    updates: function (response) {
+      var that = this;
+      response.updates.forEach(function (update) {
+        if (that[update._]) {
+          that[update._](update);
+        } else {
+          console.info('TODO implementar manejador de ' + update._ + ' en updates');
+          console.info(update);
+        }
+
+      });
+    },
+    updateUserStatus: function (response) {
+      this.refreshStatus(response.user_id, response.status);
+    },
+    updateNewMessage: function (response) {
+      if (response.message._ !== "messageEmpty") {
+        var msg = this.parseMSG(response.message);
+        this.addMSG(response.message.to_id.chat_id || response.message.to_id.user_id, msg);
+      } else {
+        console.log('Se ha borrado el historial de un chat?');
+      }
+    },
+    updateDeleteMessages: function (response) {
+      var index_chat = this.searchChatId(response.messages[0]);
+      var removed = this.splice('chats', index_chat, 1);
+    },
   });
 </script>
