@@ -233,6 +233,16 @@ Example:
         padding-bottom: 3px;
         margin-right: 2px;
       }
+      .datemarker {
+        clear:both;
+      }
+      .datemarker > span{
+        background-color:#E1F2FB;
+        color: #797979;
+        padding:5px 8px;
+        border-radius: 4px;
+        font-size:12px;
+      }
       /* Login menus */
       .login{
         padding:8px 16px;
@@ -377,7 +387,7 @@ Example:
   </template>
 
   <template is="dom-if" if="{{logged}}">
-    <paper-icon-button on-click="openMenu" class="icon" icon="menu"></paper-icon-button>
+    <paper-icon-button class="icon" icon="menu"></paper-icon-button>
     <template is="dom-if" if="{{!searching}}">
       <p class="flex">Telegram</p>
     </template>
@@ -510,7 +520,12 @@ Example:
           <div class="displayArea flex" id="displayArea">
             <template is="dom-repeat" items="[[_getReverse(user_selected.chat_messages)]]" id="chatMessages">
               <template is="dom-if" if="{{item.mine}}">
-                <div class="messageOut">
+                <template is="dom-if" if="{{showDateMarker(index, user_selected.chat_messages)}}">
+                  <div class="datemarker vertical layout center-center">
+                    <span>{{_getDate(item)}}</span>
+                  </div>
+                </template>
+                <div class="messageOut vertical layout">
                   <span class="date">{{item.date}}</span>
                   <span>{{item.text}}</span>
                 </div>
@@ -859,7 +874,7 @@ Example:
       var found = false;
       var index = -1;
       for (var i = 0; i < this.contacts.length && !found; i++) {
-        var chat_id = this.contacts[i].chat.user.id;
+        var chat_id = this.contacts[i].id;
         if (chat_id == id) {
           found = true;
           index = i;
@@ -1104,18 +1119,34 @@ Example:
     },
     addMSG: function (id, message) {
       var chat_index = this.getChatIndexById(id);
-
+      // If its a new chat
       if (chat_index == -1) {
-        console.error('No se encontro el chat en la lista. Hay que añadir un nuevo chat');
+        // look for contact with same ID
         var newChatIndex = this.getContactIndexById(id);
-        return -1;
+        if (newChatIndex === -1) {
+          console.error('No se encuentra al usuario ni en chats ni en contactos');
+          return;
+        }
+        // add user to chats
+        var user = this.contacts[newChatIndex]
+        var chat = {
+          chat_messages: [message],
+          user: user,
+          photo: user.image || this.resolveUrl('default.png'),
+          last_message: message.text
+        };
+        var peer = {
+          _: 'peerUser',
+          user_id: user.id
+        };
+        this.push('chats', { chat: chat, peer: peer });
+      } else {
+        this.unshift('chats.' + chat_index + '.chat.chat_messages', message);
+        this.set('chats.' + chat_index + '.chat.last_message', message.text);
+
+        // force render in order to re-sort chats
+        this.$$('#chatscontainer').render();
       }
-
-      this.unshift('chats.' + chat_index + '.chat.chat_messages', message);
-      this.set('chats.' + chat_index + '.chat.last_message', message.text);
-
-      // force render in order to re-sort chats
-      this.$$('#chatscontainer').render();
     },
     /*-------------------------------Refresh chat history-------------------------------*/
 
@@ -1209,12 +1240,15 @@ Example:
 
       //Parse date
       var date = new Date(msg.date * 1000);
-      message.date = date.getDate() + '/' + (date.getMonth() + 1) + '/' + date.getFullYear() + ' ' +
-        date.toLocaleTimeString();
+      message.date = moment(date).format('HH:mm');
       message.timestamp = date.getTime();
+      
+      // parse sent
+      message.sent = msg.pFlags.out? true:false;
+      message.read = !msg.pFlags.unread? true:false
       //Set id
       message.id = msg.id;
-
+      message._base = msg;
       return message;
 
     },
@@ -1231,6 +1265,21 @@ Example:
     },
     closeChat: function () {
       this.removeChat();
+    },
+    showDateMarker: function (index, list) {
+      if (index == 0) {
+        return true;
+      }
+      var current_message = new Date(list[index].timestamp);
+      var previus_message = new Date(list[index - 1].timestamp);
+
+      if (current_message.getDay() == previus_message.getDay() &&
+        current_message.getMonth() == previus_message.getMonth() &&
+        current_message.getYear() == previus_message.getYear()) {
+        return false;
+      } else {
+        return true;
+      }
     },
     /*--------------------------------List country callback-----------------------------*/
     _openSelector: function () {
@@ -1307,6 +1356,16 @@ Example:
       }
       return index;
     },
+    _getDate: function (item) {
+      var date = item.timestamp;
+      return moment(date).calendar(null, {
+        sameDay: '[Today]',
+        nextDay: '[Tomorrow]',
+        lastDay: '[Yesterday]',
+        lastWeek: 'MMM DD, YYYY',
+        sameElse: 'MMM DD, YYYY'
+      });
+    },
     /*------------------------------ subscribe handler -------------------------------*/
     updateShort: function (response) {
       // when status is updated
@@ -1358,7 +1417,7 @@ Example:
         var msg = this.parseMSG(response.message);
         this.addMSG(response.message.to_id.chat_id || response.message.to_id.user_id, msg);
       } else {
-        console.log('Se ha borrado el historial de un chat?');
+        console.info('Se ha borrado el historial de un chat?', reponse);
       }
     },
     updateDeleteMessages: function (response) {
