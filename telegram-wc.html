@@ -12,6 +12,9 @@ Example:
 <link rel="import" href="bower_components/polymer/polymer.html">
 <link rel="import" href="bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="bower_components/iron-icons/iron-icons.html">
+
+<link rel="import" href="bower_components/iron-icons/av-icons.html">
+
 <link rel="import" href="bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="bower_components/paper-button/paper-button.html">
 <link rel="import" href="bower_components/paper-icon-button/paper-icon-button.html">
@@ -21,6 +24,8 @@ Example:
 <link rel="import" href="bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="bower_components/paper-styles/shadow.html">
 <link rel="import" href="bower_components/paper-button/paper-button.html">
+
+<script src="bower_components/moment/min/moment.min.js"></script>
 <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
 <script src="bower_components/telegram-api/dist/telegramApi.js"></script>
 
@@ -29,20 +34,34 @@ Example:
   <template>
 
     <style is="custom-style" include="iron-flex iron-flex-alignment">
-
       :host{
-        display: block;
         width: 400px;
         height: 400px;
         --telegram-background: #5682a3;
         overflow: hidden;
         position: relative;
-        font-family: Tahoma, sans-serif, Arial, Helvetica;
+        font: 14px/18px Tahoma,sans-serif,Arial,Helvetica;
         background-color: #e7ebf0;
+        border: 1px solid #d2d2d2;
+        border-radius:5px;
+        /* vertical layout*/
+        -ms-flex-direction: column;
+        -webkit-flex-direction: column;
+        flex-direction: column;
+        display: flex;
       }
-
+      .container {
+        overflow:auto;
+      }
+      :host[logged]{
+        background-color:white;
+      }
+      .divisor {
+        border:none;
+        border-bottom:1px solid #d2d2d2;
+        margin:0;
+      }
       /* HEADER */
-
       paper-toolbar.toolbar{
         --paper-toolbar-background: var(--telegram-background);
         --paper-toolbar-title:{
@@ -52,176 +71,198 @@ Example:
           overflow: visible;
         }
       }
-      paper-icon-button {
-        padding: 0;
-        margin-right: 8px;
+      .icon[icon="menu"] {
+        width: 40px;
+        height: 40px;
+        margin-right: 25px;
       }
-      /* SIDE BAR CONTACTS */
-
-      .contacts{
-        display: inline-block;
-        position: absolute;
-        left: 0;
-        width: 36px;
-        height: calc(100% - 64px);
-        background: var(--paper-grey-200);
-        padding: 2px;
-        transition: .5s ease;
-        z-index: 1;
-        overflow: hidden;
+      paper-icon-button.icon{
+        width: 40px;
+        height: 40px;
       }
-
-      .contact{
-        display: flex;
-        cursor: pointer;
-        margin-bottom: 7px;
-        max-height: 36px;
+      /* CONTACTS VIEW */
+      .contacts {
+        padding:6px 12px;
+        background-color:white;
+        cursor:pointer;
       }
-
-      .contact .profImg, iron-icon{
-        display: inline-table;
-        width: 36px;
-        border-radius: 18px;
-      }
-
-      .contactSelected{
-        background: var(--background);
-        color: #ffffff;
-      }
-
-      .contactSelected:hover{
-        background: var(--background) !important;
-      }
-
-      .contacts iron-icon{
-        height: 30px;
-        color: var(--background);
-      }
-
-      .contactHidden{
-        visibility: hidden;
-        align-self: center;
-        left: 40px;
-        width: 100px;
-        white-space: nowrap;
-        margin-left: 5px;
-      }
-
       .contacts:hover{
-        width: 160px;
-        overflow-y: scroll;
+        background-color:#d2d2d2;
       }
-
-      .contacts:hover .contactHidden{
-        visibility: visible;
+      .contacts .name {
+        margin:2px 0;
       }
-
-      .contact:hover{
-        background: #ffffff;
+      .contacts .chatPreview{
+        font-size:12px;
+        margin:0;
+        color:#797979;
       }
-
-      #style-3::-webkit-scrollbar-track
+      .profImg {
+        height: 42px;
+        width: 42px;
+        border-radius:50%;
+        margin-right:10px;
+      }
+      .profImg.small {
+        height: 32px;
+        width: 32px;
+      }
+      .emptyContacts{
+        height: 100%;
+      }
+      ::-webkit-scrollbar-track
       {
         -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
         background-color: var(--paper-grey-200);
       }
-
-      #style-3::-webkit-scrollbar
+      ::-webkit-scrollbar
       {
         width: 6px;
         background-color: var(--paper-grey-200);
       }
-
-      #style-3::-webkit-scrollbar-thumb
+      ::-webkit-scrollbar-thumb
       {
-        background-color: var(--background);
+        background-color: #42749b;
       }
 
       /* CHAT AREA */
-
       .chat{
-        padding-left: 40px;
-        height: calc(100% - 64px);
         background: #ffffff;
-      }
+        position:absolute;
+        top:0;left:0;
+        width: 100%;
+        height: 100%;
 
+      }
+      .chat > .content {
+        background-image: url('http://www.pinsho.com/wp-content/uploads/2013/11/telegram01.jpg');
+        background-size: 100% 100%;
+      }
       .displayArea{
         padding: 10px;
         height: calc(100% - 106px);
         overflow-y: scroll;
         overflow-x: hidden;
       }
-
       .messageIn, .messageOut{
-        background: var(--paper-blue-200);
         border-radius: 5px;
         padding: 10px;
         margin-bottom: 10px;
         max-width: 50%;
-        font: 15px Roboto,arial,sans-serif;
+        font: 13px Roboto,arial,sans-serif;
+        position: relative;
       }
-
       .messageIn{
         float: left;
         margin-right: 50%;
+        background: white;
       }
-
+      .messageIn:before{
+        content: "";
+        position: absolute;
+        width: 0;
+        height: 0;
+        border-bottom: 12px solid white;
+        border-right: 21px solid transparent;
+        border-left: 20px solid transparent;
+        bottom: 0;
+        left:-5px;
+      }
       .messageOut{
         float: right;
+        background-color:#DCF8C6;
         margin-left: 50%;
       }
-
+      .messageOut:before{
+        content: "";
+        position: absolute;
+        width: 0;
+        height: 0;
+        border-bottom: 5px solid #DCF8C6;
+        border-right: 3px solid transparent;
+        border-left: 19px solid transparent;
+        bottom: 0;
+        right: -3px;
+      }
       .date{
         font: 10px Roboto,arial,sans-serif;
         display: inherit;
         margin-bottom: 4px;
       }
-
       .sendArea{
-        position: absolute;
-        bottom: 0;
-        padding: 10px;
-        display: flex;
+        width: 100%;
+        height: auto;
+        border-top:1px solid #d2d2d2;
+        background-color:white;
+        max-width: 100%;
       }
-
       .input{
-        width: calc(100% - 42px);
-        resize: none;
         font: 15px Roboto,arial,sans-serif;
         align-self: center;
-        margin-right: 10px;
-        padding: 5px;
+        width: 100%;
+        max-width: calc(100% - 36px);
       }
-
+      .input > p {
+        width: 100%;
+        padding:8px;
+        max-width: 100%;
+        overflow:auto;
+        max-height: 100px;
+        word-wrap: break-word;
+        word-break: break-all;
+        margin:0;
+      }
       .send{
-        align-self: center;
-        color: var(--background);
+        --paper-icon-button: {
+          align-self: center;
+          color: #42749b;
+          width: 36px;
+          height: 36px;
+          padding:8px;
+        };
+        --paper-icon-button-disabled: {
+          color:#333;
+        };
       }
-
+      .status{
+        font-size:10px;
+      }
+      .groupicon{
+        width: 20px;
+        height: 20px;
+        padding-bottom: 3px;
+        margin-right: 2px;
+      }
+      .datemarker {
+        clear:both;
+      }
+      .datemarker > span{
+        background-color:#E1F2FB;
+        color: #797979;
+        padding:5px 8px;
+        border-radius: 4px;
+        font-size:12px;
+      }
       /* Login menus */
-
       .login{
         padding:8px 16px;
         color: var(--paper-grey-700);
         font: 15px Roboto,arial,sans-serif;
-        height: calc(100% - 90px);
+        height: 100%;
+        box-sizing: border-box;
         display: flex;
       }
-
       .loginMenu{
         padding: 0 18px 8px 18px;
         width: 100%;
         background-color:white; 
       }
-
       .loginMenu span{
         display: inline-table;    
       }
-
       .loginMenu input{
         width: 60%;
       }
-
       .inputContainer{
         position:relative;
       }
@@ -279,6 +320,9 @@ Example:
         margin-top:12px;
         float:right;
       }
+      .loginMenu .button.sendcode {
+        float: none;
+      }
       .requireCode {
         text-align: center;
       }
@@ -288,127 +332,229 @@ Example:
       .requireCode paper-button{
         margin-top:18px;
       }
+      /* Search bar */
+      #contactSearch {
+        --paper-input-container-focus-color: #d2d2d2;
+        --paper-input-container-input-color: #d2d2d2;
+      }
+      /* ANIMATIONS */
+      .animated {
+        -webkit-animation-duration: 0.3s;
+        animation-duration: 0.3s;
+        -webkit-animation-fill-mode: both;
+        animation-fill-mode: both;
+      }
+      @-webkit-keyframes fadeInRight {
+        from {
+          opacity: 0;
+          -webkit-transform: translate3d(100%, 0, 0);
+          transform: translate3d(100%, 0, 0);
+        }
+
+        to {
+          opacity: 1;
+          -webkit-transform: none;
+          transform: none;
+        }
+      }
+
+      @keyframes fadeInRight {
+        from {
+          opacity: 0;
+          -webkit-transform: translate3d(100%, 0, 0);
+          transform: translate3d(100%, 0, 0);
+        }
+
+        to {
+          opacity: 1;
+          -webkit-transform: none;
+          transform: none;
+        }
+      }
+
+      .fadeInRight {
+        -webkit-animation-name: fadeInRight;
+        animation-name: fadeInRight;
+      }
     </style>
 
 
 <!-- Header -->
 <paper-toolbar class="toolbar">
-  <img src="icon.png"></img>
-  <p>Telegram</p>
+  <template is="dom-if" if="{{!logged}}">
+    <img src="icon.png" class="icon"></img>
+    <p>Telegram</p>
+  </template>
+
+  <template is="dom-if" if="{{logged}}">
+    <paper-icon-button class="icon" icon="menu"></paper-icon-button>
+    <template is="dom-if" if="{{!searching}}">
+      <p class="flex">Telegram</p>
+    </template>
+    <paper-input no-label-float class="flex self-center" hidden$="{{!searching}}" on-blur="checkCloseSearch" value="{{search_keywords}}"
+      id="contactSearch"></paper-input>
+    <template is="dom-if" if="{{!searching}}">
+      <paper-icon-button icon="search" id="searchIcon" class="icon" on-click="searchContact"></paper-icon-button>
+    </template>
+  </template>
+
 </paper-toolbar>
-<!-- Login -->
-<template is="dom-if" if="{{!logged}}">
-  <!-- Phone and code -->
-  <div class="login" hidden="{{showCode}}">
-    <div class="loginMenu">
-      <p class="bold">Register</p>
-      <p class="subtitle">Please, select your country and introduce your phone number. You will receive a code of telegram app</p>
-      <div class="inputContainer">
-        <!-- Search country code -->
-        <label for="country" class="subtitle">Country</label>
-        <paper-input value="{{country}}" no-label-float focused="{{_openedSelector}}">
-        </paper-input>
-        <template is="dom-if" if="{{_openedSelector}}">
-          <ul class="country-list" on-focus="_openSelector">
-            <template is="dom-repeat" items="{{country_codes}}" filter="{{filterCountry(country)}}">
-              <li on-mousedown="_selectCountry" tabindex="0">{{item.name}}</li>
-            </template>
-          </ul>
-        </template>
-        <!--  END search code-->
-        <div class="phoneContainer horizontal layout ">
-          <div>
-            <label for="code" class="subtitle">Code</label>
-            <paper-input name="code" value="{{countryCode}}" class="code" no-label-float>
-              <div prefix>+</div>
-            </paper-input>
+<div class="container flex">
+  <!-- Login -->
+  <template is="dom-if" if="{{!logged}}">
+    <!-- Phone and code -->
+    <div class="login" hidden="{{showCode}}">
+      <div class="loginMenu vertical layout">
+        <p class="bold">Register</p>
+        <p class="subtitle">Please, select your country and introduce your phone number. You will receive a code of telegram app</p>
+        <div class="inputContainer">
+          <!-- Search country code -->
+          <label for="country" class="subtitle">Country</label>
+          <paper-input value="{{country}}" no-label-float focused="{{_openedSelector}}">
+          </paper-input>
+          <template is="dom-if" if="{{_openedSelector}}">
+            <ul class="country-list" on-focus="_openSelector">
+              <template is="dom-repeat" items="{{country_codes}}" filter="{{filterCountry(country)}}">
+                <li on-mousedown="_selectCountry" tabindex="0">{{item.name}}</li>
+              </template>
+            </ul>
+          </template>
+          <!--  END search code-->
+          <div class="phoneContainer horizontal layout ">
+            <div>
+              <label for="code" class="subtitle">Code</label>
+              <paper-input name="code" value="{{countryCode}}" class="code" no-label-float>
+                <div prefix>+</div>
+              </paper-input>
+            </div>
+            <div class="flex">
+              <label for="phonenumber" class="subtitle">Phone Number</label>
+              <paper-input name="phonenumber" value="{{phone}}" class="phonenumber" id="phoneNumber" no-label-float tabindex="0"></paper-input>
+            </div>
           </div>
-          <div class="flex">
-            <label for="phonenumber" class="subtitle">Phone Number</label>
-            <paper-input name="phonenumber" value="{{phone}}" class="phonenumber" no-label-float></paper-input>
-          </div>
+          <paper-button on-click="sendCode" class="button">Send</paper-button>
         </div>
-        <paper-button on-click="sendCode" class="button">Send</paper-button>
       </div>
     </div>
-  </div>
-  <div class="login requireCode" hidden="{{!showCode}}">
-    <div class="loginMenu">
-      <p class="bold">+{{countryCode}} {{phone}}</p>
-      <p class="subtitle flex">Enter the code you have received</p>
-      <paper-input name="phoneCode" value="{{phoneCode}}" label="Insert your code here"></paper-input>
-      <paper-button raised on-click="login" class="button">Send Code</paper-button>
+    <div class="login requireCode" hidden="{{!showCode}}">
+      <div class="loginMenu">
+        <p class="bold">+{{countryCode}} {{phone}}</p>
+        <p class="subtitle flex">Enter the code you have received</p>
+        <paper-input name="phoneCode" value="{{phoneCode}}" label="Insert your code here"></paper-input>
+        <paper-button raised on-click="login" class="button sendcode">Send Code</paper-button>
+      </div>
     </div>
-  </div>
-</template>
+  </template>
 
-<!-- Logged -->
-<template is="dom-if" if="{{logged}}">
+  <!-- Logged -->
+  <template is="dom-if" if="{{logged}}">
 
-  <!-- Contacts/Chats -->
-  <div class="contacts" id="style-3">
-    <div class="contact">
-      <iron-icon icon="search"></iron-icon>
-      <input class="contactHidden" value="{{search_keywords::input}}"></input>
-    </div>
-    <!-- Contacts -->
-    <template is="dom-if" if="{{searching}}">
-      <template is="dom-repeat" items="[[searchResult]]">
-        <div class="contact" on-click="loadContact">
-          <template is="dom-if" if="{{item.image}}">
-            <img class="profImg" src="{{item.image}}">
-          </template>
-          <template is="dom-if" if="{{!item.image}}">
-            <img class="profImg" src="default.png">
-          </template>
-          <span class="contactHidden">{{item.first_name}} {{item.last_name}}</span>
-        </div>
-      </template>
-    </template>
-    <!-- Chats -->
-    <template is="dom-if" if="{{!searching}}">
-      <template is="dom-repeat" items="[[chats]]" id="chatsTemplate">
-        <div id="chat{{item.chat.user.id}}" class="contact" on-click="loadChat">
-          <template is="dom-if" if="{{item.chat.photo}}">
+    <!-- if Chat is closed -->
+    <template is="dom-if" if="{{!selected}}">
+      <template is="dom-if" if="{{!searching}}">
+        <template is="dom-repeat" items="{{chats}}" id="chatscontainer" sort="_sortChatByLastMSG">
+          <div class="contacts horizontal layout center" on-click="openChat">
             <img class="profImg" src="{{item.chat.photo}}">
-          </template>
-          <template is="dom-if" if="{{!item.chat.photo}}">
-            <img class="profImg" src="default.png">
-          </template>
-          <span class="contactHidden">{{item.chat.user.title}} {{item.chat.user.first_name}} {{item.chat.user.last_name}}</span>
+            <div class="vertical layout displayName">
+              <template is="dom-if" if="{{item.chat.user.title}}">
+                <p class="name">
+                  <iron-icon icon="supervisor-account" class="groupicon"></iron-icon>{{item.chat.user.title}}</p>
+              </template>
+              <template is="dom-if" if="{{item.chat.user.first_name}}">
+                <p class="name">{{item.chat.user.first_name}} {{item.chat.user.last_name}}</p>
+              </template>
+              <p class="chatPreview">{{item.chat.last_message}}</p>
+            </div>
+          </div>
+          <hr class="divisor">
+        </template>
+      </template>
+      <template is="dom-if" if="{{searching}}">
+        <template is="dom-repeat" items="{{contacts}}" filter="{{filterContact(search_keywords)}}" rendered-item-count="{{nContactsFound}}">
+          <div class="contacts horizontal layout center" on-mousedown="loadContact">
+            <template is="dom-if" if="{{item.image}}">
+              <img class="profImg" src="{{item.image}}">
+            </template>
+            <template is="dom-if" if="{{!item.image}}">
+              <img class="profImg" src="default.png">
+            </template>
+            <div class="vertical layout">
+              <p>{{item.title}}{{item.first_name}} {{item.last_name}}</p>
+            </div>
+          </div>
+          <hr class="divisor">
+        </template>
+        <template is="dom-if" if="{{showNoContacts}}">
+          <div class="vertical layout center-center emptyContacts">
+            <p class="title">No results</p>
+          </div>
+        </template>
+      </template>
+      <template is="dom-if" if="{{chats_empty}}">
+        <!-- TODO loading info -->
+        <div class="vertical layout center-center emptyContacts">
+          <p class="title">No results</p>
         </div>
       </template>
     </template>
-  </div>
 
-  <!-- Chat -->
-  <div class="chat">
-    <div class="displayArea" id="displayArea">
-      <template is="dom-repeat" items="[[chat]]">
-        <template is="dom-if" if="{{item.mine}}">
-          <div class="messageOut">
-            <span class="date">{{item.date}}</span>
-            <span>{{item.text}}</span>
+    <!-- chat opened -->
+    <template is="dom-if" if="{{user_selected}}">
+      <div id="chatContainer" class="chat animated fadeInRight vertical layout">
+        <paper-toolbar class="toolbar">
+          <paper-icon-button on-click="closeChat" class="icon" icon="arrow-back"></paper-icon-button>
+          <img class="profImg small" src="{{user_selected.photo}}">
+          <div class="vertical layout">
+            <template is="dom-if" if="{{user_selected.first_name}}">
+              <span>{{user_selected.first_name}} {{user_selected.last_name}}</span>
+            </template>
+            <template is="dom-if" if="{{user_selected.title}}">
+              <span><iron-icon icon="supervisor-account" class="groupicon"></iron-icon>{{user_selected.title}}</span>
+            </template>
+            <span class="status">{{_getStatus(user_selected.status)}}</span>
           </div>
-        </template>
-        <template is="dom-if" if="{{!item.mine}}">
-          <div class="messageIn">
-            <span class="date">{{item.date}}</span>
-            <span>{{item.text}}</span>
+
+        </paper-toolbar>
+        <div class="content vertical layout flex">
+
+          <div class="displayArea flex" id="displayArea">
+            <template is="dom-repeat" items="[[_getReverse(user_selected.chat_messages)]]" id="chatMessages">
+              <template is="dom-if" if="{{item.mine}}">
+                <template is="dom-if" if="{{showDateMarker(index, user_selected.chat_messages)}}">
+                  <div class="datemarker vertical layout center-center">
+                    <span>{{_getDate(item)}}</span>
+                  </div>
+                </template>
+                <div class="messageOut vertical layout">
+                  <span class="date">{{item.date}}</span>
+                  <span>{{item.text}}</span>
+                </div>
+              </template>
+              <template is="dom-if" if="{{!item.mine}}">
+                <div class="messageIn">
+                  <span class="date">{{item.date}}</span>
+                  <span>{{item.text}}</span>
+                </div>
+              </template>
+            </template>
           </div>
-        </template>
-      </template>
-    </div>
-    <div class="sendArea">
-      <textarea value="{{textArea::input}}" class="input" rows="3" cols="50"></textarea>
-      <paper-icon-button icon="send" class="send" on-click="sendMSG"></paper-icon-button>
-    </div>
-  </div>
 
+          <div class="sendArea horizontal layout">
+            <div class="input flex horizontal layout">
+              <p contenteditable="true" data-placeholder$="{{text_message==placeholder}}" class="flex" on-focus="removePlaceholder" on-blur="checkPlaceholder"
+                on-keypress="updateTextMessage">{{placeholder}}</p>
+            </div>
+            <paper-icon-button icon="send" class="send" disabled="[[disable_send]]" on-click="sendMSG"></paper-icon-button>
+          </div>
+
+        </div>
+      </div>
+    </template>
+
+  </template>
+
+</div>
 </template>
-
-</template>
-
 </dom-module>
 
 <script>
@@ -420,7 +566,8 @@ Example:
 
       logged: {
         type: Boolean,
-        value: false
+        value: false,
+        reflectToAttribute: true
       },
 
       showCode: {
@@ -435,7 +582,7 @@ Example:
 
       search_keywords: {
         type: String,
-        observer: "search_keywords_changed"
+        value: ''
       },
 
       app: {
@@ -484,21 +631,71 @@ Example:
             host: '149.154.171.5',
             port: 80
           }]
-        }
+        },
       },
-
+      chats: {
+        type: Array,
+        value: function () { return []; },
+        notify: true,
+      },
+      chats_empty: {
+        type: Boolean,
+        computed: '_checkEmpty(chats.length)'
+      },
+      selected: {
+        type: Boolean,
+        value: false
+      },
+      text_message: {
+        type: String,
+        value: '',
+        notify: true
+      },
+      placeholder: {
+        type: String,
+        value: 'Message'
+      },
+      disable_send: {
+        type: Boolean,
+        computed: '_isTextMessageEmpty(text_message)'
+      },
+      nContactsFound: {
+        type: Boolean,
+        observer: '_checkNContactsFound'
+      },
+      showNoContacts: {
+        type: Boolean,
+        value: true
+      },
+      _isPlaceholder: {
+        type: Boolean,
+        value: true
+      },
+      user_selected: {
+        type: Object,
+        notify: true
+      }
     },
-
+    // Observers
+    _checkEmpty: function (chats) {
+      return chats === 0;
+    },
+    _isTextMessageEmpty: function (message) {
+      return !message;
+    },
+    _checkNContactsFound: function (newValue, oldValue) {
+      this.set('showNoContacts', newValue == 0);
+    },
     //Component lifecycle
-    ready: function () {
+    attached: function () {
       var _self = this;
-      var url = '/' + Polymer.Base.resolveUrl('code.json');
+      var url = this.resolveUrl('code.json');
       $.get(url, function (data) {
-        _self.country_codes = $.parseJSON(data);
+        _self.set('country_codes', data);
       });
       telegramApi.setConfig({
         app: this.app,
-        server: this.server
+        server: this.server,
       });
       // Extend telegram api
       telegramApi.getPhoto = function (type, photo) {
@@ -555,14 +752,13 @@ Example:
       telegramApi.logOut();
       this.logged = false;
       this.showCode = false;
-      this.show = null;
-      this.chats = null;
+      this.set('chats', []);
       this.chat = null;
       this.user = null;
     },
 
     sendCode: function () {
-      if (!this.phone ||!this.countryCode) return;
+      if (!this.phone || !this.countryCode) return;
 
       var me = this;
       telegramApi.sendCode(this.countryCode + this.phone).then(
@@ -581,7 +777,7 @@ Example:
       if (!this.phone || !this.codeHash || !this.phoneCode || !this.countryCode) return;
 
       var me = this;
-      telegramApi.signIn( (this.countryCode + this.phone), this.codeHash, this.phoneCode).then(
+      telegramApi.signIn((this.countryCode + this.phone), this.codeHash, this.phoneCode).then(
         function (response) {
           // ls
 
@@ -610,10 +806,11 @@ Example:
         function (user) {
           if (user.id) {
             //Logged
-            me.user = user;
+            me.set('user', user);
             me.logged = true;
             me.getContacts();
             me.getDialogs();
+            me.subscribe(user.id);
           }
         }
       );
@@ -623,7 +820,16 @@ Example:
       var me = this;
       telegramApi.invokeApi('contacts.getContacts', {}).then(
         function (response) {
-          me.contacts = response.users;
+          // sort contacts by first name
+          me.set('contacts', response.users.sort(function (contact1, contact2) {
+            // avoid space
+            var first_name1 = contact1.first_name.replace(" ", "");
+            var first_name2 = contact2.first_name.replace(" ", "");
+
+            if (first_name1 < first_name2) return -1;
+            if (first_name1 > first_name2) return 1;
+            return 0;
+          }));
           for (var i = me.contacts.length - 1; i >= 0; i--) {
             me.getPhotoContact(me.contacts[i]);
           };
@@ -639,26 +845,118 @@ Example:
       var me = this;
       telegramApi.getDialogs().then(
         function (response) {
-          me.data = response.result;
-          me.chats = [];
-          for (var i = 0; i < response.result.dialogs.length; i++) {
-            me.initializeChat(response.result.dialogs[i].peer);
-            me.subscribe(response.result.dialogs[i].peer);
+          me.set('data', response.result);
+          me.set('chats', []);
+          var dialogs = response.result.dialogs;
+          for (var i = 0; i < dialogs.length; i++) {
+            // add to chats
+            me.initializeChat(dialogs[i].peer);
+            // subscribe modifications
+            //me.subscribe(dialogs[i].peer);
           };
+
         }
       );
     },
+    getChatIndexById: function (id) {
+      var found = false;
+      var index = -1;
+      for (var i = 0; i < this.chats.length && !found; i++) {
+        var chat_id = this.chats[i].chat.user.id;
+        if (chat_id == id) {
+          found = true;
+          index = i;
+        }
+      }
+      return index;
+    },
+    getContactIndexById: function (id) {
+      var found = false;
+      var index = -1;
+      for (var i = 0; i < this.contacts.length && !found; i++) {
+        var chat_id = this.contacts[i].id;
+        if (chat_id == id) {
+          found = true;
+          index = i;
+        }
+      }
+      return index;
+    },
+    _getStatus: function (status) {
+      var current_status = '';
+      if (status) {
+        if (status._ == 'userStatusOnline') {
+          current_status = "Connected";
+        } else if (status._ == 'userStatusRecently') {
+          current_status = "last seen recently"
+        } else {
+          var time = status.was_online * 1000;
+          var dif = new Date() - time;
+          if (dif < 24 * 60 * 60 * 1000) {
+            current_status = "last seen " + moment(time).fromNow();
+          } else {
+            current_status = "last seen " + moment(time).format('D MMM. YYYY');
+          }
+        }
+      }
+      return current_status;
+    },
+    getPhoto: function (chat, peer) {
+      return new Promise(function (resolve, reject) {
+        if (!chat.user.photo || chat.user.photo._ == "chatPhotoEmpty") {
+          chat.photo = this.resolveUrl('default.png');
+          resolve({
+            chat: chat,
+            peer: peer
+          });
+          return;
+        }
 
+        var photo = chat.user.photo.photo_small;
 
+        var me = this;
+        telegramApi.getPhoto('base64', photo).then(
+          function (result) {
+            chat.photo = result;
+
+            resolve({
+              chat: chat,
+              peer: peer
+            });
+          },
+          function (error) {
+            chat.photo = me.resolveUrl('default.png');
+            resolve({
+              chat: chat,
+              peer: peer
+            });
+          }
+        );
+      }.bind(this));
+    },
+
+    getPhotoContact: function (user) {
+      if (!user.photo) return;
+
+      var photo = user.photo.photo_small;
+
+      var me = this;
+      telegramApi.getPhoto('base64', photo).then(
+        function (result) {
+          user.image = result;
+        }
+      );
+    },
     /*----------------------------------Load component--------------------------------*/
 
     initializeChat: function (peer) {
       /* Object stored on array 'chats' show on sidebar:
         {
           - Chat:
-              - messages[] (chat history)
+              - chat_messages[] (chat history)
               - photo (String type image/jpeg)
               - user (user talking with)
+              - participants (if group)
           - Peer:
               - _ (type of peer: peerUser, peerChannel, peerChat)
               - id (user_id, channel_id, chat_id)
@@ -666,7 +964,27 @@ Example:
       */
       var chat = {};
       chat.user = this.searchUser(peer);
-      if (chat.user.first_name || chat.user.title) this.getPhoto(chat, peer);
+      var that = this;
+      if (chat.user.first_name || chat.user.title) {
+        this.getPhoto(chat, peer).then(function (chat) {
+          // take chat messages
+          that.getHistoryUser(chat.chat.user).then(function (response) {
+            chat.chat.chat_messages = that.getMSGs(response.messages);
+            // if group, add participants
+            if (response.users.length > 0) {
+              chat.participants = response.users;
+            }
+            if (response.messages.length > 0) {
+              chat.chat.last_message = response.messages[0].message;
+            }
+            that.push('chats', chat);
+          },
+            function (error) {
+              console.err(error);
+              this.push('chats', chat);
+            })
+        });
+      }
     },
 
     getId: function (peer) {
@@ -699,65 +1017,35 @@ Example:
         }
       };
     },
-
-    getPhoto: function (chat, peer) {
-      if (!chat.user.photo) {
-        this.push('chats', {
-          chat: chat,
-          peer: peer
-        });
-        return;
-      }
-
-      var photo = chat.user.photo.photo_small;
-
-      var me = this;
-      telegramApi.getPhoto('base64', photo).then(
-        function (result) {
-          chat.photo = result;
-          me.push('chats', {
-            chat: chat,
-            peer: peer
-          });
-        },
-        function (error) {
-          me.push('chats', {
-            chat: chat,
-            peer: peer
-          });
-        }
-      );
-
-    },
-
-    getPhotoContact: function (user) {
-      if (!user.photo) return;
-
-      var photo = user.photo.photo_small;
-
-      var me = this;
-      telegramApi.getPhoto('base64', photo).then(
-        function (result) {
-          user.image = result;
-        }
-      );
-    },
+    // Return a promise with object {chat:chat,peer:peer}
 
     /*---------------------------------Search methods-------------------------------*/
 
-    search_keywords_changed: function (e) {
-      if (!this.search_keywords || this.search_keywords == '' || this.search_keywords.length == 0) {
-        this.searching = false;
+    searchContact: function () {
+      this.searching = true;
+      this.$$('#contactSearch').focus();
+    },
+    filterContact: function (keyword) {
+      if (!keyword) {
+        return null;
       } else {
-        this.searchContact();
+        keyword = keyword.toLowerCase();
+        return function (contact) {
+          contact.title = contact.title || '';
+          contact.first_name = contact.first_name || ' ';
+          contact.last_name = contact.last_name || '';
+          var full_name = (contact.title + ' ' + contact.first_name + ' ' + contact.last_name).toLowerCase();
+
+          return (full_name.indexOf(keyword) != -1);
+        };
       }
     },
-
-    searchContact: function () {
-      this.searchResult = this.contacts;
-      this.searching = true;
+    checkCloseSearch: function (e) {
+      var isInput = e.currentTarget === this.$$('#contactSearch') && !e.detail;
+      if (!this.search_keywords && !isInput) {
+        this.searching = false;
+      }
     },
-
     /*------------------------------------Load chat---------------------------------*/
 
     loadContact: function (e) {
@@ -769,212 +1057,175 @@ Example:
         //If it exists
         if (this.chats[i].chat.user.id == user.id) {
           exists = true;
-          var fakeEvent = {
-            model: {
-              item: this.chats[i],
-              index: i
-            }
-          };
-          this.loadChat(fakeEvent);
+          var fakeEvent = { model: { item: this.chats[i], index: i } };
+          this.open(fakeEvent);
         }
       }
       if (!exists) {
         var chat = {
-          messages: [],
-          user: user
+          chat_messages: [],
+          user: user,
+          photo: user.image || this.resolveUrl('default.png')
         };
         var peer = {
           _: 'peerUser',
           user_id: user.id
         };
-        this.push('chats', {
-          chat: chat,
-          peer: peer
-        });
+        this.push('chats', { chat: chat, peer: peer });
+        // //Set selected style
 
-        //Set selected style
-        var id = '#chatsTemplate';
-        var div = Polymer.dom(this.root).querySelectorAll(id)[0];
-        div.render();
-
-        var fakeEvent = {
-          model: {
-            item: {
-              chat: chat,
-              peer: peer
-            },
-            index: this.chats.length - 1
-          }
-        };
-        this.loadChat(fakeEvent);
-        this.subscribe(peer);
+        var fakeEvent = { model: { item: { chat: chat, peer: peer }, index: this.chats.length - 1 } };
+        this.openChat(fakeEvent);
+        //this.subscribe(peer);
       }
     },
-
-    loadChat: function (e) {
-      var chat = e.model.item.chat;
-
-      //Set selected style
-      var id = '#chat' + chat.user.id;
-      var div = Polymer.dom(this.root).querySelectorAll(id)[0];
-      if (this.show) {
-        var id = '#chat' + this.show.chat.user.id;
-        var divOld = Polymer.dom(this.root).querySelectorAll(id)[0];
-        divOld.className = div.className;
-      }
-      div.className += " contactSelected";
-      this.focusChat(e);
-
-      //Load chat
-      this.show = e.model.item;
-      this.refreshChat();
-      this.continueRefresh();
-    },
-
     /*----------------------------------Comunication methods-----------------------------*/
 
-    sendMSG: function () {
-      if (this.textArea == null || this.textArea == '') return null;
+    sendMSG: function (text) {
+      var text = text || this.text_message;
+      if (!text) return null;
 
       var me = this;
-      telegramApi.sendMessage(this.getId(this.show.peer), this.textArea).then(
+      telegramApi.sendMessage(this.getId(this.user_selected.peer), text).then(
         function (response) {
-          me.refreshChat();
+          message = {
+            mine: true,
+            text: text
+          };
+          //Parse date
+          var date = new Date();
+          message.date = date.getDate() + '/' + (date.getMonth() + 1) + '/' + date.getFullYear() + ' ' +
+            date.toLocaleTimeString();
+
+          me.push('user_selected.chat_messages', message);
+          me.addMSG(me.getId(me.user_selected.peer), message);
+          me.fixBottom();
         }
       );
-
-      //Manual insert
-      var msg = {};
-      msg.message = this.textArea;
-      msg.from_id = this.user.id;
-      msg.date = new Date();
-      this.addMSG(msg);
-      this.textArea = '';
     },
 
     subscribe: function (peer) {
       var id = this.getId(peer);
+      console.info('Subscrito al peer: ', peer);
       var me = this;
       telegramApi.subscribe(id,
         function (response) {
-          //Notifications callback
-          if (response._ == 'updates') {
-            for (var i = response.updates.length - 1; i >= 0; i--) {
-              if (response.updates[i]._ == 'updateNewMessage') {
-                //Identify target chat
-                var msg = response.updates[i].message;
-                if (msg.from_id == me.user.id) {
-                  var id = me.getId(msg.to_id);
-                } else {
-                  var id = msg.from_id;
-                }
-                //If its the active chat refresh it
-                if (me.show.chat.user.id == id) {
-                  me.refreshChat();
-                } else {
-                  //GIVE FEEDBACK TO USER ON CHAT LIST
-                }
-
-              }
-            }
-          } else if (response._ == 'updateShortMessage') {
-            if (response.user_id == me.user.id) {
-              //unlucky: Cannot identify the chat if its an outbound message
-            }
-            //If its the active chat refresh it
-            else if (me.show.chat.user.id == response.user_id) {
-              me.refreshChat();
-            } else {
-              //GIVE FEEDBACK TO USER ON CHAT LIST
-            }
+          if (me[response._]) {
+            me[response._](response);
+          } else {
+            console.info('Falta implementar manejador para ' + response._);
           }
         });
     },
+    addMSG: function (id, message) {
+      var chat_index = this.getChatIndexById(id);
+      // If its a new chat
+      if (chat_index == -1) {
+        // look for contact with same ID
+        var newChatIndex = this.getContactIndexById(id);
+        if (newChatIndex === -1) {
+          console.error('No se encuentra al usuario ni en chats ni en contactos');
+          return;
+        }
+        // add user to chats
+        var user = this.contacts[newChatIndex]
+        var chat = {
+          chat_messages: [message],
+          user: user,
+          photo: user.image || this.resolveUrl('default.png'),
+          last_message: message.text
+        };
+        var peer = {
+          _: 'peerUser',
+          user_id: user.id
+        };
+        this.push('chats', { chat: chat, peer: peer });
+      } else {
+        this.unshift('chats.' + chat_index + '.chat.chat_messages', message);
+        this.set('chats.' + chat_index + '.chat.last_message', message.text);
 
+        // force render in order to re-sort chats
+        this.$$('#chatscontainer').render();
+      }
+    },
     /*-------------------------------Refresh chat history-------------------------------*/
 
-    /* refreshChat():
-          Update the active chat history
-    */
-    refreshChat: function () {
-      //Get messages
-      var user = this.show.chat.user;
-      if (user._ == 'user') {
-        var type = 'user';
-      } else {
-        var type = 'chat';
+    getHistoryUser: function (user, cb) {
+      return new Promise(function (resolve, reject) {
+        if (user._ == 'user') {
+          var type = 'user';
+        } else {
+          var type = 'chat';
+        }
+        var me = this;
+        telegramApi.getHistory({
+          id: user.id,
+          take: 50,
+          type: type
+        }).then(resolve, reject);
+      });
+    },
+    getMSGs: function (msgs) {
+      var messages = [];
+      msgs.forEach(function (msg) {
+        messages.push(this.parseMSG(msg));
+      }.bind(this));
+      return messages;
+    },
+    removeChat: function () {
+      // stop pulling
+      this.selected = false;
+      this.set('chat_messages', []);
+      this.set('user_selected', undefined);
+    },
+
+    refreshStatus: function (user_id, status) {
+      var that = this;
+      // chats
+      this.chats.forEach(function (chat, index) {
+        var user = chat.chat.user;
+        if (user.id == user_id) {
+          that.set('chats.' + index + '.chat.user.status', status);
+        }
+      });
+      // contact
+      this.contacts.forEach(function (contact, index) {
+        if (contact.id == user_id) {
+          that.set('contacts.' + index + '.status', status);
+        }
+      });
+      // user_selected
+      if (this.user_selected && this.user_selected.id == user_id) {
+        that.set('user_selected.status', status);
       }
-
-      var me = this;
-      telegramApi.getHistory({
-        id: user.id,
-        take: 50,
-        type: type
-      }).then(function (data) {
-        //Update view
-        me.show.chat.messages = data.messages;
-        me.chat = [];
-        for (var i = data.messages.length - 1; i >= 0; i--) {
-          me.addMSG(data.messages[i]);
-        }
-        me.fixBottom();
-      });
     },
-
-    /* continueRefresh():
-        Refresh the chat every minute
-    */
-    continueRefresh: function () {
-      var promise = new Promise(function (resolve, reject) {
-        window.setTimeout(
-          function () {
-            resolve();
-          }, 60000);
-      });
-      /* DELAY */
-      var me = this;
-      promise.then(function () {
-        if (me.show) {
-          me.refreshChat();
-          me.continueRefresh();
-        }
-      });
-    },
-
     /*----------------------------------Display methods----------------------------------*/
-
-    focusChat: function (e) {
-      var container = Polymer.dom(this.root).querySelectorAll('#style-3')[0];
-      var height = (container.scrollHeight / (this.chats.length + 1)) * (e.model.index - 1.5);
-      container.scrollTop = height;
-    },
 
     fixBottom: function () {
       //Fix scroll bar bottom
-      var container = Polymer.dom(this.root).querySelectorAll('#displayArea')[0];
-      container.scrollTop = container.scrollHeight;
-      if (container.scrollTop != container.scrollHeight) {
-        var promise = new Promise(function (resolve, reject) {
-          window.setTimeout(
-            function () {
-              resolve();
-            }, 100);
-        });
-        /* DELAY */
-        var me = this;
-        promise.then(function () {
-          container.scrollTop = container.scrollHeight;
-        });
+      var container = this.$$('#displayArea');
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+        if (container.scrollTop != container.scrollHeight) {
+          var promise = new Promise(function (resolve, reject) {
+            window.setTimeout(
+              function () {
+                resolve();
+              }, 100);
+          });
+          /* DELAY */
+          var me = this;
+          promise.then(function () {
+            container.scrollTop = container.scrollHeight;
+          });
+        }
       }
-
     },
 
-    addMSG: function (msg) {
-      //Check if exists
-      for (var i = this.chat.length - 1; i >= 0 && !exists; i--) {
-        var exists = this.chat[i].id == msg.id;
-      }
-      if (exists) return;
+
+    parseMSG: function (msg) {
+
+      if (!msg) return;
 
       //Check outbound or inbound message
       message = {};
@@ -989,28 +1240,57 @@ Example:
 
       //Parse date
       var date = new Date(msg.date * 1000);
-      message.date = date.getDate() + '/' + (date.getMonth() + 1) + '/' + date.getFullYear() + ' ' +
-        date.toLocaleTimeString();
-
+      message.date = moment(date).format('HH:mm');
+      message.timestamp = date.getTime();
+      
+      // parse sent
+      message.sent = msg.pFlags.out? true:false;
+      message.read = !msg.pFlags.unread? true:false
       //Set id
       message.id = msg.id;
-
-      this.push('chat', message);
+      message._base = msg;
+      return message;
 
     },
+    openChat: function (e) {
+      this.set('user_selected', e.model.item.chat.user);
+      this.set('user_selected._index', e.model.index);
+      this.set('user_selected.photo', e.model.item.chat.photo);
+      this.set('user_selected.peer', e.model.item.peer);
+      this.set('user_selected.chat_messages', e.model.item.chat.chat_messages || []);
+      this.selected = true;
+      var that = this;
+      window.setTimeout(function () { that.fixBottom(); }, 100);
 
-    // Events callback
+    },
+    closeChat: function () {
+      this.removeChat();
+    },
+    showDateMarker: function (index, list) {
+      if (index == 0) {
+        return true;
+      }
+      var current_message = new Date(list[index].timestamp);
+      var previus_message = new Date(list[index - 1].timestamp);
+
+      if (current_message.getDay() == previus_message.getDay() &&
+        current_message.getMonth() == previus_message.getMonth() &&
+        current_message.getYear() == previus_message.getYear()) {
+        return false;
+      } else {
+        return true;
+      }
+    },
+    /*--------------------------------List country callback-----------------------------*/
     _openSelector: function () {
       this._openedSelector = true;
-    },
-    _closeSelector: function () {
-      this._openedSelector = false;
     },
     _selectCountry: function (e) {
       var item = e.model.item;
       this.country = item.name;
       this.countryCode = item.number;
       this._openedSelector = false;
+      this.$$('#phoneNumber').$.input.focus();
     },
 
     // Filter country
@@ -1024,6 +1304,125 @@ Example:
         return name.indexOf(country) != -1;
       }
     },
+    /*----------------------------------Input text methods ----------------------------------*/
+    removePlaceholder: function (e) {
+      var target = e.currentTarget;
+      var text = target.innerHTML;
+      target.innerHTML = text === this.placeholder ? '' : text;
+      this._isPlaceholder = false;
+    },
+    checkPlaceholder: function (e) {
+      var target = e.currentTarget;
+      target.innerHTML = target.innerHTML || this.placeholder;
+      this._isPlaceholder = target.innerHTML == this.placeholder;
+    },
 
+    updateTextMessage: function (e) {
+      var code = e.keyCode;
+      var text = e.currentTarget.innerHTML + String.fromCharCode(code);
+      this.text_message = text;
+      if (code === 13) {
+        // send message
+        // Prevent navigator add <div>br</div>
+        e.preventDefault();
+        this.sendMSG(this.text_message);
+        e.currentTarget.innerHTML = this.placeholder;
+        e.currentTarget.blur();
+        this.text_message = '';
+      }
+    },
+
+    /*---------------------------------- Left menu ----------------------------------*/
+    /*------------------------------ Auxiliar functions-------------------------------*/
+    _getReverse: function (list) {
+      return list ? list.reverse() : list;
+    },
+    _sortChatByLastMSG: function (chat1, chat2) {
+      var msg1_time = chat1.chat.chat_messages.length > 0 ? chat1.chat.chat_messages[0].timestamp : -1;
+      var msg2_time = chat2.chat.chat_messages.length > 0 ? chat2.chat.chat_messages[0].timestamp : -1;
+
+      return msg2_time - msg1_time;
+
+    },
+    searchChatId: function (message_id) {
+      var found = false;
+      var index = -1;
+      for (var i = 0; i < this.chats.length && !found; i++) {
+        var messages = this.chats[i].chat.chat_messages;
+        if (messages && messages.length > 0 && messages[0].id == message_id) {
+          found = true;
+          index = i;
+        }
+      }
+      return index;
+    },
+    _getDate: function (item) {
+      var date = item.timestamp;
+      return moment(date).calendar(null, {
+        sameDay: '[Today]',
+        nextDay: '[Tomorrow]',
+        lastDay: '[Yesterday]',
+        lastWeek: 'MMM DD, YYYY',
+        sameElse: 'MMM DD, YYYY'
+      });
+    },
+    /*------------------------------ subscribe handler -------------------------------*/
+    updateShort: function (response) {
+      // when status is updated
+      //console.info('TODO manejador de updateShort');
+      if (response.update) {
+        this.refreshStatus(response.update.user_id, response.update.status);
+      } else {
+        console.info('No hay response.update (quiza muchos): ', response);
+
+      }
+    },
+    msgs_ack: function (response) {
+      console.info('TODO manejador de msgs_ack');
+      console.info(response);
+    },
+    msgs_ack: function (response) {
+      // Only say msgs_ack but msg_ids is empty
+      if (response.msg_ids.length > 0) console.info(response);
+    },
+    msg_container: function (response) {
+      // useless. Response to an RPC query
+    },
+    // sent a message
+    updateShortMessage: function (response) {
+      var msg = this.parseMSG(response);
+      this.addMSG(response.user_id || response.chat_id, msg);
+    },
+    updateShortChatMessage: function (response) {
+      var msg = this.parseMSG(response);
+      this.addMSG(response.user_id || response.chat_id, msg);
+    },
+    updates: function (response) {
+      var that = this;
+      response.updates.forEach(function (update) {
+        if (that[update._]) {
+          that[update._](update);
+        } else {
+          console.info('TODO implementar manejador de ' + update._ + ' en updates');
+          console.info(update);
+        }
+
+      });
+    },
+    updateUserStatus: function (response) {
+      this.refreshStatus(response.user_id, response.status);
+    },
+    updateNewMessage: function (response) {
+      if (response.message._ !== "messageEmpty") {
+        var msg = this.parseMSG(response.message);
+        this.addMSG(response.message.to_id.chat_id || response.message.to_id.user_id, msg);
+      } else {
+        console.info('Se ha borrado el historial de un chat?', reponse);
+      }
+    },
+    updateDeleteMessages: function (response) {
+      var index_chat = this.searchChatId(response.messages[0]);
+      var removed = this.splice('chats', index_chat, 1);
+    },
   });
 </script>

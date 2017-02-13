@@ -23,6 +23,7 @@
     "paper-toolbar": "^1.1.7",
     "paper-behaviors": "^1.0.12",
     "paper-button": "^1.0.14",
-    "paper-input": "PolymerElements/paper-input#^1.1.22"
+    "paper-input": "PolymerElements/paper-input#^1.1.22",
+    "moment": "^2.17.1"
   }
 }
