@@ -146,11 +146,12 @@ Example:
       }
       .messageIn, .messageOut{
         border-radius: 5px;
-        padding: 10px;
+        padding: 5px 8px 0 8px;
         margin-bottom: 10px;
         max-width: 50%;
         font: 13px Roboto,arial,sans-serif;
         position: relative;
+        min-width: 60px;
       }
       .messageIn{
         float: left;
@@ -187,7 +188,9 @@ Example:
       .date{
         font: 10px Roboto,arial,sans-serif;
         display: inherit;
-        margin-bottom: 4px;
+        margin:2px 4px 2px auto;
+        text-align: right;
+        color:green;
       }
       .sendArea{
         width: 100%;
@@ -242,6 +245,9 @@ Example:
         padding:5px 8px;
         border-radius: 4px;
         font-size:12px;
+      }
+      .check {
+        letter-spacing: -5px;
       }
       /* Login menus */
       .login{
@@ -526,14 +532,30 @@ Example:
                   </div>
                 </template>
                 <div class="messageOut vertical layout">
-                  <span class="date">{{item.date}}</span>
-                  <span>{{item.text}}</span>
+                  <span class="text">{{item.text}}</span>
+                  <div class="date">
+                    {{item.date}}
+                    <template is="dom-if" if="{{item.sent}}">
+                      <span class="check">✓</span>
+                    </template>
+                    <template is="dom-if" if="{{item.read}}">
+                      <span class="check">✓</span>
+                    </template>
+                  </div>
                 </div>
               </template>
               <template is="dom-if" if="{{!item.mine}}">
                 <div class="messageIn">
-                  <span class="date">{{item.date}}</span>
-                  <span>{{item.text}}</span>
+                  <span class "text">{{item.text}}</span>
+                  <div class="date">
+                    {{item.date}}
+                    <template is="dom-if" if="{{item.sent}}">
+                      <span class="check">✓</span>
+                    </template>
+                    <template is="dom-if" if="{{item.read}}">
+                      <span class="check">✓</span>
+                    </template>
+                  </div>
                 </div>
               </template>
             </template>
@@ -1242,10 +1264,10 @@ Example:
       var date = new Date(msg.date * 1000);
       message.date = moment(date).format('HH:mm');
       message.timestamp = date.getTime();
-      
+
       // parse sent
-      message.sent = msg.pFlags.out? true:false;
-      message.read = !msg.pFlags.unread? true:false
+      message.sent = msg.pFlags.out ? true : false;
+      message.read = !msg.pFlags.unread ? true : false
       //Set id
       message.id = msg.id;
       message._base = msg;
