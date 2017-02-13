@@ -1,5 +1,6 @@
 node_modules
 dist
 bower_components
+bower_components/telegram-api/dist/telegramApi.js
 .tmp
 .vscode
