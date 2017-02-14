@@ -85,6 +85,8 @@ Example:
         padding:6px 12px;
         background-color:white;
         cursor:pointer;
+        box-sizing: border-box;
+        position:relative;
       }
       .contacts:hover{
         background-color:#d2d2d2;
@@ -96,9 +98,14 @@ Example:
         font-size:12px;
         margin:0;
         color:#797979;
+        display: inline-block;
+        width: 70%;
+        white-space: nowrap;
+        overflow: hidden !important;
+        text-overflow: ellipsis;
       }
       .displayName {
-        width: 100%;
+        width: calc(100% - 52px); /* profImg size + margin*/
       }
       .datechat{
         margin-left:10px;
@@ -146,9 +153,11 @@ Example:
       }
       .displayArea{
         padding: 10px;
+        width: 100%;
         height: calc(100% - 106px);
         overflow-y: scroll;
         overflow-x: hidden;
+        box-sizing: border-box;
       }
       .messageIn, .messageOut{
         border-radius: 5px;
@@ -401,6 +410,82 @@ Example:
         -webkit-animation-name: fadeInRight;
         animation-name: fadeInRight;
       }
+      /* LEFT MENU */
+      .bar {
+        bottom: 0;top:0;
+        position: absolute;
+        z-index: 1000;
+        width: 100%;
+        height: 100%;
+        /*-webkit-transition: fadeOut 0.3s ease-in;*/
+        transition: left 0.3s ease-out;
+        left: -100%;
+        box-shadow: none;
+        display:none;
+      }
+
+      .bar[show] {
+        left:0;
+        /*-webkit-transition: fadeIn 0.3s ease-out;*/
+        transition: left 0.3s ease-out, background-color 0.7s ease-out;
+        background-color: rgba(0,0,0,0.4);
+      }
+      .bar .avatar {
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+      }
+      .bar .userInfo{
+        background-color:#42749b;
+        text-align: left;
+        width:80%;
+        padding:10px 20px;
+        box-sizing: border-box;
+        position: relative;
+      }
+      .bar .userInfo p {
+        font-size: 16px;
+        text-transform: capitalize;
+        color: #fefefe;
+        margin:10px 0 5px 0;
+      }
+      .bar .userInfo p.phone {
+        font-size:12px;
+        color:#d2d2d2;
+      }
+      .bar .menuContent {
+        padding:10px 0px;
+        position:relative;
+        color: #333;
+        background-color: var(--paper-grey-50);
+        max-height: 100%;
+        overflow-y: auto;
+        width:80%;
+      }
+      .closeMenu{
+        position:absolute;
+        top:10px;
+        right:10px;
+        display: inline-block;
+        color: #d2d2d2;
+      }
+      .menuOptions{
+        list-style-type: none;
+        padding:0;
+        margin:0;
+      }
+      .menuOptions > li {
+        padding:10px;
+        cursor: pointer;
+      }
+      .menuOptions > li:hover{
+        background-color: rgba(210,210,210,0.5);
+      }
+      .optionIcon{
+        width: 20px;
+        height: auto;
+        margin-right: 10px;
+      }
     </style>
 
 
@@ -412,7 +497,7 @@ Example:
   </template>
 
   <template is="dom-if" if="{{logged}}">
-    <paper-icon-button class="icon" icon="menu"></paper-icon-button>
+    <paper-icon-button on-click="toggleMenu" class="icon" icon="menu"></paper-icon-button>
     <template is="dom-if" if="{{!searching}}">
       <p class="flex">Telegram</p>
     </template>
@@ -489,22 +574,23 @@ Example:
                 </template>
 
                 <template is="dom-if" if="{{item.chat.user.first_name}}">
-                  <p class="name flex">{{item.chat.user.first_name}} {{item.chat.user.last_name}}</p>
+                  <p class="name flex" data-sent$="{{item.chat.last_message.sent}}" data-read$="{{item.chat.last_message.read}}">{{item.chat.user.first_name}} {{item.chat.user.last_name}}</p>
                 </template>
                 <template is="dom-if" if="{{item.chat.last_message.mine}}">
-                    
-                    <template is="dom-if" if="{{item.chat.last_message.sent}}">
-                      <span class="check sort">✓</span>
-                    </template>
-                    
-                    <template is="dom-if" if="{{item.chat.last_message.read}}">
-                      <span class="check sort">✓</span>
-                    </template>
-                  
+                  <template is="dom-if" if="{{item.chat.last_message.sent}}">
+                    <span class="check sort">✓</span>
                   </template>
+
+                  <template is="dom-if" if="{{item.chat.last_message.read}}">
+                    <span class="check sort">✓</span>
+                  </template>
+
+                </template>
                 <p class="date lastmessage">{{item.chat.last_message.date}}</p>
               </div>
-              <p class="chatPreview">{{item.chat.last_message.text}}</p>
+              <div>
+                <p class="chatPreview">{{item.chat.last_message.text}}</p>
+              </div>
             </div>
           </div>
           <hr class="divisor">
@@ -602,6 +688,22 @@ Example:
       </div>
     </template>
 
+    <div show$="{{menu_open}}" class="bar vertical layout" id="bar">
+      <div class="userInfo">
+        <img src="{{user.image}}" class="avatar">
+        <p>{{user.first_name}}</p>
+        <p class="phone">{{user.phone}}</p>
+        <paper-icon-button class="closeMenu" on-click="toggleMenu" icon="arrow-back"></paper-icon-button>
+      </div>
+      <div class="menuContent flex">
+        <ul class="menuOptions">
+          <li on-click="logout">
+            <iron-icon class="optionIcon" icon="exit-to-app"></iron-icon>
+            <span>Logout</span>
+          </li>
+        </ul>
+      </div>
+    </div>
   </template>
 
 </div>
@@ -726,6 +828,12 @@ Example:
         type: Object,
         notify: true
       },
+      menu_open: {
+        type: Boolean,
+        notify: true,
+        value: false,
+        reflectToAttribute: true
+      }
     },
     observers: ['_renderChats(user_selected.chat_messages.length)'],
     // Observers
@@ -835,7 +943,6 @@ Example:
       telegramApi.signIn((this.countryCode + this.phone), this.codeHash, this.phoneCode).then(
         function (response) {
           // ls
-
           me.getUser();
         }
       );
@@ -862,10 +969,20 @@ Example:
           if (user.id) {
             //Logged
             me.set('user', user);
+            var phone = '+' + user.phone;
+            phone = phone.match(/.{1,3}/g).join(' ')
+            me.set('user.phone', phone);
             me.logged = true;
             me.getContacts();
             me.getDialogs();
             me.subscribe(user.id);
+
+            var photo = user.photo.photo_small;
+            telegramApi.getPhoto('base64', photo).then(
+              function (result) {
+                me.set('user.image', result);
+              }
+            );
           }
         }
       );
@@ -1147,9 +1264,8 @@ Example:
           message.mine = true;
           message.text = text;
 
-          me.push('user_selected.chat_messages', message);
+          //me.push('user_selected.chat_messages', message);
           me.addMSG(me.getId(me.user_selected.peer), message);
-          //me.$$('#chatMessages').render();
           me.fixBottom();
         }
       );
@@ -1202,6 +1318,38 @@ Example:
           this.fixBottom();
         }
       }
+    },
+    updateMSG: function (user_id, msg_id) {
+      var chat_id = this.searchChatByUserId(user_id);
+      if (chat_id == -1) {
+        console.error('No se encuentra el chat al actualizar');
+        return;
+      }
+      var end = false;
+      var length = this.chats[chat_id].chat.chat_messages.length - 1;
+      for (var i = length; i >= 0; i--) {
+        var chat = this.chats[chat_id].chat.chat_messages[i];
+        if (chat.mine && !chat.read) {
+          this.set('chats.' + chat_id + '.chat.chat_messages.' + i + '.read', true);
+          this.set('chats.' + chat_id + '.chat.chat_messages.' + i + '._base.pFlags.unread', false);
+          if (i == length){
+            this.set('chats.' + chat_id +'.chat.last_message.read', true);
+          }
+        } else if (chat.read) {
+          end = true;
+        }
+      }
+      if (this.user_selected.id && this.user_selected.id == user_id) {
+        this.set('user_selected.chat_messages',[]);
+        this.set('user_selected.chat_messages', this.chats[chat_id].chat.chat_messages);
+      }
+      // force render
+      this.$$('#chatscontainer').render();
+      if (this.$$('#chatMessages')) {
+        this.$$('#chatMessages').render();
+        //this.fixBottom();
+      }
+      return i;
     },
     /*-------------------------------Refresh chat history-------------------------------*/
 
@@ -1392,14 +1540,19 @@ Example:
     },
 
     /*---------------------------------- Left menu ----------------------------------*/
+    toggleMenu: function (e) {
+      this.menu_open = !this.menu_open;
+    },
+
+
     /*------------------------------ Auxiliar functions-------------------------------*/
     _getReverse: function (list) {
       return list ? list.reverse() : list;
     },
     _sortChatByLastMSG: function (chat1, chat2) {
-      var msg1_time = chat1.chat.last_message  ? chat1.chat.last_message.timestamp : -1;
-      var msg2_time = chat2.chat.last_message  ? chat2.chat.last_message.timestamp : -1;
-      
+      var msg1_time = chat1.chat.last_message ? chat1.chat.last_message.timestamp : -1;
+      var msg2_time = chat2.chat.last_message ? chat2.chat.last_message.timestamp : -1;
+
       // console.info('Chat 1 es:'+ chat1.chat.user.first_name + ' su mensaje es: '+ );
       // console.info('Chat 2 es:'+ chat2.chat.user.first_name);
       // console.info(' Diferentecia :' + (msg2_time - msg1_time));
@@ -1407,12 +1560,24 @@ Example:
       return msg2_time - msg1_time;
 
     },
-    searchChatId: function (message_id) {
+    searchChatByMsgId: function (message_id) {
       var found = false;
       var index = -1;
       for (var i = 0; i < this.chats.length && !found; i++) {
         var messages = this.chats[i].chat.chat_messages;
         if (messages && messages.length > 0 && messages[0].id == message_id) {
+          found = true;
+          index = i;
+        }
+      }
+      return index;
+    },
+    searchChatByUserId: function (user_id) {
+      var found = false;
+      var index = -1;
+      for (var i = 0; i < this.chats.length && !found; i++) {
+        var id = this.chats[i].chat.user.id;
+        if (id == user_id) {
           found = true;
           index = i;
         }
@@ -1441,11 +1606,8 @@ Example:
       }
     },
     msgs_ack: function (response) {
-      console.info('TODO manejador de msgs_ack');
-      console.info(response);
-    },
-    msgs_ack: function (response) {
       // Only say msgs_ack but msg_ids is empty
+      console.info('ACK: ', response);
       if (response.msg_ids.length > 0) console.info(response);
     },
     msg_container: function (response) {
@@ -1486,11 +1648,14 @@ Example:
       }
     },
     updateDeleteMessages: function (response) {
-      var index_chat = this.searchChatId(response.messages[0]);
+      var index_chat = this.searchMsgBy(response.messages[0]);
       var removed = this.splice('chats', index_chat, 1);
     },
     rpc_result: function (response) {
-      // Se puede usar para setear los ticks de enviado y/o leido
-    }
+    },
+    updateReadHistoryOutbox: function (response) {
+      var id = response.peer.user_id || response.peer.chat_id;
+      this.updateMSG(id, response);
+    },
   });
 </script>
