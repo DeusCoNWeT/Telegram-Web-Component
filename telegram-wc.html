@@ -696,8 +696,9 @@ Example:
       user_selected: {
         type: Object,
         notify: true
-      }
+      },
     },
+    observers: ['_renderChats(user_selected.chat_messages.length)'],
     // Observers
     _checkEmpty: function (chats) {
       return chats === 0;
@@ -707,6 +708,9 @@ Example:
     },
     _checkNContactsFound: function (newValue, oldValue) {
       this.set('showNoContacts', newValue == 0);
+    },
+    _renderChats: function(){
+      if (this.$$('#chatMessages'))this.$$('#chatMessages').render();
     },
     //Component lifecycle
     attached: function () {
@@ -1116,7 +1120,7 @@ Example:
 
           me.push('user_selected.chat_messages', message);
           me.addMSG(me.getId(me.user_selected.peer), message);
-          me.$$('#chatMessages').render();
+          //me.$$('#chatMessages').render();
           me.fixBottom();
         }
       );
