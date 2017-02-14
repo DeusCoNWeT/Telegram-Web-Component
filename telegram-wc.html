@@ -1110,14 +1110,9 @@ Example:
       var me = this;
       telegramApi.sendMessage(this.getId(this.user_selected.peer), text).then(
         function (response) {
-          message = {
-            mine: true,
-            text: text
-          };
-          //Parse date
-          var date = new Date();
-          message.date = date.getDate() + '/' + (date.getMonth() + 1) + '/' + date.getFullYear() + ' ' +
-            date.toLocaleTimeString();
+          var message = me.parseMSG(response);
+          message.mine = true;
+          message.text = text;
 
           me.push('user_selected.chat_messages', message);
           me.addMSG(me.getId(me.user_selected.peer), message);
