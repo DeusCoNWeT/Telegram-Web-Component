@@ -1397,8 +1397,12 @@ Example:
       return list ? list.reverse() : list;
     },
     _sortChatByLastMSG: function (chat1, chat2) {
-      var msg1_time = chat1.chat.chat_messages.length > 0 ? chat1.chat.chat_messages[0].timestamp : -1;
-      var msg2_time = chat2.chat.chat_messages.length > 0 ? chat2.chat.chat_messages[0].timestamp : -1;
+      var msg1_time = chat1.chat.last_message  ? chat1.chat.last_message.timestamp : -1;
+      var msg2_time = chat2.chat.last_message  ? chat2.chat.last_message.timestamp : -1;
+      
+      // console.info('Chat 1 es:'+ chat1.chat.user.first_name + ' su mensaje es: '+ );
+      // console.info('Chat 2 es:'+ chat2.chat.user.first_name);
+      // console.info(' Diferentecia :' + (msg2_time - msg1_time));
 
       return msg2_time - msg1_time;
 
