@@ -97,6 +97,12 @@ Example:
         margin:0;
         color:#797979;
       }
+      .displayName {
+        width: 100%;
+      }
+      .datechat{
+        margin-left:10px;
+      }
       .profImg {
         height: 42px;
         width: 42px;
@@ -185,12 +191,18 @@ Example:
         bottom: 0;
         right: -3px;
       }
-      .date{
+      .text {
+        display:inline-block;
+      }
+      .date {
         font: 10px Roboto,arial,sans-serif;
         display: inherit;
         margin:2px 4px 2px auto;
         text-align: right;
         color:green;
+      }
+      .date.lastmessage{
+        margin-left:10px;
       }
       .sendArea{
         width: 100%;
@@ -248,6 +260,13 @@ Example:
       }
       .check {
         letter-spacing: -5px;
+        color:green;
+      }
+      .check.sort{
+       letter-spacing: -10px;
+       display: inline-block;
+       width: 4px;
+       line-height: 15px;
       }
       /* Login menus */
       .login{
@@ -462,14 +481,30 @@ Example:
           <div class="contacts horizontal layout center" on-click="openChat">
             <img class="profImg" src="{{item.chat.photo}}">
             <div class="vertical layout displayName">
-              <template is="dom-if" if="{{item.chat.user.title}}">
-                <p class="name">
-                  <iron-icon icon="supervisor-account" class="groupicon"></iron-icon>{{item.chat.user.title}}</p>
-              </template>
-              <template is="dom-if" if="{{item.chat.user.first_name}}">
-                <p class="name">{{item.chat.user.first_name}} {{item.chat.user.last_name}}</p>
-              </template>
-              <p class="chatPreview">{{item.chat.last_message}}</p>
+              <div class="horizontal layout">
+
+                <template is="dom-if" if="{{item.chat.user.title}}">
+                  <p class="name flex">
+                    <iron-icon icon="supervisor-account" class="groupicon"></iron-icon>{{item.chat.user.title}}</p>
+                </template>
+
+                <template is="dom-if" if="{{item.chat.user.first_name}}">
+                  <p class="name flex">{{item.chat.user.first_name}} {{item.chat.user.last_name}}</p>
+                </template>
+                <template is="dom-if" if="{{item.chat.last_message.mine}}">
+                    
+                    <template is="dom-if" if="{{item.chat.last_message.sent}}">
+                      <span class="check sort">✓</span>
+                    </template>
+                    
+                    <template is="dom-if" if="{{item.chat.last_message.read}}">
+                      <span class="check sort">✓</span>
+                    </template>
+                  
+                  </template>
+                <p class="date lastmessage">{{item.chat.last_message.date}}</p>
+              </div>
+              <p class="chatPreview">{{item.chat.last_message.text}}</p>
             </div>
           </div>
           <hr class="divisor">
@@ -549,12 +584,6 @@ Example:
                   <span class "text">{{item.text}}</span>
                   <div class="date">
                     {{item.date}}
-                    <template is="dom-if" if="{{item.sent}}">
-                      <span class="check">✓</span>
-                    </template>
-                    <template is="dom-if" if="{{item.read}}">
-                      <span class="check">✓</span>
-                    </template>
                   </div>
                 </div>
               </template>
@@ -709,8 +738,8 @@ Example:
     _checkNContactsFound: function (newValue, oldValue) {
       this.set('showNoContacts', newValue == 0);
     },
-    _renderChats: function(){
-      if (this.$$('#chatMessages'))this.$$('#chatMessages').render();
+    _renderChats: function () {
+      if (this.$$('#chatMessages')) this.$$('#chatMessages').render();
     },
     //Component lifecycle
     attached: function () {
@@ -1001,7 +1030,7 @@ Example:
               chat.participants = response.users;
             }
             if (response.messages.length > 0) {
-              chat.chat.last_message = response.messages[0].message;
+              chat.chat.last_message = chat.chat.chat_messages[0];
             }
             that.push('chats', chat);
           },
@@ -1163,11 +1192,15 @@ Example:
         };
         this.push('chats', { chat: chat, peer: peer });
       } else {
-        this.unshift('chats.' + chat_index + '.chat.chat_messages', message);
-        this.set('chats.' + chat_index + '.chat.last_message', message.text);
+        this.push('chats.' + chat_index + '.chat.chat_messages', message);
+        this.set('chats.' + chat_index + '.chat.last_message', message);
 
         // force render in order to re-sort chats
         this.$$('#chatscontainer').render();
+        if (this.$$('#chatMessages')) {
+          this.$$('#chatMessages').render();
+          this.fixBottom();
+        }
       }
     },
     /*-------------------------------Refresh chat history-------------------------------*/
@@ -1251,7 +1284,8 @@ Example:
 
       //Check outbound or inbound message
       message = {};
-      if (msg.from_id == this.user.id) {
+      var id = msg.from_id || msg.user_id || msg.chat_id;
+      if (id == this.user.id) {
         message.mine = true;
       } else {
         message.mine = false;
@@ -1290,6 +1324,9 @@ Example:
     },
     showDateMarker: function (index, list) {
       if (index == 0) {
+        return true;
+      }
+      if (index >= list.length) {
         return true;
       }
       var current_message = new Date(list[index].timestamp);
@@ -1418,6 +1455,7 @@ Example:
     updateShortChatMessage: function (response) {
       var msg = this.parseMSG(response);
       this.addMSG(response.user_id || response.chat_id, msg);
+      // actualizar user selected?
     },
     updates: function (response) {
       var that = this;
@@ -1438,6 +1476,7 @@ Example:
       if (response.message._ !== "messageEmpty") {
         var msg = this.parseMSG(response.message);
         this.addMSG(response.message.to_id.chat_id || response.message.to_id.user_id, msg);
+        // actualizar user_selected?
       } else {
         console.info('Se ha borrado el historial de un chat?', reponse);
       }
@@ -1446,5 +1485,8 @@ Example:
       var index_chat = this.searchChatId(response.messages[0]);
       var removed = this.splice('chats', index_chat, 1);
     },
+    rpc_result: function (response) {
+      // Se puede usar para setear los ticks de enviado y/o leido
+    }
   });
 </script>
