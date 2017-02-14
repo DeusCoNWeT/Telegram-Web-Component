@@ -1116,6 +1116,7 @@ Example:
 
           me.push('user_selected.chat_messages', message);
           me.addMSG(me.getId(me.user_selected.peer), message);
+          me.$$('#chatMessages').render();
           me.fixBottom();
         }
       );
