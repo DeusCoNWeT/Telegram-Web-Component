@@ -574,7 +574,7 @@ Example:
                 </template>
 
                 <template is="dom-if" if="{{item.chat.user.first_name}}">
-                  <p class="name flex" data-sent$="{{item.chat.last_message.sent}}" data-read$="{{item.chat.last_message.read}}">{{item.chat.user.first_name}} {{item.chat.user.last_name}}</p>
+                  <p class="name flex">{{item.chat.user.first_name}} {{item.chat.user.last_name}}</p>
                 </template>
                 <template is="dom-if" if="{{item.chat.last_message.mine}}">
                   <template is="dom-if" if="{{item.chat.last_message.sent}}">
@@ -645,7 +645,7 @@ Example:
         <div class="content vertical layout flex">
 
           <div class="displayArea flex" id="displayArea">
-            <template is="dom-repeat" items="[[_getReverse(user_selected.chat_messages)]]" id="chatMessages">
+            <template is="dom-repeat" items="[[user_selected.chat_messages]]" id="chatMessages">
               <template is="dom-if" if="{{item.mine}}">
                 <template is="dom-if" if="{{showDateMarker(index, user_selected.chat_messages)}}">
                   <div class="datemarker vertical layout center-center">
@@ -790,6 +790,7 @@ Example:
         type: Array,
         value: function () { return []; },
         notify: true,
+        observe:true
       },
       chats_empty: {
         type: Boolean,
@@ -1142,12 +1143,13 @@ Example:
           // take chat messages
           that.getHistoryUser(chat.chat.user).then(function (response) {
             chat.chat.chat_messages = that.getMSGs(response.messages);
+            chat.chat.chat_messages.reverse();
             // if group, add participants
             if (response.users.length > 0) {
               chat.participants = response.users;
             }
             if (response.messages.length > 0) {
-              chat.chat.last_message = chat.chat.chat_messages[0];
+              chat.chat.last_message = chat.chat.chat_messages[chat.chat.chat_messages.length -1];
             }
             that.push('chats', chat);
           },
@@ -1230,7 +1232,7 @@ Example:
         if (this.chats[i].chat.user.id == user.id) {
           exists = true;
           var fakeEvent = { model: { item: this.chats[i], index: i } };
-          this.open(fakeEvent);
+          this.openChat(fakeEvent);
         }
       }
       if (!exists) {
@@ -1248,7 +1250,6 @@ Example:
 
         var fakeEvent = { model: { item: { chat: chat, peer: peer }, index: this.chats.length - 1 } };
         this.openChat(fakeEvent);
-        //this.subscribe(peer);
       }
     },
     /*----------------------------------Comunication methods-----------------------------*/
@@ -1326,29 +1327,35 @@ Example:
         return;
       }
       var end = false;
-      var length = this.chats[chat_id].chat.chat_messages.length - 1;
-      for (var i = length; i >= 0; i--) {
+      var length = this.chats[chat_id].chat.chat_messages.length;
+      for (var i = 0; i <length; i++) {
         var chat = this.chats[chat_id].chat.chat_messages[i];
         if (chat.mine && !chat.read) {
-          this.set('chats.' + chat_id + '.chat.chat_messages.' + i + '.read', true);
-          this.set('chats.' + chat_id + '.chat.chat_messages.' + i + '._base.pFlags.unread', false);
-          if (i == length){
-            this.set('chats.' + chat_id +'.chat.last_message.read', true);
+          this.chats[chat_id].chat.chat_messages[i].read = true;
+          this.notifyPath('chats.' + chat_id + '.chat.chat_messages.' + i + '.read', this.chats[chat_id].chat.chat_messages[i].read);
+          
+          this.chats[chat_id].chat.chat_messages[i]._base.pFlags.unread = false;
+          this.notifyPath('chats.' + chat_id + '.chat.chat_messages.' + i + '._base.pFlags.unread', this.chats[chat_id].chat.chat_messages[i]._base.pFlags.unread);
+         
+          if (this.user_selected &&  this.user_selected.id == user_id) {
+            this.user_selected.chat_messages[i].read = true;
+            this.notifyPath('user_selected.chat_messages.' + i +'.read',this.user_selected.chat_messages[i].read);
+          }
+
+          if (i == length-1){
+            this.chats[chat_id].chat.last_message.read = true;
+            this.notifyPath('chats.' + chat_id +'.chat.last_message.read', this.chats[chat_id].chat.last_message.read);
           }
         } else if (chat.read) {
           end = true;
         }
       }
-      if (this.user_selected.id && this.user_selected.id == user_id) {
-        this.set('user_selected.chat_messages',[]);
-        this.set('user_selected.chat_messages', this.chats[chat_id].chat.chat_messages);
-      }
       // force render
-      this.$$('#chatscontainer').render();
-      if (this.$$('#chatMessages')) {
-        this.$$('#chatMessages').render();
-        //this.fixBottom();
-      }
+      // this.$$('#chatscontainer').render();
+      // if (this.$$('#chatMessages')) {
+      //   this.$$('#chatMessages').render();
+      //   //this.fixBottom();
+      // }
       return i;
     },
     /*-------------------------------Refresh chat history-------------------------------*/
@@ -1533,8 +1540,8 @@ Example:
         // Prevent navigator add <div>br</div>
         e.preventDefault();
         this.sendMSG(this.text_message);
-        e.currentTarget.innerHTML = this.placeholder;
-        e.currentTarget.blur();
+        e.currentTarget.innerHTML = '';
+        // e.currentTarget.blur();
         this.text_message = '';
       }
     },
@@ -1546,9 +1553,6 @@ Example:
 
 
     /*------------------------------ Auxiliar functions-------------------------------*/
-    _getReverse: function (list) {
-      return list ? list.reverse() : list;
-    },
     _sortChatByLastMSG: function (chat1, chat2) {
       var msg1_time = chat1.chat.last_message ? chat1.chat.last_message.timestamp : -1;
       var msg2_time = chat2.chat.last_message ? chat2.chat.last_message.timestamp : -1;
@@ -1593,6 +1597,9 @@ Example:
         lastWeek: 'MMM DD, YYYY',
         sameElse: 'MMM DD, YYYY'
       });
+    },
+    arrayItem: function(change, idx, path){
+      return this.get(path, change.base[idx]);
     },
     /*------------------------------ subscribe handler -------------------------------*/
     updateShort: function (response) {

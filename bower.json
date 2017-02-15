@@ -24,6 +24,8 @@
     "paper-behaviors": "^1.0.12",
     "paper-button": "^1.0.14",
     "paper-input": "PolymerElements/paper-input#^1.1.22",
-    "moment": "^2.17.1"
+    "moment": "^2.17.1",
+    "iron-ajax": "^1.4.3",
+    "paper-menu": "^1.2.2"
   }
 }
