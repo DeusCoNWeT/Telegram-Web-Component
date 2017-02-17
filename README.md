@@ -21,4 +21,20 @@ install the component and dependencies and use the tag as follows:  
   app='{ id:"your id", hash:"your hash", version: "1.0.0" }'
 >
 </telegram-wc>
+
+
+
+### TODO
+
+[ ] Parse media messages
+[ ] Send "read message" to API when I read a new message
+[ ] Send "i'm online" when the component is visible
+[ ] Create new Groups
+[ ] Language support
+[ ] Change user config
+[ ] Delete a chat
+[ ] Send medias
+[ ] Emoticons
+[ ] User typing status
+[ ] Message that reference to other message
 ```

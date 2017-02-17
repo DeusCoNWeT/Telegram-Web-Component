@@ -1440,7 +1440,7 @@ Example:
           if (me[response._]) {
             me[response._](response);
           } else {
-            console.info('Falta implementar manejador para ' + response._);
+            console.info('Handler doesnt found ' + response._);
           }
         });
     },
@@ -1451,7 +1451,7 @@ Example:
         // look for contact with same ID
         var newChatIndex = this.getContactIndexById(id);
         if (newChatIndex === -1) {
-          console.error('No se encuentra al usuario ni en chats ni en contactos');
+          console.error('User doesnt found in chats and contacs list');
           return;
         }
         // add user to chats 
@@ -1681,8 +1681,12 @@ Example:
       if (message.isChat) {
         message.from_user = this.getUserName(id);        
       }
-      message._base = msg;
 
+      // if its a media file say it
+      message._base = msg;
+      if (msg.media){
+        message.text = "[MEDIA doesnt implemented] " + message.text;
+      }
       return message;
 
     },
@@ -1849,7 +1853,7 @@ Example:
         }
       }
       if (index == -1){
-        console.error('El id pasado para generar el color no existe en la lista de participantes: ', id, participants);
+        console.error('ID doesnt found in participants list', id, participants);
         index =0;
       }
       return color[index]
@@ -1860,14 +1864,10 @@ Example:
       // when status is updated
       if (response.update) {
         this.refreshStatus(response.update.user_id, response.update.status);
-      } else {
-        console.info('No hay response.update (quiza muchos): ', response);
-
-      }
+      } 
     },
     msgs_ack: function (response) {
       // Only say msgs_ack but msg_ids is empty
-      if (response.msg_ids.length > 0) console.info(response);
     },
     msg_container: function (response) {
       var messages = response.messages;
@@ -1876,7 +1876,7 @@ Example:
           if (this[message.body._]) {
             this[message.body._](message.body);
           } else {
-            console.info('Falta implementar manejador para ' + message.body._);
+            console.info('Handler doesn\'t found ' + message.body._);
           }
         }
 
@@ -1908,7 +1908,7 @@ Example:
         if (that[update._]) {
           that[update._](update);
         } else {
-          console.info('TODO implementar manejador de ' + update._ + ' en updates');
+          console.info('TODO Implement hander for' + update._);
           console.info(update);
         }
 
