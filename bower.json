@@ -2,7 +2,8 @@
   "name": "Telegram-Web-Component",
   "homepage": "https://github.com/fjcaballero/Telegram-Web-Component",
   "authors": [
-    "Javier Caballero <javier.caballero.abenza@gmail.com>"
+    "Javier Caballero <javier.caballero.abenza@gmail.com>",
+    "Miguel Ortega Moreno <mortega@conwet.com"
   ],
   "description": "",
   "main": "telegram-wc.html",
@@ -25,8 +26,6 @@
     "paper-button": "^1.0.14",
     "paper-input": "PolymerElements/paper-input#^1.1.22",
     "moment": "^2.17.1",
-    "iron-ajax": "^1.4.3",
-    "paper-menu": "^1.2.2",
     "paper-fab": "PolymerElements/paper-fab#^1.2.1"
   }
 }
