@@ -1,6 +1,7 @@
 <!--
 @license
-@author Javier Caballero Abenza. All rights reserved.
+@author Javier Caballero Abenza.
+        Miguel Ortega Moreno. All rights reserved.
 
 Example:
 
@@ -12,9 +13,7 @@ Example:
 <link rel="import" href="bower_components/polymer/polymer.html">
 <link rel="import" href="bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="bower_components/iron-icons/iron-icons.html">
-
 <link rel="import" href="bower_components/iron-icons/av-icons.html">
-
 <link rel="import" href="bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="bower_components/paper-button/paper-button.html">
 <link rel="import" href="bower_components/paper-icon-button/paper-icon-button.html">
@@ -24,134 +23,157 @@ Example:
 <link rel="import" href="bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="bower_components/paper-styles/shadow.html">
 <link rel="import" href="bower_components/paper-button/paper-button.html">
-
 <script src="bower_components/moment/min/moment.min.js"></script>
 <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
 <script src="bower_components/telegram-api/dist/telegramApi.js"></script>
-
 <dom-module id="telegram-wc">
-
   <template>
-
     <style is="custom-style" include="iron-flex iron-flex-alignment">
-      :host{
+       :host {
         width: 400px;
         height: 400px;
         --telegram-background: #5682a3;
         overflow: hidden;
         position: relative;
-        font: 14px/18px Tahoma,sans-serif,Arial,Helvetica;
+        font: 14px/18px Tahoma, sans-serif, Arial, Helvetica;
         background-color: #e7ebf0;
         border: 1px solid #d2d2d2;
-        border-radius:5px;
+        border-radius: 5px;
         /* vertical layout*/
         -ms-flex-direction: column;
         -webkit-flex-direction: column;
         flex-direction: column;
         display: flex;
       }
+      
       .container {
-        overflow:auto;
+        overflow: auto;
       }
-      :host[logged]{
-        background-color:white;
+      
+       :host[logged] {
+        background-color: white;
       }
+      
       .divisor {
-        border:none;
-        border-bottom:1px solid #d2d2d2;
-        margin:0;
+        border: none;
+        border-bottom: 1px solid #d2d2d2;
+        margin: 0;
       }
       /* HEADER */
-      paper-toolbar.toolbar{
+      
+      paper-toolbar.toolbar {
         --paper-toolbar-background: var(--telegram-background);
-        --paper-toolbar-title:{
+        --paper-toolbar-title: {
           text-align: center;
           margin-left: auto;
           margin-right: auto;
           overflow: visible;
         }
       }
+      
       .icon[icon="menu"] {
         width: 40px;
         height: 40px;
         margin-right: 25px;
       }
-      paper-icon-button.icon{
+      
+      paper-icon-button.icon {
         width: 40px;
         height: 40px;
       }
       /* CONTACTS VIEW */
+      
       .contacts {
-        padding:6px 12px;
-        background-color:white;
-        cursor:pointer;
+        padding: 6px 12px;
+        background-color: white;
+        cursor: pointer;
         box-sizing: border-box;
-        position:relative;
+        position: relative;
       }
-      .contacts:hover{
-        background-color:#d2d2d2;
+      
+      .contacts:hover {
+        background-color: #d2d2d2;
       }
+      
       .contacts .name {
-        margin:2px 0;
+        margin: 2px 0;
       }
-      .contacts .chatPreview{
-        font-size:12px;
-        margin:0;
-        color:#797979;
+      
+      .contacts .chatPreview {
+        font-size: 12px;
+        margin: 0;
+        color: #8a8a8a;
         display: inline-block;
         width: 70%;
         white-space: nowrap;
         overflow: hidden !important;
         text-overflow: ellipsis;
+        padding: 0 7px;
       }
+      
       .displayName {
-        width: calc(100% - 52px); /* profImg size + margin*/
+        width: calc(100% - 52px);
+        /* profImg size + margin*/
       }
-      .datechat{
-        margin-left:10px;
+      
+      .datechat {
+        margin-left: 10px;
       }
+      
       .profImg {
         height: 42px;
         width: 42px;
-        border-radius:50%;
-        margin-right:10px;
+        border-radius: 50%;
+        margin-right: 10px;
       }
+      
       .profImg.small {
         height: 32px;
         width: 32px;
       }
-      .emptyContacts{
+      
+      .emptyContacts {
         height: 100%;
       }
-      ::-webkit-scrollbar-track
-      {
-        -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+      
+       ::-webkit-scrollbar-track {
+        -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
         background-color: var(--paper-grey-200);
       }
-      ::-webkit-scrollbar
-      {
+      
+       ::-webkit-scrollbar {
         width: 6px;
         background-color: var(--paper-grey-200);
       }
-      ::-webkit-scrollbar-thumb
-      {
+      
+       ::-webkit-scrollbar-thumb {
         background-color: #42749b;
       }
-
       /* CHAT AREA */
-      .chat{
+      
+      .chat {
         background: #ffffff;
-        position:absolute;
-        top:0;left:0;
+        position: absolute;
+        top: 0;
+        left: 0;
         width: 100%;
         height: 100%;
-
       }
-      .chat > .content {
-        background-image: url('http://www.pinsho.com/wp-content/uploads/2013/11/telegram01.jpg');
+      
+      .chat >.content {
+        background: rgba(173,205,227,1);
+        background: -moz-radial-gradient(center, ellipse cover, rgba(173,205,227,1) 0%, rgba(134,174,204,1) 100%);
+        background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%, rgba(173,205,227,1)), color-stop(100%, rgba(134,174,204,1)));
+        background: -webkit-radial-gradient(center, ellipse cover, rgba(173,205,227,1) 0%, rgba(134,174,204,1) 100%);
+        background: -o-radial-gradient(center, ellipse cover, rgba(173,205,227,1) 0%, rgba(134,174,204,1) 100%);
+        background: -ms-radial-gradient(center, ellipse cover, rgba(173,205,227,1) 0%, rgba(134,174,204,1) 100%);
+        background: radial-gradient(ellipse at center, rgba(173,205,227,1) 0%, rgba(134,174,204,1) 100%);
+        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#adcde3', endColorstr='#86aecc', GradientType=1 );
         background-size: 100% 100%;
+        background-image: url('background.jpg');
       }
-      .displayArea{
+      
+      .displayArea {
         padding: 10px;
         width: 100%;
         height: calc(100% - 106px);
@@ -159,21 +181,25 @@ Example:
         overflow-x: hidden;
         box-sizing: border-box;
       }
-      .messageIn, .messageOut{
+      
+      .messageIn,
+      .messageOut {
         border-radius: 5px;
         padding: 5px 8px 0 8px;
         margin-bottom: 10px;
         max-width: 50%;
-        font: 13px Roboto,arial,sans-serif;
+        font: 13px Roboto, arial, sans-serif;
         position: relative;
         min-width: 60px;
       }
-      .messageIn{
+      
+      .messageIn {
         float: left;
         margin-right: 50%;
         background: white;
       }
-      .messageIn:before{
+      
+      .messageIn:before {
         content: "";
         position: absolute;
         width: 0;
@@ -182,14 +208,16 @@ Example:
         border-right: 21px solid transparent;
         border-left: 20px solid transparent;
         bottom: 0;
-        left:-5px;
+        left: -5px;
       }
-      .messageOut{
+      
+      .messageOut {
         float: right;
-        background-color:#DCF8C6;
+        background-color: #DCF8C6;
         margin-left: 50%;
       }
-      .messageOut:before{
+      
+      .messageOut:before {
         content: "";
         position: absolute;
         width: 0;
@@ -200,219 +228,282 @@ Example:
         bottom: 0;
         right: -3px;
       }
+      
+      .sender {
+        margin:0;
+
+      }
       .text {
-        display:inline-block;
+        display: inline-block;
       }
+      
       .date {
-        font: 10px Roboto,arial,sans-serif;
+        font: 10px Roboto, arial, sans-serif;
         display: inherit;
-        margin:2px 4px 2px auto;
+        margin: 2px 4px 2px auto;
         text-align: right;
-        color:green;
+        color: #8a8a8a;
       }
-      .date.lastmessage{
-        margin-left:10px;
+      
+      .date.lastmessage {
+        margin-left: 10px;
       }
-      .sendArea{
+      
+      .sendArea {
         width: 100%;
         height: auto;
-        border-top:1px solid #d2d2d2;
-        background-color:white;
+        border-top: 1px solid #d2d2d2;
+        background-color: white;
         max-width: 100%;
       }
-      .input{
-        font: 15px Roboto,arial,sans-serif;
+      
+      .input {
+        font: 15px Roboto, arial, sans-serif;
         align-self: center;
         width: 100%;
         max-width: calc(100% - 36px);
       }
-      .input > p {
+      
+      .input>p {
         width: 100%;
-        padding:8px;
+        padding: 8px;
         max-width: 100%;
-        overflow:auto;
+        overflow: auto;
         max-height: 100px;
         word-wrap: break-word;
         word-break: break-all;
-        margin:0;
+        margin: 0;
       }
-      .send{
+      
+      .send {
         --paper-icon-button: {
           align-self: center;
           color: #42749b;
           width: 36px;
           height: 36px;
-          padding:8px;
-        };
+          padding: 8px;
+        }
+        ;
         --paper-icon-button-disabled: {
-          color:#333;
-        };
+          color: #333;
+        }
+        ;
       }
-      .status{
-        font-size:10px;
+      
+      .status {
+        font-size: 10px;
       }
-      .groupicon{
+      
+      .groupicon {
         width: 20px;
         height: 20px;
         padding-bottom: 3px;
         margin-right: 2px;
       }
+      
       .datemarker {
-        clear:both;
+        clear: both;
       }
-      .datemarker > span{
-        background-color:#E1F2FB;
+      
+      .datemarker>span {
+        background-color: #E1F2FB;
         color: #797979;
-        padding:5px 8px;
+        padding: 5px 8px;
         border-radius: 4px;
-        font-size:12px;
+        font-size: 12px;
       }
+      
       .check {
         letter-spacing: -5px;
-        color:green;
+        color: green;
       }
-      .check.sort{
-       letter-spacing: -10px;
-       display: inline-block;
-       width: 4px;
-       line-height: 15px;
+      
+      .check.sort {
+        display: inline-block;
+        width: 4px;
+        line-height: 17px;
+        color: #8a8a8a;
+      }
+      
+      .unread {
+        background-color: #5c9ccc;
+        color: #fff;
+        font-weight: 500;
+        font-size: 12px !important;
+        padding: 0px 5px;
+        border-radius: 12px;
+        min-width: 9px;
+        text-align: center;
+        display: -webkit-inline-flex;
+        display: inline-flex;
+        -webkit-align-items: center;
+        align-items: center;
+        -webkit-justify-content: center;
+        justify-content: center;
+        height: 19px;
+        min-width: 19px;
+        box-sizing: border-box;
+        line-height: normal;
       }
       /* Login menus */
-      .login{
-        padding:8px 16px;
+      
+      .login {
+        padding: 8px 16px;
         color: var(--paper-grey-700);
-        font: 15px Roboto,arial,sans-serif;
+        font: 15px Roboto, arial, sans-serif;
         height: 100%;
         box-sizing: border-box;
         display: flex;
       }
-      .loginMenu{
+      
+      .loginMenu {
         padding: 0 18px 8px 18px;
         width: 100%;
-        background-color:white; 
+        background-color: white;
       }
-      .loginMenu span{
-        display: inline-table;    
+      
+      .loginMenu span {
+        display: inline-table;
       }
-      .loginMenu input{
+      
+      .loginMenu input {
         width: 60%;
       }
-      .inputContainer{
-        position:relative;
+      
+      .inputContainer {
+        position: relative;
       }
+      
       .bold {
         font-weight: bold;
         text-transform: capitalize;
       }
+      
       .subtitle {
         color: #999;
         margin: 15px 0 30px;
         font-size: 13px;
         line-height: 160%;
       }
+      
       .code {
-        margin:0 5px;
+        margin: 0 5px;
         width: 50px;
         height: 30px;
       }
+      
       paper-input {
-         --paper-input-container-input: {
+        --paper-input-container-input: {
           font-size: 13px;
-        };
-        --paper-input-container:{
-          padding:0;
+        }
+        ;
+        --paper-input-container: {
+          padding: 0;
         }
       }
+      
       .phoneContainer {
-        margin-top:30px;
-        font-size:13px;
+        margin-top: 30px;
+        font-size: 13px;
       }
-      .country-list{
-        list-style:none;
+      
+      .country-list {
+        list-style: none;
         margin: 0;
         min-width: 100%;
         max-height: 100px;
         position: absolute;
-        background-color:white;
-        padding:0;
-        top:50px;
-        overflow:auto;
-        z-index:1000;
+        background-color: white;
+        padding: 0;
+        top: 50px;
+        overflow: auto;
+        z-index: 1000;
         color: #42749b;
         @apply(--shadow-elevation-6dp);
       }
-      .country-list > li {
-        padding:8px 12px;
+      
+      .country-list>li {
+        padding: 8px 12px;
       }
-      .country-list > li:hover {
+      
+      .country-list>li:hover {
         background-color: #f2f6fa;
       }
+      
       .button {
         color: #42749b;
       }
+      
       .loginMenu .button {
-        margin-top:12px;
-        float:right;
+        margin-top: 12px;
+        float: right;
       }
+      
       .loginMenu .button.sendcode {
         float: none;
       }
+      
       .requireCode {
         text-align: center;
       }
-      .requireCode [name="phoneCode"]{
-        margin-top:60px;
+      
+      .requireCode [name="phoneCode"] {
+        margin-top: 60px;
       }
-      .requireCode paper-button{
-        margin-top:18px;
+      
+      .requireCode paper-button {
+        margin-top: 18px;
       }
       /* Search bar */
+      
       #contactSearch {
         --paper-input-container-focus-color: #d2d2d2;
         --paper-input-container-input-color: #d2d2d2;
       }
       /* ANIMATIONS */
+      
       .animated {
         -webkit-animation-duration: 0.3s;
         animation-duration: 0.3s;
         -webkit-animation-fill-mode: both;
         animation-fill-mode: both;
       }
+      
       @-webkit-keyframes fadeInRight {
         from {
           opacity: 0;
           -webkit-transform: translate3d(100%, 0, 0);
           transform: translate3d(100%, 0, 0);
         }
-
         to {
           opacity: 1;
           -webkit-transform: none;
           transform: none;
         }
       }
-
+      
       @keyframes fadeInRight {
         from {
           opacity: 0;
           -webkit-transform: translate3d(100%, 0, 0);
           transform: translate3d(100%, 0, 0);
         }
-
         to {
           opacity: 1;
           -webkit-transform: none;
           transform: none;
         }
       }
-
+      
       .fadeInRight {
         -webkit-animation-name: fadeInRight;
         animation-name: fadeInRight;
       }
       /* LEFT MENU */
+      
       .bar {
-        bottom: 0;top:0;
+        bottom: 0;
+        top: 0;
         position: absolute;
         z-index: 1000;
         width: 100%;
@@ -421,81 +512,88 @@ Example:
         transition: left 0.3s ease-out;
         left: -100%;
         box-shadow: none;
-        display:none;
+        display: none;
       }
-
+      
       .bar[show] {
-        left:0;
+        left: 0;
         /*-webkit-transition: fadeIn 0.3s ease-out;*/
         transition: left 0.3s ease-out, background-color 0.7s ease-out;
-        background-color: rgba(0,0,0,0.4);
+        background-color: rgba(0, 0, 0, 0.4);
       }
+      
       .bar .avatar {
         border-radius: 50%;
         width: 60px;
         height: 60px;
       }
-      .bar .userInfo{
-        background-color:#42749b;
+      
+      .bar .userInfo {
+        background-color: #42749b;
         text-align: left;
-        width:80%;
-        padding:10px 20px;
+        width: 80%;
+        padding: 10px 20px;
         box-sizing: border-box;
         position: relative;
       }
+      
       .bar .userInfo p {
         font-size: 16px;
         text-transform: capitalize;
         color: #fefefe;
-        margin:10px 0 5px 0;
+        margin: 10px 0 5px 0;
       }
+      
       .bar .userInfo p.phone {
-        font-size:12px;
-        color:#d2d2d2;
+        font-size: 12px;
+        color: #d2d2d2;
       }
+      
       .bar .menuContent {
-        padding:10px 0px;
-        position:relative;
+        padding: 10px 0px;
+        position: relative;
         color: #333;
         background-color: var(--paper-grey-50);
         max-height: 100%;
         overflow-y: auto;
-        width:80%;
+        width: 80%;
       }
-      .closeMenu{
-        position:absolute;
-        top:10px;
-        right:10px;
+      
+      .closeMenu {
+        position: absolute;
+        top: 10px;
+        right: 10px;
         display: inline-block;
         color: #d2d2d2;
       }
-      .menuOptions{
+      
+      .menuOptions {
         list-style-type: none;
-        padding:0;
-        margin:0;
+        padding: 0;
+        margin: 0;
       }
-      .menuOptions > li {
-        padding:10px;
+      
+      .menuOptions>li {
+        padding: 10px;
         cursor: pointer;
       }
-      .menuOptions > li:hover{
-        background-color: rgba(210,210,210,0.5);
+      
+      .menuOptions>li:hover {
+        background-color: rgba(210, 210, 210, 0.5);
       }
-      .optionIcon{
+      
+      .optionIcon {
         width: 20px;
         height: auto;
         margin-right: 10px;
       }
     </style>
-
-
 <!-- Header -->
 <paper-toolbar class="toolbar">
   <template is="dom-if" if="{{!logged}}">
     <img src="icon.png" class="icon"></img>
     <p>Telegram</p>
   </template>
-
   <template is="dom-if" if="{{logged}}">
     <paper-icon-button on-click="toggleMenu" class="icon" icon="menu"></paper-icon-button>
     <template is="dom-if" if="{{!searching}}">
@@ -507,7 +605,6 @@ Example:
       <paper-icon-button icon="search" id="searchIcon" class="icon" on-click="searchContact"></paper-icon-button>
     </template>
   </template>
-
 </paper-toolbar>
 <div class="container flex">
   <!-- Login -->
@@ -555,10 +652,8 @@ Example:
       </div>
     </div>
   </template>
-
   <!-- Logged -->
   <template is="dom-if" if="{{logged}}">
-
     <!-- if Chat is closed -->
     <template is="dom-if" if="{{!selected}}">
       <template is="dom-if" if="{{!searching}}">
@@ -567,29 +662,33 @@ Example:
             <img class="profImg" src="{{item.chat.photo}}">
             <div class="vertical layout displayName">
               <div class="horizontal layout">
-
                 <template is="dom-if" if="{{item.chat.user.title}}">
                   <p class="name flex">
                     <iron-icon icon="supervisor-account" class="groupicon"></iron-icon>{{item.chat.user.title}}</p>
                 </template>
-
                 <template is="dom-if" if="{{item.chat.user.first_name}}">
                   <p class="name flex">{{item.chat.user.first_name}} {{item.chat.user.last_name}}</p>
                 </template>
+                <p class="date lastmessage">{{item.chat.last_message.date}}</p>
+              </div>
+              <div class="horizontal layout">
                 <template is="dom-if" if="{{item.chat.last_message.mine}}">
                   <template is="dom-if" if="{{item.chat.last_message.sent}}">
                     <span class="check sort">✓</span>
                   </template>
-
                   <template is="dom-if" if="{{item.chat.last_message.read}}">
                     <span class="check sort">✓</span>
                   </template>
-
                 </template>
-                <p class="date lastmessage">{{item.chat.last_message.date}}</p>
-              </div>
-              <div>
-                <p class="chatPreview">{{item.chat.last_message.text}}</p>
+                <p class="chatPreview flex">
+                  <template is="dom-if" if="{{item.chat.last_message.isChat}}">
+                    {{item.chat.last_message.from_user}}: 
+                  </template>
+                  {{item.chat.last_message.text}}
+                  </p>
+                <template is="dom-if" if="{{item.chat.messages_unread}}">
+                  <span class="unread">{{item.chat.messages_unread}}</span>
+                </template>
               </div>
             </div>
           </div>
@@ -624,7 +723,6 @@ Example:
         </div>
       </template>
     </template>
-
     <!-- chat opened -->
     <template is="dom-if" if="{{user_selected}}">
       <div id="chatContainer" class="chat animated fadeInRight vertical layout">
@@ -640,10 +738,8 @@ Example:
             </template>
             <span class="status">{{_getStatus(user_selected.status)}}</span>
           </div>
-
         </paper-toolbar>
         <div class="content vertical layout flex">
-
           <div class="displayArea flex" id="displayArea">
             <template is="dom-repeat" items="[[user_selected.chat_messages]]" id="chatMessages">
               <template is="dom-if" if="{{item.mine}}">
@@ -667,6 +763,9 @@ Example:
               </template>
               <template is="dom-if" if="{{!item.mine}}">
                 <div class="messageIn">
+                  <template is="dom-if" if="{{item.isChat}}">
+                    <p class="sender" style$="color: {{item.user_color}}">{{item.from_user}}</p>
+                  </template>
                   <span class "text">{{item.text}}</span>
                   <div class="date">
                     {{item.date}}
@@ -675,7 +774,6 @@ Example:
               </template>
             </template>
           </div>
-
           <div class="sendArea horizontal layout">
             <div class="input flex horizontal layout">
               <p contenteditable="true" data-placeholder$="{{text_message==placeholder}}" class="flex" on-focus="removePlaceholder" on-blur="checkPlaceholder"
@@ -683,11 +781,9 @@ Example:
             </div>
             <paper-icon-button icon="send" class="send" disabled="[[disable_send]]" on-click="sendMSG"></paper-icon-button>
           </div>
-
         </div>
       </div>
     </template>
-
     <div show$="{{menu_open}}" class="bar vertical layout" id="bar">
       <div class="userInfo">
         <img src="{{user.image}}" class="avatar">
@@ -705,11 +801,9 @@ Example:
       </div>
     </div>
   </template>
-
 </div>
 </template>
 </dom-module>
-
 <script>
   Polymer({
 
@@ -788,9 +882,11 @@ Example:
       },
       chats: {
         type: Array,
-        value: function () { return []; },
+        value: function () {
+          return [];
+        },
         notify: true,
-        observe:true
+        observe: true
       },
       chats_empty: {
         type: Boolean,
@@ -953,12 +1049,13 @@ Example:
       if (!this.phone || !this.codeHash || !this.phoneCode || !this.countryCode) return;
 
       var me = this;
-      telegramApi.signUp((this.countryCode + this.phone), this.codeHash, this.phoneCode, this.user.firstname, this.user.lastname).then(
+      telegramApi.signUp((this.countryCode + this.phone), this.codeHash, this.phoneCode, this.user.firstname,
+        this.user.lastname).then(
         function (response) {
           // Sign up complete
           this.getUser();
         }
-      );
+        );
     },
 
     /*--------------------------------------User info-------------------------------------*/
@@ -1142,14 +1239,16 @@ Example:
         this.getPhoto(chat, peer).then(function (chat) {
           // take chat messages
           that.getHistoryUser(chat.chat.user).then(function (response) {
-            chat.chat.chat_messages = that.getMSGs(response.messages);
+            chat.chat.chat_messages = that.getMSGs(response.messages, response.users);
             chat.chat.chat_messages.reverse();
+            chat.chat.messages_unread = that._checkMessagesUnread(chat.chat.chat_messages, chat.chat.user
+              .id);
             // if group, add participants
             if (response.users.length > 0) {
               chat.participants = response.users;
             }
             if (response.messages.length > 0) {
-              chat.chat.last_message = chat.chat.chat_messages[chat.chat.chat_messages.length -1];
+              chat.chat.last_message = chat.chat.chat_messages[chat.chat.chat_messages.length - 1];
             }
             that.push('chats', chat);
           },
@@ -1191,7 +1290,19 @@ Example:
         }
       };
     },
-    // Return a promise with object {chat:chat,peer:peer}
+    getUserName: function (id) {
+      var user = "";
+      var found = false;
+
+      for (var i = 0; i < this.contacts.length && !found; i++) {
+        if (this.contacts[i].id == id) {
+          user = this.contacts[i].first_name;
+          found = true;
+        }
+      }
+
+      return user;
+    },
 
     /*---------------------------------Search methods-------------------------------*/
 
@@ -1231,7 +1342,12 @@ Example:
         //If it exists
         if (this.chats[i].chat.user.id == user.id) {
           exists = true;
-          var fakeEvent = { model: { item: this.chats[i], index: i } };
+          var fakeEvent = {
+            model: {
+              item: this.chats[i],
+              index: i
+            }
+          };
           this.openChat(fakeEvent);
         }
       }
@@ -1245,10 +1361,21 @@ Example:
           _: 'peerUser',
           user_id: user.id
         };
-        this.push('chats', { chat: chat, peer: peer });
+        this.push('chats', {
+          chat: chat,
+          peer: peer
+        });
         // //Set selected style
 
-        var fakeEvent = { model: { item: { chat: chat, peer: peer }, index: this.chats.length - 1 } };
+        var fakeEvent = {
+          model: {
+            item: {
+              chat: chat,
+              peer: peer
+            },
+            index: this.chats.length - 1
+          }
+        };
         this.openChat(fakeEvent);
       }
     },
@@ -1295,30 +1422,55 @@ Example:
           console.error('No se encuentra al usuario ni en chats ni en contactos');
           return;
         }
-        // add user to chats
+        // add user to chats 
         var user = this.contacts[newChatIndex]
         var chat = {
           chat_messages: [message],
           user: user,
           photo: user.image || this.resolveUrl('default.png'),
-          last_message: message.text
+          last_message: message.text,
+          messages_unread: message.mine ? 0 : 1
         };
         var peer = {
           _: 'peerUser',
           user_id: user.id
         };
-        this.push('chats', { chat: chat, peer: peer });
+        this.push('chats', {
+          chat: chat,
+          peer: peer
+        });
+
+
+
       } else {
+        // assign color
+        if (message.isChat){
+          // TODO el id que le paso es el del chat no el del mensaje, hay que corregirlo
+          message.user_color = this._getRandomColor(message._base.from_id, this.chats[chat_index].participants);
+        }
+
         this.push('chats.' + chat_index + '.chat.chat_messages', message);
         this.set('chats.' + chat_index + '.chat.last_message', message);
 
+        // Update Number chats unread
+        if ((!this.user_selected || this.user_selected != id) && !message.mine) {
+          var unread = this.chats[chat_index].chat.messages_unread ? this.chats[chat_index].chat.messages_unread +
+            1 : 1;
+          this.chats[chat_index].chat.messages_unread = unread;
+          this.notifyPath('chats.' + chat_index + '.chat.messages_unread', this.chats[chat_index].chat.messages_unread);
+        } else {
+          // Notify new chat
+        }
         // force render in order to re-sort chats
         this.$$('#chatscontainer').render();
         if (this.$$('#chatMessages')) {
           this.$$('#chatMessages').render();
           this.fixBottom();
         }
+        // Update Number chats unread
       }
+
+
     },
     updateMSG: function (user_id, msg_id) {
       var chat_id = this.searchChatByUserId(user_id);
@@ -1328,23 +1480,26 @@ Example:
       }
       var end = false;
       var length = this.chats[chat_id].chat.chat_messages.length;
-      for (var i = 0; i <length; i++) {
+      for (var i = 0; i < length; i++) {
         var chat = this.chats[chat_id].chat.chat_messages[i];
         if (chat.mine && !chat.read) {
           this.chats[chat_id].chat.chat_messages[i].read = true;
-          this.notifyPath('chats.' + chat_id + '.chat.chat_messages.' + i + '.read', this.chats[chat_id].chat.chat_messages[i].read);
-          
+          this.notifyPath('chats.' + chat_id + '.chat.chat_messages.' + i + '.read', this.chats[chat_id].chat.chat_messages[
+            i].read);
+
           this.chats[chat_id].chat.chat_messages[i]._base.pFlags.unread = false;
-          this.notifyPath('chats.' + chat_id + '.chat.chat_messages.' + i + '._base.pFlags.unread', this.chats[chat_id].chat.chat_messages[i]._base.pFlags.unread);
-         
-          if (this.user_selected &&  this.user_selected.id == user_id) {
+          this.notifyPath('chats.' + chat_id + '.chat.chat_messages.' + i + '._base.pFlags.unread', this.chats[
+            chat_id].chat.chat_messages[i]._base.pFlags.unread);
+
+          if (this.user_selected && this.user_selected.id == user_id) {
             this.user_selected.chat_messages[i].read = true;
-            this.notifyPath('user_selected.chat_messages.' + i +'.read',this.user_selected.chat_messages[i].read);
+            this.notifyPath('user_selected.chat_messages.' + i + '.read', this.user_selected.chat_messages[i].read);
           }
 
-          if (i == length-1){
+          if (i == length - 1) {
             this.chats[chat_id].chat.last_message.read = true;
-            this.notifyPath('chats.' + chat_id +'.chat.last_message.read', this.chats[chat_id].chat.last_message.read);
+            this.notifyPath('chats.' + chat_id + '.chat.last_message.read', this.chats[chat_id].chat.last_message
+              .read);
           }
         } else if (chat.read) {
           end = true;
@@ -1375,10 +1530,15 @@ Example:
         }).then(resolve, reject);
       });
     },
-    getMSGs: function (msgs) {
+    getMSGs: function (msgs, users) {
       var messages = [];
-      msgs.forEach(function (msg) {
-        messages.push(this.parseMSG(msg));
+      msgs.forEach(function (message) {
+        var msg = this.parseMSG(message);
+        var id = message.from_id;
+        if (msg.isChat && users.length > 0){
+          msg.user_color = this._getRandomColor(id, users);
+        }
+        messages.push(msg);
       }.bind(this));
       return messages;
     },
@@ -1459,7 +1619,14 @@ Example:
       message.read = !msg.pFlags.unread ? true : false
       //Set id
       message.id = msg.id;
+
+      // check if its a chat message
+      message.isChat = (msg.to_id && msg.to_id.chat_id) || msg.chat_id? true : false;
+      if (message.isChat) {
+        message.from_user = this.getUserName(id);        
+      }
       message._base = msg;
+
       return message;
 
     },
@@ -1469,9 +1636,16 @@ Example:
       this.set('user_selected.photo', e.model.item.chat.photo);
       this.set('user_selected.peer', e.model.item.peer);
       this.set('user_selected.chat_messages', e.model.item.chat.chat_messages || []);
+     
+      var index = e.model.index;
+      this.chats[index].chat.messages_unread = 0;
+      this.notifyPath('chats.' + index + '.chat.messages_unread', 0);
+     
       this.selected = true;
       var that = this;
-      window.setTimeout(function () { that.fixBottom(); }, 100);
+      window.setTimeout(function () {
+        that.fixBottom();
+      }, 100);
 
     },
     closeChat: function () {
@@ -1557,10 +1731,6 @@ Example:
       var msg1_time = chat1.chat.last_message ? chat1.chat.last_message.timestamp : -1;
       var msg2_time = chat2.chat.last_message ? chat2.chat.last_message.timestamp : -1;
 
-      // console.info('Chat 1 es:'+ chat1.chat.user.first_name + ' su mensaje es: '+ );
-      // console.info('Chat 2 es:'+ chat2.chat.user.first_name);
-      // console.info(' Diferentecia :' + (msg2_time - msg1_time));
-
       return msg2_time - msg1_time;
 
     },
@@ -1598,13 +1768,39 @@ Example:
         sameElse: 'MMM DD, YYYY'
       });
     },
-    arrayItem: function(change, idx, path){
-      return this.get(path, change.base[idx]);
+    _checkMessagesUnread: function (list_messages, id) {
+      var count = 0;
+      if (id !== this.user.id) {
+        list_messages = list_messages || [];
+        list_messages.forEach(function (message) {
+          if (!message.read && !message.mine) {
+            count += 1;
+          }
+        });
+      }
+      return count;
+    },
+    _getRandomColor: function (id, participants) {
+      var color = ["#F44336", "#E91E63", "#9C27B0", "#673AB7", "#3F51B5", "#2196F3",
+       "#03A9F4", "#00BCD4", "#009688", "#4CAF50", "#8BC34A", "#CDDC39","#FFEB3B",
+       "#FFC107", "#FF9800", "FF5722", "#795548", "#607D8B"]
+
+      var index = -1;
+      for(var i =0; i<participants.length && index== -1;i++){
+        if (participants[i].id == id){
+          index = i;
+        }
+      }
+      if (index == -1){
+        console.error('El id pasado para generar el color no existe en la lista de participantes: ', id, participants);
+        index =0;
+      }
+      return color[index]
+
     },
     /*------------------------------ subscribe handler -------------------------------*/
     updateShort: function (response) {
       // when status is updated
-      //console.info('TODO manejador de updateShort');
       if (response.update) {
         this.refreshStatus(response.update.user_id, response.update.status);
       } else {
@@ -1614,7 +1810,6 @@ Example:
     },
     msgs_ack: function (response) {
       // Only say msgs_ack but msg_ids is empty
-      console.info('ACK: ', response);
       if (response.msg_ids.length > 0) console.info(response);
     },
     msg_container: function (response) {
@@ -1622,13 +1817,23 @@ Example:
     },
     // sent a message
     updateShortMessage: function (response) {
+      // If its a message sent by my to me. Its already out
+      if (response.user_id == this.user.id) {
+        response.pFlags.out = response.pFlags.out || true;
+      }
+      // flag 1 message in from user_id
+      // flag 3 message out to user_id from me
+      if (response.flags == 1) {
+        response.from_id = response.from_id || response.user_id;
+      } else { // flag !== 1?
+        response.from_id = this.user.id;
+      }
       var msg = this.parseMSG(response);
       this.addMSG(response.user_id || response.chat_id, msg);
     },
     updateShortChatMessage: function (response) {
       var msg = this.parseMSG(response);
       this.addMSG(response.user_id || response.chat_id, msg);
-      // actualizar user selected?
     },
     updates: function (response) {
       var that = this;
@@ -1648,8 +1853,7 @@ Example:
     updateNewMessage: function (response) {
       if (response.message._ !== "messageEmpty") {
         var msg = this.parseMSG(response.message);
-        this.addMSG(response.message.to_id.chat_id || response.message.to_id.user_id, msg);
-        // actualizar user_selected?
+        this.addMSG(response.message.from_id, msg);
       } else {
         console.info('Se ha borrado el historial de un chat?', reponse);
       }
@@ -1658,11 +1862,13 @@ Example:
       var index_chat = this.searchMsgBy(response.messages[0]);
       var removed = this.splice('chats', index_chat, 1);
     },
-    rpc_result: function (response) {
-    },
+    rpc_result: function (response) { },
     updateReadHistoryOutbox: function (response) {
       var id = response.peer.user_id || response.peer.chat_id;
       this.updateMSG(id, response);
     },
+    // I dont know what it means
+    updateReadHistoryInbox: function () {
+    }
   });
 </script>
