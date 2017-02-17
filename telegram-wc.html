@@ -1448,12 +1448,16 @@ Example:
           // TODO el id que le paso es el del chat no el del mensaje, hay que corregirlo
           message.user_color = this._getRandomColor(message._base.from_id, this.chats[chat_index].participants);
         }
-
         this.push('chats.' + chat_index + '.chat.chat_messages', message);
-        this.set('chats.' + chat_index + '.chat.last_message', message);
 
+        this.chats[chat_index].chat.last_message = message;
+        this.notifyPath('chats.' + chat_index + '.chat.last_message', message);
+
+        if (this.user_selected && this.user_selected.id == id){
+          this.notifyPath('user_selected.chat_messages',this.chats[chat_index].chat.chat_messages);
+        }
         // Update Number chats unread
-        if ((!this.user_selected || this.user_selected != id) && !message.mine) {
+        if ((!this.user_selected || this.user_selected.id != id) && !message.mine) {
           var unread = this.chats[chat_index].chat.messages_unread ? this.chats[chat_index].chat.messages_unread +
             1 : 1;
           this.chats[chat_index].chat.messages_unread = unread;
@@ -1480,7 +1484,7 @@ Example:
       }
       var end = false;
       var length = this.chats[chat_id].chat.chat_messages.length;
-      for (var i = 0; i < length; i++) {
+      for (var i = 0; i < length; i--) {
         var chat = this.chats[chat_id].chat.chat_messages[i];
         if (chat.mine && !chat.read) {
           this.chats[chat_id].chat.chat_messages[i].read = true;
@@ -1505,12 +1509,6 @@ Example:
           end = true;
         }
       }
-      // force render
-      // this.$$('#chatscontainer').render();
-      // if (this.$$('#chatMessages')) {
-      //   this.$$('#chatMessages').render();
-      //   //this.fixBottom();
-      // }
       return i;
     },
     /*-------------------------------Refresh chat history-------------------------------*/
@@ -1568,6 +1566,32 @@ Example:
       if (this.user_selected && this.user_selected.id == user_id) {
         that.set('user_selected.status', status);
       }
+    },
+
+    readMessages: function(id, max_id){
+      var chat_index = this.getChatIndexById(id);
+
+      var length = this.chats[chat_index].chat.chat_messages.length;
+      
+      var chat = this.chats[chat_index].chat;
+      var end = false;
+      for (var i =length-1; i > -1 && !end; i--){
+        var message = chat.chat_messages[i]
+        if (!message.mine && !message.read && message.id !== max_id){
+          this.chats[chat_index].chat.chat_messages[i].read = true;
+          this.notifyPath('chats.' + chat_index + '.chat.chat_messages.' + i+'.read', true);
+        } else if (message.id === max_id){
+          this.chats[chat_index].chat.chat_messages[i].read = true;
+          this.notifyPath('chats.' + chat_index + '.chat.chat_messages.' + i+'.read', true);
+          end = true;
+        }
+      }
+      // Update unread messags
+      var id = this.chats[chat_index].chat.user.id;
+      var unread = this._checkMessagesUnread(this.chats[chat_index].chat.chat_messages, id);
+      
+      this.chats[chat_index].chat.messages_unread = unread;
+      this.notifyPath('chats.' + chat_index + '.chat.messages_unread', unread);
     },
     /*----------------------------------Display methods----------------------------------*/
 
@@ -1631,13 +1655,14 @@ Example:
 
     },
     openChat: function (e) {
+      var id = e.model.item.chat.user.id;
+      var index = this.getChatIndexById(id);
       this.set('user_selected', e.model.item.chat.user);
       this.set('user_selected._index', e.model.index);
       this.set('user_selected.photo', e.model.item.chat.photo);
       this.set('user_selected.peer', e.model.item.peer);
       this.set('user_selected.chat_messages', e.model.item.chat.chat_messages || []);
      
-      var index = e.model.index;
       this.chats[index].chat.messages_unread = 0;
       this.notifyPath('chats.' + index + '.chat.messages_unread', 0);
      
@@ -1813,7 +1838,17 @@ Example:
       if (response.msg_ids.length > 0) console.info(response);
     },
     msg_container: function (response) {
-      // useless. Response to an RPC query
+      var messages = response.messages;
+      messages.forEach(function(message){
+        if (message.body){
+          if (this[message.body._]) {
+            this[message.body._](message.body);
+          } else {
+            console.info('Falta implementar manejador para ' + message.body._);
+          }
+        }
+
+      }.bind(this))
     },
     // sent a message
     updateShortMessage: function (response) {
@@ -1853,7 +1888,9 @@ Example:
     updateNewMessage: function (response) {
       if (response.message._ !== "messageEmpty") {
         var msg = this.parseMSG(response.message);
-        this.addMSG(response.message.from_id, msg);
+
+        var id = msg.isChat? response.message.to_id.chat_id : response.message.from_id;
+        this.addMSG(id, msg);
       } else {
         console.info('Se ha borrado el historial de un chat?', reponse);
       }
@@ -1867,8 +1904,15 @@ Example:
       var id = response.peer.user_id || response.peer.chat_id;
       this.updateMSG(id, response);
     },
-    // I dont know what it means
-    updateReadHistoryInbox: function () {
-    }
+    // other telegram session has read a message unread
+    updateReadHistoryInbox: function (response) {
+      var id = response.peer.chat_id || response.peer.user_id;
+      this.readMessages(id, response.max_id);
+    },
+
+    // TODO implementar updateChatUserTyping pero depende de que marque la session como activa cuando veo el componente
+    
+    new_session_created: function(response){
+    },
   });
 </script>
