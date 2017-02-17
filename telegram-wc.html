@@ -14,15 +14,16 @@ Example:
 <link rel="import" href="bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="bower_components/iron-icons/av-icons.html">
-<link rel="import" href="bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="bower_components/paper-button/paper-button.html">
 <link rel="import" href="bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="bower_components/paper-toolbar/paper-toolbar.html">
-<link rel="import" href="bower_components/paper-menu/paper-menu.html">
 <link rel="import" href="bower_components/paper-input/paper-input.html">
 <link rel="import" href="bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="bower_components/paper-styles/shadow.html">
-<link rel="import" href="bower_components/paper-button/paper-button.html">
+<link rel="import" href="bower_components/paper-fab/paper-fab.html">
+
+
+
 <script src="bower_components/moment/min/moment.min.js"></script>
 <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
 <script src="bower_components/telegram-api/dist/telegramApi.js"></script>
@@ -344,6 +345,21 @@ Example:
         min-width: 19px;
         box-sizing: border-box;
         line-height: normal;
+      }
+      .loading {
+        border-radius: 100%;
+        border:2px solid white;
+        width: 90px;height:90px
+      }
+      .createChat {
+        position:absolute;
+        bottom:10px;
+        right:10px;
+        --paper-fab-background: #5682a3;
+        --paper-fab-iron-icon: {
+          width:20px;
+          height:20px;
+        }
       }
       /* Login menus */
       
@@ -694,6 +710,9 @@ Example:
           </div>
           <hr class="divisor">
         </template>
+        <template is="dom-if" if="{{!loading}}">
+          <paper-fab class="createChat" on-click="searchContact" mini icon="create" title="open a new chat"></paper-fab>
+        </template>
       </template>
       <template is="dom-if" if="{{searching}}">
         <template is="dom-repeat" items="{{contacts}}" filter="{{filterContact(search_keywords)}}" rendered-item-count="{{nContactsFound}}">
@@ -712,14 +731,19 @@ Example:
         </template>
         <template is="dom-if" if="{{showNoContacts}}">
           <div class="vertical layout center-center emptyContacts">
-            <p class="title">No results</p>
+              <p class="title">No results</p>
           </div>
         </template>
       </template>
       <template is="dom-if" if="{{chats_empty}}">
         <!-- TODO loading info -->
         <div class="vertical layout center-center emptyContacts">
-          <p class="title">No results</p>
+          <template is="dom-if" if="{{loading}}">
+            <img class="loading" src="loading.gif"></img>
+          </template>
+          <template is="dom-if" if="{{!loading}}">
+            <p class="title">No results</p>
+          </template>
         </div>
       </template>
     </template>
@@ -810,7 +834,10 @@ Example:
     is: 'telegram-wc',
 
     properties: {
-
+      loading: {
+        type:Boolean,
+        value:true
+      },
       logged: {
         type: Boolean,
         value: false,
@@ -1081,6 +1108,8 @@ Example:
                 me.set('user.image', result);
               }
             );
+          } else {
+            me.loading = false;
           }
         }
       );
@@ -1113,6 +1142,7 @@ Example:
     */
     getDialogs: function () {
       var me = this;
+      this.loading = true;
       telegramApi.getDialogs().then(
         function (response) {
           me.set('data', response.result);
@@ -1251,10 +1281,12 @@ Example:
               chat.chat.last_message = chat.chat.chat_messages[chat.chat.chat_messages.length - 1];
             }
             that.push('chats', chat);
+            that.loading = false;
           },
             function (error) {
               console.err(error);
               this.push('chats', chat);
+              that.loading = false;
             })
         });
       }
@@ -1889,14 +1921,22 @@ Example:
       if (response.message._ !== "messageEmpty") {
         var msg = this.parseMSG(response.message);
 
-        var id = msg.isChat? response.message.to_id.chat_id : response.message.from_id;
+        var id;
+        if (msg.isChat){
+          id = repsonse.message.to_id.chat_id;
+        } else if (response.message.from_id == this.user.id){
+          id = response.message.to_id.user_id;
+        } else {
+          id = response.message.from_id
+        }
         this.addMSG(id, msg);
       } else {
-        console.info('Se ha borrado el historial de un chat?', reponse);
+        // Delete historial
+        console.info('Historial deleted', response);
       }
     },
     updateDeleteMessages: function (response) {
-      var index_chat = this.searchMsgBy(response.messages[0]);
+      var index_chat = this.searchChatByMsgId(response.messages[0]);
       var removed = this.splice('chats', index_chat, 1);
     },
     rpc_result: function (response) { },
