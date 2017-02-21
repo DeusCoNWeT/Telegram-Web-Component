@@ -110,6 +110,8 @@ Example:
         overflow: hidden !important;
         text-overflow: ellipsis;
         padding: 0 7px;
+        box-sizing: border-box;
+        max-width: 95%;
       }
       
       .displayName {
@@ -236,6 +238,7 @@ Example:
       }
       .text {
         display: inline-block;
+        word-break: break-all;
       }
       
       .date {
@@ -790,7 +793,7 @@ Example:
                   <template is="dom-if" if="{{item.isChat}}">
                     <p class="sender" style$="color: {{item.user_color}}">{{item.from_user}}</p>
                   </template>
-                  <span class "text">{{item.text}}</span>
+                  <span class="text">{{item.text}}</span>
                   <div class="date">
                     {{item.date}}
                   </div>
@@ -1019,11 +1022,33 @@ Example:
         });
       }
       this.getUser();
+      var that = this;
+      // set user status == online
+            
+      var that = this;
+      this._visibilityInterval = window.setInterval(function(){
+        var current_visibility = document.visibilityState;
+        if (that._visibility !== current_visibility){
+          var offline = document.visibilityState == 'visible'? false:true;
+          console.info('Esta offline? : ', offline);
+          that.setStatus(offline);
+        }
+        that._visibility = document.visibilityState;
+      },1000)
 
+      // $(window).on('focus',function(){
+      //   that.setStatus(false);
+      //   console.info('El usuario esta online porque la ventana está activa');
+      // });
+      // $(window).on('blur',function(){
+      //   that.setStatus(true);
+      //   console.info('El usuario esta offline');
+      // });
     },
 
     dettached: function () {
       this.logout();
+      window.clearInterval(this._visibilityInterval);
     },
 
     //Component behaviour
@@ -1246,6 +1271,12 @@ Example:
           user.image = result;
         }
       );
+    },
+    /*
+     * 
+     */
+    setStatus: function(offline){
+      telegramApi.invokeApi('account.updateStatus',{offline:offline});
     },
     /*----------------------------------Load component--------------------------------*/
 
@@ -1516,7 +1547,7 @@ Example:
       }
       var end = false;
       var length = this.chats[chat_id].chat.chat_messages.length;
-      for (var i = 0; i < length; i--) {
+      for (var i = 0; i < length; i++) {
         var chat = this.chats[chat_id].chat.chat_messages[i];
         if (chat.mine && !chat.read) {
           this.chats[chat_id].chat.chat_messages[i].read = true;
@@ -1607,7 +1638,7 @@ Example:
       
       var chat = this.chats[chat_index].chat;
       var end = false;
-      for (var i =length-1; i > -1 && !end; i--){
+      for (var i =0; i < length && !end; i++){
         var message = chat.chat_messages[i]
         if (!message.mine && !message.read && message.id !== max_id){
           this.chats[chat_index].chat.chat_messages[i].read = true;
@@ -1685,7 +1716,7 @@ Example:
       // if its a media file say it
       message._base = msg;
       if (msg.media){
-        message.text = "[MEDIA doesnt implemented] " + message.text;
+        message.text = "[MEDIA it doesn't implemented] " + message.text;
       }
       return message;
 
