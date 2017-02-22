@@ -711,10 +711,10 @@ Example:
                 </template>
                 <p class="chatPreview flex">
                   <template is="dom-if" if="{{item.chat.last_message.isChat}}">
-                    {{item.chat.last_message.from_user}}: 
+                    {{item.chat.last_message.from_user}}:
                   </template>
                   {{item.chat.last_message.text}}
-                  </p>
+                </p>
                 <template is="dom-if" if="{{item.chat.messages_unread}}">
                   <span class="unread">{{item.chat.messages_unread}}</span>
                 </template>
@@ -744,7 +744,7 @@ Example:
         </template>
         <template is="dom-if" if="{{showNoContacts}}">
           <div class="vertical layout center-center emptyContacts">
-              <p class="title">No results</p>
+            <p class="title">No results</p>
           </div>
         </template>
       </template>
@@ -767,19 +767,19 @@ Example:
           <paper-icon-button on-click="closeChat" class="icon" icon="arrow-back"></paper-icon-button>
           <img class="profImg small" src="{{user_selected.photo}}">
           <div class="vertical layout">
-              <template is="dom-if" if="{{user_selected.first_name}}">
-                <template is="dom-if" if="{{user_selected.pFlags.contact}}">
+            <template is="dom-if" if="{{user_selected.first_name}}">
+              <template is="dom-if" if="{{user_selected.pFlags.contact}}">
+                <span>{{user_selected.first_name}} {{user_selected.last_name}}</span>
+              </template>
+              <template is="dom-if" if="{{!user_selected.pFlags.contact}}">
+                <template is="dom-if" if="{{user_selected.pFlags.verified}}">
                   <span>{{user_selected.first_name}} {{user_selected.last_name}}</span>
                 </template>
-                <template is="dom-if" if="{{!user_selected.pFlags.contact}}">
-                  <template is="dom-if" if="{{user_selected.pFlags.verified}}">
-                    <span>{{user_selected.first_name}} {{user_selected.last_name}}</span>
-                  </template>
-                  <template is="dom-if" if="{{!user_selected.pFlags.verified}}">
-                    <span>{{_parsePhone(user_selected.phone)}}</span>
-                  </template>
+                <template is="dom-if" if="{{!user_selected.pFlags.verified}}">
+                  <span>{{_parsePhone(user_selected.phone)}}</span>
                 </template>
               </template>
+            </template>
             <template is="dom-if" if="{{user_selected.title}}">
               <span><iron-icon icon="supervisor-account" class="groupicon"></iron-icon>{{user_selected.title}}</span>
             </template>
@@ -789,12 +789,12 @@ Example:
         <div class="content vertical layout flex">
           <div class="displayArea flex" id="displayArea">
             <template is="dom-repeat" items="[[user_selected.chat_messages]]" id="chatMessages">
+              <template is="dom-if" if="{{showDateMarker(index, user_selected.chat_messages)}}">
+                <div class="datemarker vertical layout center-center">
+                  <span>{{_getDate(item)}}</span>
+                </div>
+              </template>
               <template is="dom-if" if="{{item.mine}}">
-                <template is="dom-if" if="{{showDateMarker(index, user_selected.chat_messages)}}">
-                  <div class="datemarker vertical layout center-center">
-                    <span>{{_getDate(item)}}</span>
-                  </div>
-                </template>
                 <div class="messageOut vertical layout">
                   <span class="text">{{item.text}}</span>
                   <div class="date">
@@ -858,8 +858,8 @@ Example:
 
     properties: {
       loading: {
-        type:Boolean,
-        value:true
+        type: Boolean,
+        value: true
       },
       logged: {
         type: Boolean,
@@ -1043,19 +1043,19 @@ Example:
       }
       this.getUser();
       var that = this;
-      
+
       // Check when document is visible every 1000 seconds
       // If visible --> status = online 
       // else       --> status = offline      
       var that = this;
-      this._visibilityInterval = window.setInterval(function(){
+      this._visibilityInterval = window.setInterval(function () {
         var current_visibility = document.visibilityState;
-        if (that._visibility !== current_visibility){
-          var offline = document.visibilityState == 'visible'? false:true;
+        if (that._visibility !== current_visibility) {
+          var offline = document.visibilityState == 'visible' ? false : true;
           that.setStatus(offline);
         }
         that._visibility = document.visibilityState;
-      },1000)
+      }, 1000)
 
     },
 
@@ -1287,8 +1287,8 @@ Example:
     /*
      * 
      */
-    setStatus: function(offline){
-      telegramApi.invokeApi('account.updateStatus',{offline:offline});
+    setStatus: function (offline) {
+      telegramApi.invokeApi('account.updateStatus', { offline: offline });
     },
     /*----------------------------------Load component--------------------------------*/
 
@@ -1519,7 +1519,7 @@ Example:
 
       } else {
         // assign color
-        if (message.isChat){
+        if (message.isChat) {
           // TODO el id que le paso es el del chat no el del mensaje, hay que corregirlo
           message.user_color = this._getRandomColor(message._base.from_id, this.chats[chat_index].participants);
         }
@@ -1528,8 +1528,8 @@ Example:
         this.chats[chat_index].chat.last_message = message;
         this.notifyPath('chats.' + chat_index + '.chat.last_message', message);
 
-        if (this.user_selected && this.user_selected.id == id){
-          this.notifyPath('user_selected.chat_messages',this.chats[chat_index].chat.chat_messages);
+        if (this.user_selected && this.user_selected.id == id) {
+          this.notifyPath('user_selected.chat_messages', this.chats[chat_index].chat.chat_messages);
         }
         // Update Number chats unread
         if ((!this.user_selected || this.user_selected.id != id) && !message.mine) {
@@ -1608,7 +1608,7 @@ Example:
       msgs.forEach(function (message) {
         var msg = this.parseMSG(message);
         var id = message.from_id;
-        if (msg.isChat && users.length > 0){
+        if (msg.isChat && users.length > 0) {
           msg.user_color = this._getRandomColor(id, users);
         }
         messages.push(msg);
@@ -1643,47 +1643,47 @@ Example:
       }
     },
 
-    readMessages: function(id, max_id){
+    readMessages: function (id, max_id) {
       var chat_index = this.getChatIndexById(id);
 
       var length = this.chats[chat_index].chat.chat_messages.length;
-      
+
       var chat = this.chats[chat_index].chat;
       var end = false;
-      for (var i =0; i < length && !end; i++){
+      for (var i = 0; i < length && !end; i++) {
         var message = chat.chat_messages[i]
-        if (!message.mine && !message.read && message.id !== max_id){
+        if (!message.mine && !message.read && message.id !== max_id) {
           this.chats[chat_index].chat.chat_messages[i].read = true;
-          this.notifyPath('chats.' + chat_index + '.chat.chat_messages.' + i+'.read', true);
-        } else if (message.id === max_id){
+          this.notifyPath('chats.' + chat_index + '.chat.chat_messages.' + i + '.read', true);
+        } else if (message.id === max_id) {
           this.chats[chat_index].chat.chat_messages[i].read = true;
-          this.notifyPath('chats.' + chat_index + '.chat.chat_messages.' + i+'.read', true);
+          this.notifyPath('chats.' + chat_index + '.chat.chat_messages.' + i + '.read', true);
           end = true;
         }
       }
       // Update unread messags
       var id = this.chats[chat_index].chat.user.id;
       var unread = this._checkMessagesUnread(this.chats[chat_index].chat.chat_messages, id);
-      
+
       this.chats[chat_index].chat.messages_unread = unread;
       this.notifyPath('chats.' + chat_index + '.chat.messages_unread', unread);
     },
-    setMessageRead: function(user_id){
+    setMessageRead: function (user_id) {
       var chat_index = this.searchChatByUserId(user_id);
       var chat = this.chats[chat_index];
       var peer = {
-        "_":"inputPeerUser",
-        "user_id":user_id,
-        "access_hash":chat.chat.user.access_hash
+        "_": "inputPeerUser",
+        "user_id": user_id,
+        "access_hash": chat.chat.user.access_hash
       }
-      if (chat.chat.user._ == 'chat'){
+      if (chat.chat.user._ == 'chat') {
         peer._ = "inputPeerChat"
       };
       // get last message
       var max_id = chat.chat.chat_messages.splice(-1)[0].id;
-      telegramApi.invokeApi('messages.readHistory',{peer:peer, max_id},function(e){
+      telegramApi.invokeApi('messages.readHistory', { peer: peer, max_id }, function (e) {
         console.info('Todo fue bien', e);
-      }, function(e){
+      }, function (e) {
         console.info('Algo fue mal: ', e);
       })
     },
@@ -1739,14 +1739,14 @@ Example:
       message.id = msg.id;
 
       // check if its a chat message
-      message.isChat = (msg.to_id && msg.to_id.chat_id) || msg.chat_id? true : false;
+      message.isChat = (msg.to_id && msg.to_id.chat_id) || msg.chat_id ? true : false;
       if (message.isChat) {
-        message.from_user = this.getUserName(id);        
+        message.from_user = this.getUserName(id);
       }
 
       // if its a media file say it
       message._base = msg;
-      if (msg.media){
+      if (msg.media) {
         message.text = "[MEDIA it doesn't implemented] " + message.text;
       }
       return message;
@@ -1760,12 +1760,12 @@ Example:
       this.set('user_selected.photo', e.model.item.chat.photo);
       this.set('user_selected.peer', e.model.item.peer);
       this.set('user_selected.chat_messages', e.model.item.chat.chat_messages || []);
-     
+
       this.chats[index].chat.messages_unread = 0;
       this.setMessageRead(id);
 
       this.notifyPath('chats.' + index + '.chat.messages_unread', 0);
-     
+
       this.selected = true;
       var that = this;
       window.setTimeout(function () {
@@ -1907,28 +1907,28 @@ Example:
     },
     _getRandomColor: function (id, participants) {
       var color = ["#F44336", "#E91E63", "#9C27B0", "#673AB7", "#3F51B5", "#2196F3",
-       "#03A9F4", "#00BCD4", "#009688", "#4CAF50", "#8BC34A", "#CDDC39","#FFEB3B",
-       "#FFC107", "#FF9800", "FF5722", "#795548", "#607D8B"]
+        "#03A9F4", "#00BCD4", "#009688", "#4CAF50", "#8BC34A", "#CDDC39", "#FFEB3B",
+        "#FFC107", "#FF9800", "FF5722", "#795548", "#607D8B"]
 
       var index = -1;
-      for(var i =0; i<participants.length && index== -1;i++){
-        if (participants[i].id == id){
+      for (var i = 0; i < participants.length && index == -1; i++) {
+        if (participants[i].id == id) {
           index = i;
         }
       }
-      if (index == -1){
+      if (index == -1) {
         console.error('ID doesnt found in participants list', id, participants);
-        index =0;
+        index = 0;
       }
       return color[index]
 
     },
-    _parsePhone: function(phone){
+    _parsePhone: function (phone) {
       var parsedPhone = '+' + phone;
       parsedPhone = parsedPhone.match(/.{1,3}/g).join(' ')
       return parsedPhone
     },
-    _getChatDate: function(item){
+    _getChatDate: function (item) {
       var date = item.timestamp;
       return moment(date).calendar(null, {
         sameDay: 'HH:mm',
@@ -1943,15 +1943,15 @@ Example:
       // when status is updated
       if (response.update) {
         this.refreshStatus(response.update.user_id, response.update.status);
-      } 
+      }
     },
     msgs_ack: function (response) {
       // Only say msgs_ack but msg_ids is empty
     },
     msg_container: function (response) {
       var messages = response.messages;
-      messages.forEach(function(message){
-        if (message.body){
+      messages.forEach(function (message) {
+        if (message.body) {
           if (this[message.body._]) {
             this[message.body._](message.body);
           } else {
@@ -2001,9 +2001,9 @@ Example:
         var msg = this.parseMSG(response.message);
 
         var id;
-        if (msg.isChat){
+        if (msg.isChat) {
           id = repsonse.message.to_id.chat_id;
-        } else if (response.message.from_id == this.user.id){
+        } else if (response.message.from_id == this.user.id) {
           id = response.message.to_id.user_id;
         } else {
           id = response.message.from_id
@@ -2030,14 +2030,14 @@ Example:
     },
 
     // TODO implementar updateChatUserTyping pero depende de que marque la session como activa cuando veo el componente
-    
-    new_session_created: function(response){
+
+    new_session_created: function (response) {
     },
 
-    msgs_state_info: function(response){
+    msgs_state_info: function (response) {
       //  https://core.telegram.org/mtproto/service_messages_about_messages
     },
-    msg_detailed_info: function(response){
+    msg_detailed_info: function (response) {
       // https://core.telegram.org/mtproto/service_messages_about_messages
     },
   });
