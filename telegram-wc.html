@@ -21,8 +21,7 @@ Example:
 <link rel="import" href="bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="bower_components/paper-styles/shadow.html">
 <link rel="import" href="bower_components/paper-fab/paper-fab.html">
-
-
+<link rel="import" href="bower_components/paper-spinner/paper-spinner.html">
 
 <script src="bower_components/moment/min/moment.min.js"></script>
 <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
@@ -163,15 +162,15 @@ Example:
         height: 100%;
       }
       
-      .chat >.content {
-        background: rgba(173,205,227,1);
-        background: -moz-radial-gradient(center, ellipse cover, rgba(173,205,227,1) 0%, rgba(134,174,204,1) 100%);
-        background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%, rgba(173,205,227,1)), color-stop(100%, rgba(134,174,204,1)));
-        background: -webkit-radial-gradient(center, ellipse cover, rgba(173,205,227,1) 0%, rgba(134,174,204,1) 100%);
-        background: -o-radial-gradient(center, ellipse cover, rgba(173,205,227,1) 0%, rgba(134,174,204,1) 100%);
-        background: -ms-radial-gradient(center, ellipse cover, rgba(173,205,227,1) 0%, rgba(134,174,204,1) 100%);
-        background: radial-gradient(ellipse at center, rgba(173,205,227,1) 0%, rgba(134,174,204,1) 100%);
-        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#adcde3', endColorstr='#86aecc', GradientType=1 );
+      .chat>.content {
+        background: rgba(173, 205, 227, 1);
+        background: -moz-radial-gradient(center, ellipse cover, rgba(173, 205, 227, 1) 0%, rgba(134, 174, 204, 1) 100%);
+        background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%, rgba(173, 205, 227, 1)), color-stop(100%, rgba(134, 174, 204, 1)));
+        background: -webkit-radial-gradient(center, ellipse cover, rgba(173, 205, 227, 1) 0%, rgba(134, 174, 204, 1) 100%);
+        background: -o-radial-gradient(center, ellipse cover, rgba(173, 205, 227, 1) 0%, rgba(134, 174, 204, 1) 100%);
+        background: -ms-radial-gradient(center, ellipse cover, rgba(173, 205, 227, 1) 0%, rgba(134, 174, 204, 1) 100%);
+        background: radial-gradient(ellipse at center, rgba(173, 205, 227, 1) 0%, rgba(134, 174, 204, 1) 100%);
+        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#adcde3', endColorstr='#86aecc', GradientType=1);
         background-size: 100% 100%;
         background-image: url('background.jpg');
       }
@@ -233,8 +232,45 @@ Example:
       }
       
       .sender {
-        margin:0;
-
+        margin: 0;
+      }
+      .img {
+        width: 100%;
+        height: auto;
+        cursor:pointer;
+      }
+      .loading-spinner {
+        width: 24px;
+        height: 24px;
+        --paper-spinner-layer-1-color: #5682a3;
+        --paper-spinner-layer-2-color: #5682a3;
+        --paper-spinner-layer-3-color: #5682a3;
+        --paper-spinner-layer-4-color: #5682a3;
+      }
+      .full-image-container{
+        position:absolute;
+        top:0;right: 0;
+        display: flex;
+        width: 100%;
+        height: 100%;
+        padding:10px;
+        box-sizing:border-box;
+        background-color: rgba(0,0,0,0.75);
+      }
+      .close-icon{
+        position:absolute;
+        top:5px;
+        left: 5px;
+        color:white;
+      }
+      .full-image{
+        height: auto;
+        width: auto;
+        max-width: 100%;
+        max-height:100%; 
+        margin: auto;
+        display: flex;
+        background-color: rgba(0,0,0,0.75);
       }
       .text {
         display: inline-block;
@@ -349,19 +385,22 @@ Example:
         box-sizing: border-box;
         line-height: normal;
       }
+      
       .loading {
         border-radius: 100%;
-        border:2px solid white;
-        width: 90px;height:90px
+        border: 2px solid white;
+        width: 90px;
+        height: 90px
       }
+      
       .createChat {
-        position:absolute;
-        bottom:10px;
-        right:10px;
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
         --paper-fab-background: #5682a3;
         --paper-fab-iron-icon: {
-          width:20px;
-          height:20px;
+          width: 20px;
+          height: 20px;
         }
       }
       /* Login menus */
@@ -518,6 +557,34 @@ Example:
         -webkit-animation-name: fadeInRight;
         animation-name: fadeInRight;
       }
+      @-webkit-keyframes zoomIn {
+        from {
+          opacity: 0;
+          -webkit-transform: scale3d(.3, .3, .3);
+          transform: scale3d(.3, .3, .3);
+        }
+
+        50% {
+          opacity: 1;
+        }
+      }
+
+      @keyframes zoomIn {
+        from {
+          opacity: 0;
+          -webkit-transform: scale3d(.3, .3, .3);
+          transform: scale3d(.3, .3, .3);
+        }
+
+        50% {
+          opacity: 1;
+        }
+      }
+
+      .zoomIn {
+        -webkit-animation-name: zoomIn;
+        animation-name: zoomIn;
+      }
       /* LEFT MENU */
       
       .bar {
@@ -606,6 +673,7 @@ Example:
         height: auto;
         margin-right: 10px;
       }
+      
     </style>
 <!-- Header -->
 <paper-toolbar class="toolbar">
@@ -713,7 +781,7 @@ Example:
                   <template is="dom-if" if="{{item.chat.last_message.isChat}}">
                     {{item.chat.last_message.from_user}}:
                   </template>
-                  {{item.chat.last_message.text}}
+                  {{item.chat.last_message.text}}{{item.chat.last_message.preview}}
                 </p>
                 <template is="dom-if" if="{{item.chat.messages_unread}}">
                   <span class="unread">{{item.chat.messages_unread}}</span>
@@ -796,6 +864,14 @@ Example:
               </template>
               <template is="dom-if" if="{{item.mine}}">
                 <div class="messageOut vertical layout">
+                  <template is="dom-if" if="{{item.isPhoto}}">
+                    <template is="dom-if" if="{{item.src}}">
+                      <img src="{{item.src}}" class="img" on-click="openFullImage">
+                    </template>
+                    <template is="dom-if" if="{{!item.src}}">
+                      <paper-spinner active class="loading-spinner"></paper-spinner>
+                    </template>
+                  </template>
                   <span class="text">{{item.text}}</span>
                   <div class="date">
                     {{item.date}}
@@ -810,6 +886,14 @@ Example:
               </template>
               <template is="dom-if" if="{{!item.mine}}">
                 <div class="messageIn">
+                  <template is="dom-if" if="{{item.isPhoto}}">
+                    <template is="dom-if" if="{{item.src}}">
+                      <img src="{{item.src}}" class="img" on-click="openFullImage">
+                    </template>
+                    <template is="dom-if" if="{{!item.src}}">
+                      <paper-spinner active class="loading-spinner"></paper-spinner>
+                    </template>
+                  </template>
                   <template is="dom-if" if="{{item.isChat}}">
                     <p class="sender" style$="color: {{item.user_color}}">{{item.from_user}}</p>
                   </template>
@@ -829,6 +913,12 @@ Example:
             <paper-icon-button icon="send" class="send" disabled="[[disable_send]]" on-click="sendMSG"></paper-icon-button>
           </div>
         </div>
+        <template is="dom-if" if="{{expand_image}}">
+          <div class="full-image-container animated zoomIn">
+            <paper-icon-button on-click="closeFullImage" class="close-icon" icon="arrow-back"></paper-icon-button>
+            <img class="full-image" src="{{expand_image}}">
+          </div>
+        </template>
       </div>
     </template>
     <div show$="{{menu_open}}" class="bar vertical layout" id="bar">
@@ -1288,7 +1378,9 @@ Example:
      * 
      */
     setStatus: function (offline) {
-      telegramApi.invokeApi('account.updateStatus', { offline: offline });
+      telegramApi.invokeApi('account.updateStatus', {
+        offline: offline
+      });
     },
     /*----------------------------------Load component--------------------------------*/
 
@@ -1324,6 +1416,7 @@ Example:
               chat.chat.last_message = chat.chat.chat_messages[chat.chat.chat_messages.length - 1];
             }
             that.push('chats', chat);
+            that._loadImgPreview(that.chats.length - 1);
             that.loading = false;
           },
             function (error) {
@@ -1514,14 +1607,21 @@ Example:
           chat: chat,
           peer: peer
         });
-
-
-
+        if (message.isPhoto) {
+          var image_index = message._base.media.photo.sizes.length - 1;
+          this.getImgimage_index(message._base.media.photo, index, newChatIndex, 0);
+        }
       } else {
         // assign color
         if (message.isChat) {
           // TODO el id que le paso es el del chat no el del mensaje, hay que corregirlo
           message.user_color = this._getRandomColor(message._base.from_id, this.chats[chat_index].participants);
+        }
+        if (message.isPhoto) {
+          var updateSelected = this.user_selected && this.user_selected == id;
+          var image_index = message._base.media.photo.sizes.length - 1;
+          this.getImgIndex(message._base.media.photo, image_index, chat_index, this.chats[chat_index].chat.chat_messages.length,
+            updateSelected);
         }
         this.push('chats.' + chat_index + '.chat.chat_messages', message);
 
@@ -1680,8 +1780,11 @@ Example:
         peer._ = "inputPeerChat"
       };
       // get last message
-      var max_id = chat.chat.chat_messages.splice(-1)[0].id;
-      telegramApi.invokeApi('messages.readHistory', { peer: peer, max_id }, function (e) {
+      var max_id = chat.chat.chat_messages.slice(-1)[0].id;
+      telegramApi.invokeApi('messages.readHistory', {
+        peer: peer,
+        max_id
+      }, function (e) {
         console.info('Todo fue bien', e);
       }, function (e) {
         console.info('Algo fue mal: ', e);
@@ -1747,7 +1850,12 @@ Example:
       // if its a media file say it
       message._base = msg;
       if (msg.media) {
-        message.text = "[MEDIA it doesn't implemented] " + message.text;
+        if (msg.media._ == 'messageMediaPhoto') {
+          message.preview = message.text ? '' : 'Image';
+          message.isPhoto = true;
+        } else {
+          message.text = "[MEDIA it doesn't implemented] " + message.text;
+        }
       }
       return message;
 
@@ -1855,7 +1963,6 @@ Example:
     _sortChatByLastMSG: function (chat1, chat2) {
       var msg1_time = chat1.chat.last_message ? chat1.chat.last_message.timestamp : -1;
       var msg2_time = chat2.chat.last_message ? chat2.chat.last_message.timestamp : -1;
-
       return msg2_time - msg1_time;
 
     },
@@ -1908,7 +2015,8 @@ Example:
     _getRandomColor: function (id, participants) {
       var color = ["#F44336", "#E91E63", "#9C27B0", "#673AB7", "#3F51B5", "#2196F3",
         "#03A9F4", "#00BCD4", "#009688", "#4CAF50", "#8BC34A", "#CDDC39", "#FFEB3B",
-        "#FFC107", "#FF9800", "FF5722", "#795548", "#607D8B"]
+        "#FFC107", "#FF9800", "FF5722", "#795548", "#607D8B"
+      ]
 
       var index = -1;
       for (var i = 0; i < participants.length && index == -1; i++) {
@@ -2031,8 +2139,7 @@ Example:
 
     // TODO implementar updateChatUserTyping pero depende de que marque la session como activa cuando veo el componente
 
-    new_session_created: function (response) {
-    },
+    new_session_created: function (response) { },
 
     msgs_state_info: function (response) {
       //  https://core.telegram.org/mtproto/service_messages_about_messages
@@ -2040,5 +2147,62 @@ Example:
     msg_detailed_info: function (response) {
       // https://core.telegram.org/mtproto/service_messages_about_messages
     },
+    /* ---------------  MEDIA FUNCTIONS ------------------- */
+    getImgIndex: function (photo, img_index, chat_index, message_index) {
+      var copy_img = JSON.parse(JSON.stringify(photo));
+      copy_img.sizes = [copy_img.sizes[img_index]];
+      var that = this;
+
+      function setSrc(result) {
+        var blob_url = that.unit8ToImg(result);
+        that.chats[chat_index].chat.chat_messages[message_index].src = blob_url;
+        that.notifyPath('chats.' + chat_index + '.chat.chat_messages.' + message_index + '.src', that.chats[
+          chat_index].chat.chat_messages[message_index].src);
+        // avoid unselect user while its loading the img
+        if (that.user_selected && that.user_selected.id == that.chats[chat_index].chat.user.id) {
+          that.user_selected.chat_messages[message_index].src = blob_url;
+          that.notifyPath('user_selected.chat_messages.' + message_index + '.src', that.user_selected.chat_messages[
+            message_index].src);
+        }
+
+        that.set('_test', that._test || [])
+        that.push('_test', blob_url);
+      }
+      if (copy_img.sizes[0]._ === 'photoCachedSize') {
+        // Load img from cache
+        var photo = {
+          type: 'image/jpg'
+        };
+        photo.bytes = [new Uint8Array(Object.values(copy_img.sizes[0].bytes))];
+        setSrc(photo);
+      } else {
+        telegramApi.downloadPhoto(copy_img).then(setSrc);
+      }
+    },
+    unit8ToImg: function (byteImg) {
+      if (byteImg.bytes.length == 0) console.error('La imagen llega vacia');
+      var blob = new Blob(byteImg.bytes, {
+        type: byteImg.type
+      });
+      return URL.createObjectURL(blob);
+    },
+    _loadImgPreview: function (index) {
+      var chat = this.chats[index];
+      var that = this;
+
+      chat.chat.chat_messages.forEach(function (message, msg_index) {
+        if (message.isPhoto) {
+          var index_image = message._base.media.photo.sizes.length - 1;
+          that.getImgIndex(message._base.media.photo, index_image, index, msg_index);
+        }
+      });
+    },
+    openFullImage: function (e) {
+      console.info(e);
+      this.expand_image = e.model.item.src;
+    },
+    closeFullImage: function (e) {
+      this.expand_image = "";
+    }
   });
 </script>
