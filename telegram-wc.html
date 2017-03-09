@@ -194,7 +194,7 @@ Example:
       .messageOut {
         border-radius: 5px;
         padding: 5px 8px 0 8px;
-        margin-bottom: 10px;
+        margin: 10px 0;
         max-width: 50%;
         font: 13px Roboto, arial, sans-serif;
         position: relative;
@@ -1680,9 +1680,12 @@ Example:
         });
         if (message.isPhoto) {
           var image_index = message._base.media.photo.sizes.length - 1;
-          this.getImgIndex(message._base.media.photo, index, newChatIndex, 0);
+          this.getImgIndex(message._base.media.photo, image_index , newChatIndex, 0);
         } else if (message.isSticker) {
           this.getStickerImg(message._base.media.document, newChatIndex, 0);
+        } else if(message.isWeb){
+          var index_image = message._base.media.webpage.photo.sizes.length - 1;
+          that.getImgIndex(message._base.media.webpage.photo, image_index, newChatIndex, 0)
         }
       } else {
         // assign color
@@ -1698,7 +1701,11 @@ Example:
             updateSelected);
         } else if (message.isSticker) {
           this.getStickerImg(message._base.media.document, chat_index, this.chats[chat_index].chat.chat_messages.length);
+        } else if(message.isWeb){
+          var index_image = message._base.media.webpage.photo.sizes.length - 1;
+          this.getImgIndex(message._base.media.webpage.photo, chat_index, this.chats[chat_index].chat.chat_messages.length)
         }
+        
         this.push('chats.' + chat_index + '.chat.chat_messages', message);
 
         this.chats[chat_index].chat.last_message = message;
@@ -1932,13 +1939,17 @@ Example:
         } else if (msg.media._ === 'messageMediaDocument' && msg.media.document.mime_type === 'image/webp') {
           message.preview = message.text ? '' : msg.media.document.attributes[1].alt + ' Sticker';
           message.isSticker = true;
-        } else if(msg.media._ === 'messageMediaDocument'){
+        } else if(msg.media._ === 'messageMediaDocument' && msg.media.document.mime_type.indexOf('application') > -1){
           // message.text = "[MEDIA it doesn't implemented] " + message.text;
           message.isFile = true;
           message.filename = msg.media.document.attributes[0].file_name;
+          message.preview = message.text ? '': message.filename; 
           message.size = this._formatBytes(msg.media.document.size, 1);
           message.type = msg.media.document.mime_type.split('/')[1];
-
+        } else if(msg.media._ === 'messageMediaWebPage'){
+          message.isWeb = true;
+        }else {
+          message.text = "[MEDIA it doesn't implemented] " + message.text;
         }
       }
       return message;
@@ -2288,6 +2299,9 @@ Example:
           that.getImgIndex(message._base.media.photo, index_image, index, msg_index);
         } else if (message.isSticker) {
           that.getStickerImg(message._base.media.document, index, msg_index);
+        } else if(message.isWeb){
+          var index_image = message._base.media.webpage.photo.sizes.length - 1;
+          that.getImgIndex(message._base.media.webpage.photo, index_image, index, msg_index)
         }
       });
     },
