@@ -274,7 +274,9 @@ Example:
         color: #5dad00;
       }
       
-      .webtitle_preview {}
+      .location > img {
+        max-width: 100%;
+      }
       
       .sender {
         margin: 0;
@@ -985,9 +987,14 @@ Example:
                         <div class="webpreview">
                           <p class="website_name">{{item.site_name}}</p>
                           <p class="webtitle_preview">{{item.title}}</p>
-                          <img class="webimage" src="{{item.src}}"></img>
+                          <img class="webimage" src="{{item.src}}">
                           <p class="webdescription">{{item.description}}</p>
                         </div>
+                      </template>
+                      <template is="dom-if" if="{{item.isLocation}}">
+                        <a class="location" href="{{item.link}}" target="_blank" title="Open on Google Maps">
+                          <img src="{{item.photo_preview}}">
+                        </a>
                       </template>
                       <span class="text">{{item.text}}</span>
                       <div class="date">
@@ -1039,6 +1046,11 @@ Example:
                           <img class="webimage" src="{{item.src}}">
                           <p class="webdescription">{{item.description}}</p>
                         </div>
+                      </template>
+                      <template is="dom-if" if="{{item.isLocation}}">
+                        <a class="location" href="{{item.link}}" target="_blank">
+                          <img src="{{item.photo_preview}}">
+                        </a>
                       </template>
                       <template is="dom-if" if="{{item.isChat}}">
                         <p class="sender" style$="color: {{item.user_color}}">{{item.from_user}}</p>
@@ -2031,6 +2043,14 @@ Example:
           message.description = webpage.description;
           message.text = '';
 
+        } else if (msg.media._ === "messageMediaGeo") {
+          var geo = msg.media.geo;
+          message.isLocation = true;
+          var lat_long = geo.lat + ',' + geo.long
+          message.link = "https://maps.google.com/?q=" + lat_long;
+          message.preview = 'Location';
+          message.photo_preview = "https://maps.googleapis.com/maps/api/staticmap?sensor=false&center=" + lat_long;
+          message.photo_preview += "&zoom=15&size=300x150&scale=2&markers=color:red|size:big|" +lat_long;
         } else {
           message.text = "[MEDIA it doesn't implemented] " + message.text;
         }
