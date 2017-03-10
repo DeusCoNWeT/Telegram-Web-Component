@@ -48,6 +48,10 @@ Example:
         display: flex;
       }
       
+      p {
+        margin: 0;
+      }
+      
       .container {
         overflow: auto;
       }
@@ -187,23 +191,25 @@ Example:
       }
       
       .messageOut[downloadable]:hover,
-      .messageIn[downloadable]:hover{
-        cursor:pointer;
+      .messageIn[downloadable]:hover {
+        cursor: pointer;
       }
+      
       .messageIn,
       .messageOut {
         border-radius: 5px;
         padding: 5px 8px 0 8px;
         margin: 10px 0;
-        max-width: 50%;
+        max-width: 60%;
         font: 13px Roboto, arial, sans-serif;
         position: relative;
         min-width: 60px;
+        word-break: break-word;
       }
       
       .messageIn {
         float: left;
-        margin-right: 50%;
+        margin-right: 40%;
         background: white;
       }
       
@@ -222,7 +228,7 @@ Example:
       .messageOut {
         float: right;
         background-color: #DCF8C6;
-        margin-left: 50%;
+        margin-left: 40%;
       }
       
       .messageOut:before {
@@ -237,6 +243,39 @@ Example:
         right: -3px;
       }
       
+      .webtitle,
+      .weblink,
+      .website_name,
+      .webtitle_preview {
+        margin: 1px 0;
+      }
+      
+      .webimage {
+        width: 100%;
+        height: auto;
+      }
+      
+      a.weblink {
+        color: #42749b;
+        text-decoration: underline;
+      }
+      
+      .webpreview {
+        border-left: 2px solid #5dad00;
+        ;
+        box-sizing: border-box;
+        margin: 5px 0 2px 0;
+        font-weight: 400;
+        font-size: 12px;
+        padding: 0 8px;
+      }
+      
+      .website_name {
+        color: #5dad00;
+      }
+      
+      .webtitle_preview {}
+      
       .sender {
         margin: 0;
       }
@@ -246,38 +285,44 @@ Example:
         height: auto;
         cursor: pointer;
       }
+      
       .fileicon,
-      .downloadButton{
-        background-color:#70c970;
-        margin:0;
-        color:#DCF8C6;
+      .downloadButton {
+        background-color: #70c970;
+        margin: 0;
+        color: #DCF8C6;
         width: 35px;
         height: 35px;
-        padding:5px;
+        padding: 5px;
         box-sizing: border-box;
         border-radius: 100%;
       }
-      .fileinfo{
-        margin:0 8px;
+      
+      .fileinfo {
+        margin: 0 8px;
       }
-      .filename{
-        color:#156015;
+      
+      .filename {
+        color: #156015;
         font-weight: bold;
-        margin:0;
+        margin: 0;
       }
-      .progressbar{
+      
+      .progressbar {
         width: 100%;
         display: none;
       }
-      .progressbar[loading]
-      {
-        display:inline-block;
+      
+      .progressbar[loading] {
+        display: inline-block;
       }
-      .sizetype{
+      
+      .sizetype {
         text-transform: capitalize;
-        margin:5px 0;
-        font-size:10px;
+        margin: 5px 0;
+        font-size: 10px;
       }
+      
       .loading-spinner {
         width: 24px;
         height: 24px;
@@ -718,299 +763,329 @@ Example:
         margin-right: 10px;
       }
     </style>
-<!-- Header -->
-<paper-toolbar class="toolbar">
-  <template is="dom-if" if="{{!logged}}">
-    <img src="icon.png" class="icon"></img>
-    <p>Telegram</p>
-  </template>
-  <template is="dom-if" if="{{logged}}">
-    <paper-icon-button on-click="toggleMenu" class="icon" icon="menu"></paper-icon-button>
-    <template is="dom-if" if="{{!searching}}">
-      <p class="flex">Telegram</p>
-    </template>
-    <paper-input no-label-float class="flex self-center" hidden$="{{!searching}}" on-blur="checkCloseSearch" value="{{search_keywords}}"
-      id="contactSearch"></paper-input>
-    <template is="dom-if" if="{{!searching}}">
-      <paper-icon-button icon="search" id="searchIcon" class="icon" on-click="searchContact"></paper-icon-button>
-    </template>
-  </template>
-</paper-toolbar>
-<div class="container flex">
-  <!-- Login -->
-  <template is="dom-if" if="{{!logged}}">
-    <!-- Phone and code -->
-    <div class="login" hidden="{{showCode}}">
-      <div class="loginMenu vertical layout">
-        <p class="bold">Register</p>
-        <p class="subtitle">Please, select your country and introduce your phone number. You will receive a code of telegram app</p>
-        <div class="inputContainer">
-          <!-- Search country code -->
-          <label for="country" class="subtitle">Country</label>
-          <paper-input value="{{country}}" no-label-float focused="{{_openedSelector}}">
-          </paper-input>
-          <template is="dom-if" if="{{_openedSelector}}">
-            <ul class="country-list" on-focus="_openSelector">
-              <template is="dom-repeat" items="{{country_codes}}" filter="{{filterCountry(country)}}">
-                <li on-mousedown="_selectCountry" tabindex="0">{{item.name}}</li>
-              </template>
-            </ul>
-          </template>
-          <!--  END search code-->
-          <div class="phoneContainer horizontal layout ">
-            <div>
-              <label for="code" class="subtitle">Code</label>
-              <paper-input name="code" value="{{countryCode}}" class="code" no-label-float>
-                <div prefix>+</div>
+    <!-- Header -->
+    <paper-toolbar class="toolbar">
+      <template is="dom-if" if="{{!logged}}">
+        <img src="icon.png" class="icon"></img>
+        <p>Telegram</p>
+      </template>
+      <template is="dom-if" if="{{logged}}">
+        <paper-icon-button on-click="toggleMenu" class="icon" icon="menu"></paper-icon-button>
+        <template is="dom-if" if="{{!searching}}">
+          <p class="flex">Telegram</p>
+        </template>
+        <paper-input no-label-float class="flex self-center" hidden$="{{!searching}}" on-blur="checkCloseSearch" value="{{search_keywords}}"
+          id="contactSearch"></paper-input>
+        <template is="dom-if" if="{{!searching}}">
+          <paper-icon-button icon="search" id="searchIcon" class="icon" on-click="searchContact"></paper-icon-button>
+        </template>
+      </template>
+    </paper-toolbar>
+    <div class="container flex">
+      <!-- Login -->
+      <template is="dom-if" if="{{!logged}}">
+        <!-- Phone and code -->
+        <div class="login" hidden="{{showCode}}">
+          <div class="loginMenu vertical layout">
+            <p class="bold">Register</p>
+            <p class="subtitle">Please, select your country and introduce your phone number. You will receive a code of telegram app</p>
+            <div class="inputContainer">
+              <!-- Search country code -->
+              <label for="country" class="subtitle">Country</label>
+              <paper-input value="{{country}}" no-label-float focused="{{_openedSelector}}">
               </paper-input>
-            </div>
-            <div class="flex">
-              <label for="phonenumber" class="subtitle">Phone Number</label>
-              <paper-input name="phonenumber" value="{{phone}}" class="phonenumber" id="phoneNumber" no-label-float tabindex="0"></paper-input>
-            </div>
-          </div>
-          <paper-button on-click="sendCode" class="button">Send</paper-button>
-        </div>
-      </div>
-    </div>
-    <div class="login requireCode" hidden="{{!showCode}}">
-      <div class="loginMenu">
-        <p class="bold">+{{countryCode}} {{phone}}</p>
-        <p class="subtitle flex">Enter the code you have received</p>
-        <paper-input name="phoneCode" value="{{phoneCode}}" label="Insert your code here"></paper-input>
-        <paper-button raised on-click="login" class="button sendcode">Send Code</paper-button>
-      </div>
-    </div>
-  </template>
-  <!-- Logged -->
-  <template is="dom-if" if="{{logged}}">
-    <!-- if Chat is closed -->
-    <template is="dom-if" if="{{!selected}}">
-      <template is="dom-if" if="{{!searching}}">
-        <template is="dom-repeat" items="{{chats}}" id="chatscontainer" sort="_sortChatByLastMSG">
-          <div class="contacts horizontal layout center" on-click="openChat">
-            <img class="profImg" src="{{item.chat.photo}}">
-            <div class="vertical layout displayName">
-              <div class="horizontal layout">
-                <template is="dom-if" if="{{item.chat.user.title}}">
-                  <p class="name flex">
-                    <iron-icon icon="supervisor-account" class="groupicon"></iron-icon>{{item.chat.user.title}}</p>
-                </template>
-                <template is="dom-if" if="{{item.chat.user.first_name}}">
-                  <template is="dom-if" if="{{item.chat.user.pFlags.contact}}">
-                    <p class="name flex">{{item.chat.user.first_name}} {{item.chat.user.last_name}}</p>
+              <template is="dom-if" if="{{_openedSelector}}">
+                <ul class="country-list" on-focus="_openSelector">
+                  <template is="dom-repeat" items="{{country_codes}}" filter="{{filterCountry(country)}}">
+                    <li on-mousedown="_selectCountry" tabindex="0">{{item.name}}</li>
                   </template>
-                  <template is="dom-if" if="{{!item.chat.user.pFlags.contact}}">
-                    <template is="dom-if" if="{{item.chat.user.pFlags.verified}}">
-                      <p class="name flex">{{item.chat.user.first_name}} {{item.chat.user.last_name}}</p>
-                    </template>
-                    <template is="dom-if" if="{{!item.chat.user.pFlags.verified}}">
-                      <p class="name flex">{{_parsePhone(item.chat.user.phone)}}</p>
-                    </template>
-                  </template>
-                </template>
-                <p class="date lastmessage">{{_getChatDate(item.chat.last_message)}}</p>
-              </div>
-              <div class="horizontal layout">
-                <template is="dom-if" if="{{item.chat.last_message.mine}}">
-                  <template is="dom-if" if="{{item.chat.last_message.sent}}">
-                    <span class="check sort">✓</span>
-                  </template>
-                  <template is="dom-if" if="{{item.chat.last_message.read}}">
-                    <span class="check sort">✓</span>
-                  </template>
-                </template>
-                <p class="chatPreview flex">
-                  <template is="dom-if" if="{{item.chat.last_message.isChat}}">
-                    {{item.chat.last_message.from_user}}:
-                  </template>
-                  {{item.chat.last_message.text}}{{item.chat.last_message.preview}}
-                </p>
-                <template is="dom-if" if="{{item.chat.messages_unread}}">
-                  <span class="unread">{{item.chat.messages_unread}}</span>
-                </template>
-              </div>
-            </div>
-          </div>
-          <hr class="divisor">
-        </template>
-        <template is="dom-if" if="{{!loading}}">
-          <paper-fab class="createChat" on-click="searchContact" mini icon="create" title="open a new chat"></paper-fab>
-        </template>
-      </template>
-      <template is="dom-if" if="{{searching}}">
-        <template is="dom-repeat" items="{{contacts}}" filter="{{filterContact(search_keywords)}}" rendered-item-count="{{nContactsFound}}">
-          <div class="contacts horizontal layout center" on-mousedown="loadContact">
-            <template is="dom-if" if="{{item.image}}">
-              <img class="profImg" src="{{item.image}}">
-            </template>
-            <template is="dom-if" if="{{!item.image}}">
-              <img class="profImg" src="default.png">
-            </template>
-            <div class="vertical layout">
-              <p>{{item.title}}{{item.first_name}} {{item.last_name}}</p>
-            </div>
-          </div>
-          <hr class="divisor">
-        </template>
-        <template is="dom-if" if="{{showNoContacts}}">
-          <div class="vertical layout center-center emptyContacts">
-            <p class="title">No results</p>
-          </div>
-        </template>
-      </template>
-      <template is="dom-if" if="{{chats_empty}}">
-        <!-- TODO loading info -->
-        <div class="vertical layout center-center emptyContacts">
-          <template is="dom-if" if="{{loading}}">
-            <img class="loading" src="loading.gif"></img>
-          </template>
-          <template is="dom-if" if="{{!loading}}">
-            <p class="title">No results</p>
-          </template>
-        </div>
-      </template>
-    </template>
-    <!-- chat opened -->
-    <template is="dom-if" if="{{user_selected}}">
-      <div id="chatContainer" class="chat animated fadeInRight vertical layout">
-        <paper-toolbar class="toolbar">
-          <paper-icon-button on-click="closeChat" class="icon" icon="arrow-back"></paper-icon-button>
-          <img class="profImg small" src="{{user_selected.photo}}">
-          <div class="vertical layout">
-            <template is="dom-if" if="{{user_selected.first_name}}">
-              <template is="dom-if" if="{{user_selected.pFlags.contact}}">
-                <span>{{user_selected.first_name}} {{user_selected.last_name}}</span>
+                </ul>
               </template>
-              <template is="dom-if" if="{{!user_selected.pFlags.contact}}">
-                <template is="dom-if" if="{{user_selected.pFlags.verified}}">
-                  <span>{{user_selected.first_name}} {{user_selected.last_name}}</span>
-                </template>
-                <template is="dom-if" if="{{!user_selected.pFlags.verified}}">
-                  <span>{{_parsePhone(user_selected.phone)}}</span>
-                </template>
-              </template>
-            </template>
-            <template is="dom-if" if="{{user_selected.title}}">
-              <span><iron-icon icon="supervisor-account" class="groupicon"></iron-icon>{{user_selected.title}}</span>
-            </template>
-            <span class="status">{{_getStatus(user_selected.status)}}</span>
-          </div>
-        </paper-toolbar>
-        <div class="content vertical layout flex">
-          <div class="displayArea flex" id="displayArea">
-            <template is="dom-repeat" items="[[user_selected.chat_messages]]" id="chatMessages">
-              <template is="dom-if" if="{{showDateMarker(index, user_selected.chat_messages)}}">
-                <div class="datemarker vertical layout center-center">
-                  <span>{{_getDate(item)}}</span>
+              <!--  END search code-->
+              <div class="phoneContainer horizontal layout ">
+                <div>
+                  <label for="code" class="subtitle">Code</label>
+                  <paper-input name="code" value="{{countryCode}}" class="code" no-label-float>
+                    <div prefix>+</div>
+                  </paper-input>
                 </div>
+                <div class="flex">
+                  <label for="phonenumber" class="subtitle">Phone Number</label>
+                  <paper-input name="phonenumber" value="{{phone}}" class="phonenumber" id="phoneNumber" no-label-float tabindex="0"></paper-input>
+                </div>
+              </div>
+              <paper-button on-click="sendCode" class="button">Send</paper-button>
+            </div>
+          </div>
+        </div>
+        <div class="login requireCode" hidden="{{!showCode}}">
+          <div class="loginMenu">
+            <p class="bold">+{{countryCode}} {{phone}}</p>
+            <p class="subtitle flex">Enter the code you have received</p>
+            <paper-input name="phoneCode" value="{{phoneCode}}" label="Insert your code here"></paper-input>
+            <paper-button raised on-click="login" class="button sendcode">Send Code</paper-button>
+          </div>
+        </div>
+      </template>
+      <!-- Logged -->
+      <template is="dom-if" if="{{logged}}">
+        <!-- if Chat is closed -->
+        <template is="dom-if" if="{{!selected}}">
+          <template is="dom-if" if="{{!searching}}">
+            <template is="dom-repeat" items="{{chats}}" id="chatscontainer" sort="_sortChatByLastMSG">
+              <div class="contacts horizontal layout center" on-click="openChat">
+                <img class="profImg" src="{{item.chat.photo}}">
+                <div class="vertical layout displayName">
+                  <div class="horizontal layout">
+                    <template is="dom-if" if="{{item.chat.user.title}}">
+                      <p class="name flex">
+                        <iron-icon icon="supervisor-account" class="groupicon"></iron-icon>{{item.chat.user.title}}</p>
+                    </template>
+                    <template is="dom-if" if="{{item.chat.user.first_name}}">
+                      <template is="dom-if" if="{{item.chat.user.pFlags.contact}}">
+                        <p class="name flex">{{item.chat.user.first_name}} {{item.chat.user.last_name}}</p>
+                      </template>
+                      <template is="dom-if" if="{{!item.chat.user.pFlags.contact}}">
+                        <template is="dom-if" if="{{item.chat.user.pFlags.verified}}">
+                          <p class="name flex">{{item.chat.user.first_name}} {{item.chat.user.last_name}}</p>
+                        </template>
+                        <template is="dom-if" if="{{!item.chat.user.pFlags.verified}}">
+                          <p class="name flex">{{_parsePhone(item.chat.user.phone)}}</p>
+                        </template>
+                      </template>
+                    </template>
+                    <p class="date lastmessage">{{_getChatDate(item.chat.last_message)}}</p>
+                  </div>
+                  <div class="horizontal layout">
+                    <template is="dom-if" if="{{item.chat.last_message.mine}}">
+                      <template is="dom-if" if="{{item.chat.last_message.sent}}">
+                        <span class="check sort">✓</span>
+                      </template>
+                      <template is="dom-if" if="{{item.chat.last_message.read}}">
+                        <span class="check sort">✓</span>
+                      </template>
+                    </template>
+                    <p class="chatPreview flex">
+                      <template is="dom-if" if="{{item.chat.last_message.isChat}}">
+                        {{item.chat.last_message.from_user}}:
+                      </template>
+                      {{item.chat.last_message.text}}{{item.chat.last_message.preview}}
+                    </p>
+                    <template is="dom-if" if="{{item.chat.messages_unread}}">
+                      <span class="unread">{{item.chat.messages_unread}}</span>
+                    </template>
+                  </div>
+                </div>
+              </div>
+              <hr class="divisor">
+            </template>
+            <template is="dom-if" if="{{!loading}}">
+              <paper-fab class="createChat" on-click="searchContact" mini icon="create" title="open a new chat"></paper-fab>
+            </template>
+          </template>
+          <template is="dom-if" if="{{searching}}">
+            <template is="dom-repeat" items="{{contacts}}" filter="{{filterContact(search_keywords)}}" rendered-item-count="{{nContactsFound}}">
+              <div class="contacts horizontal layout center" on-mousedown="loadContact">
+                <template is="dom-if" if="{{item.image}}">
+                  <img class="profImg" src="{{item.image}}">
+                </template>
+                <template is="dom-if" if="{{!item.image}}">
+                  <img class="profImg" src="default.png">
+                </template>
+                <div class="vertical layout">
+                  <p>{{item.title}}{{item.first_name}} {{item.last_name}}</p>
+                </div>
+              </div>
+              <hr class="divisor">
+            </template>
+            <template is="dom-if" if="{{showNoContacts}}">
+              <div class="vertical layout center-center emptyContacts">
+                <p class="title">No results</p>
+              </div>
+            </template>
+          </template>
+          <template is="dom-if" if="{{chats_empty}}">
+            <!-- TODO loading info -->
+            <div class="vertical layout center-center emptyContacts">
+              <template is="dom-if" if="{{loading}}">
+                <img class="loading" src="loading.gif"></img>
               </template>
-              <template is="dom-if" if="{{item.mine}}">
-                <div class="messageOut vertical layout" downloadable$="{{item.isFile}}">
-                  <template is="dom-if" if="{{item.isPhoto}}">
-                    <template is="dom-if" if="{{item.src}}">
-                      <img src="{{item.src}}" class="img" on-click="openFullImage">
+              <template is="dom-if" if="{{!loading}}">
+                <p class="title">No results</p>
+              </template>
+            </div>
+          </template>
+        </template>
+        <!-- chat opened -->
+        <template is="dom-if" if="{{user_selected}}">
+          <div id="chatContainer" class="chat animated fadeInRight vertical layout">
+            <paper-toolbar class="toolbar">
+              <paper-icon-button on-click="closeChat" class="icon" icon="arrow-back"></paper-icon-button>
+              <img class="profImg small" src="{{user_selected.photo}}">
+              <div class="vertical layout">
+                <template is="dom-if" if="{{user_selected.first_name}}">
+                  <template is="dom-if" if="{{user_selected.pFlags.contact}}">
+                    <span>{{user_selected.first_name}} {{user_selected.last_name}}</span>
+                  </template>
+                  <template is="dom-if" if="{{!user_selected.pFlags.contact}}">
+                    <template is="dom-if" if="{{user_selected.pFlags.verified}}">
+                      <span>{{user_selected.first_name}} {{user_selected.last_name}}</span>
                     </template>
-                    <template is="dom-if" if="{{!item.src}}">
-                      <paper-spinner active class="loading-spinner"></paper-spinner>
+                    <template is="dom-if" if="{{!user_selected.pFlags.verified}}">
+                      <span>{{_parsePhone(user_selected.phone)}}</span>
                     </template>
                   </template>
-                  <template is="dom-if" if="{{item.isSticker}}">
-                    <template is="dom-if" if="{{item.src}}">
-                      <img src="{{item.src}}" class="img" on-click="openFullImage">
-                    </template>
-                    <template is="dom-if" if="{{!item.src}}">
-                      <!--<paper-spinner active class="loading-spinner"></paper-spinner>-->
-                      <p>Sticker does not supported</p>
-                    </template>
+                </template>
+                <template is="dom-if" if="{{user_selected.title}}">
+                  <span><iron-icon icon="supervisor-account" class="groupicon"></iron-icon>{{user_selected.title}}</span>
+                </template>
+                <span class="status">{{_getStatus(user_selected.status)}}</span>
+              </div>
+            </paper-toolbar>
+            <div class="content vertical layout flex">
+              <div class="displayArea flex" id="displayArea">
+                <template is="dom-repeat" items="[[user_selected.chat_messages]]" id="chatMessages">
+                  <template is="dom-if" if="{{showDateMarker(index, user_selected.chat_messages)}}">
+                    <div class="datemarker vertical layout center-center">
+                      <span>{{_getDate(item)}}</span>
+                    </div>
                   </template>
-                  <template is="dom-if" if="{{item.isFile}}">
-                    <div class="horizontal layout center" on-click="downloadFile" title="Download {{item.filename}}">
-                      <iron-icon class="fileicon" icon="editor:insert-drive-file"></iron-icon>
-                      <div class="vertical layout fileinfo">
-                        <p class="filename">{{item.filename}}</p>
-                        <p class="sizetype">{{item.size}} {{item.type}}</p>
-                        <paper-progress class="progressbar" indeterminate loading$="{{item.loading}}"></paper-progress>
+                  <template is="dom-if" if="{{item.mine}}">
+                    <div class="messageOut vertical layout" downloadable$="{{item.isFile}}">
+                      <template is="dom-if" if="{{item.isPhoto}}">
+                        <template is="dom-if" if="{{item.src}}">
+                          <img src="{{item.src}}" class="img" on-click="openFullImage">
+                        </template>
+                        <template is="dom-if" if="{{!item.src}}">
+                          <paper-spinner active class="loading-spinner"></paper-spinner>
+                        </template>
+                      </template>
+                      <template is="dom-if" if="{{item.isSticker}}">
+                        <template is="dom-if" if="{{item.src}}">
+                          <img src="{{item.src}}" class="img" on-click="openFullImage">
+                        </template>
+                        <template is="dom-if" if="{{!item.src}}">
+                          <!--<paper-spinner active class="loading-spinner"></paper-spinner>-->
+                          <p>Sticker does not supported</p>
+                        </template>
+                      </template>
+                      <template is="dom-if" if="{{item.isFile}}">
+                        <div class="horizontal layout center" on-click="downloadFile" title="Download {{item.filename}}">
+                          <iron-icon class="fileicon" icon="editor:insert-drive-file"></iron-icon>
+                          <div class="vertical layout fileinfo">
+                            <p class="filename">{{item.filename}}</p>
+                            <p class="sizetype">{{item.size}} {{item.type}}</p>
+                            <paper-progress class="progressbar" indeterminate loading$="{{item.loading}}"></paper-progress>
+                          </div>
+                        </div>
+                      </template>
+                      <template is="dom-if" if="{{item.isWebpage}}">
+                        <p class="webtitle">{{item.title}}</p>
+                        <a class="weblink" target="_blank" href="{{item.link}}">{{item.link}}</a>
+                        <div class="webpreview">
+                          <p class="website_name">{{item.site_name}}</p>
+                          <p class="webtitle_preview">{{item.title}}</p>
+                          <img class="webimage" src="{{item.src}}"></img>
+                          <p class="webdescription">{{item.description}}</p>
+                        </div>
+                      </template>
+                      <span class="text">{{item.text}}</span>
+                      <div class="date">
+                        {{item.date}}
+                        <template is="dom-if" if="{{item.sent}}">
+                          <span class="check">✓</span>
+                        </template>
+                        <template is="dom-if" if="{{item.read}}">
+                          <span class="check">✓</span>
+                        </template>
                       </div>
                     </div>
                   </template>
-                  <span class="text">{{item.text}}</span>
-                  <div class="date">
-                    {{item.date}}
-                    <template is="dom-if" if="{{item.sent}}">
-                      <span class="check">✓</span>
-                    </template>
-                    <template is="dom-if" if="{{item.read}}">
-                      <span class="check">✓</span>
-                    </template>
-                  </div>
+                  <template is="dom-if" if="{{!item.mine}}">
+                    <div class="messageIn">
+                      <template is="dom-if" if="{{item.isPhoto}}">
+                        <template is="dom-if" if="{{item.src}}">
+                          <img src="{{item.src}}" class="img" on-click="openFullImage">
+                        </template>
+                        <template is="dom-if" if="{{!item.src}}">
+                          <paper-spinner active class="loading-spinner"></paper-spinner>
+                        </template>
+                      </template>
+                      <template is="dom-if" if="{{item.isSticker}}">
+                        <template is="dom-if" if="{{item.src}}">
+                          <img src="{{item.src}}" class="img" on-click="openFullImage">
+                        </template>
+                        <template is="dom-if" if="{{!item.src}}">
+                          <paper-spinner active class="loading-spinner"></paper-spinner>
+                          <p>Sticker does not supported</p>
+                        </template>
+                      </template>
+                      <template is="dom-if" if="{{item.isFile}}">
+                        <div class="horizontal layout center" on-click="downloadFile" title="Download {{item.filename}}">
+                          <iron-icon class="fileicon" icon="editor:insert-drive-file"></iron-icon>
+                          <div class="vertical layout fileinfo">
+                            <p class="filename">{{item.filename}}</p>
+                            <p class="sizetype">{{item.size}} {{item.type}}</p>
+                            <paper-progress class="progressbar" indeterminate loading$="{{item.loading}}"></paper-progress>
+                          </div>
+                        </div>
+                      </template>
+                      <template is="dom-if" if="{{item.isWebpage}}">
+                        <p class="webtitle">{{item.title}}</p>
+                        <a class="weblink" target="_blank" href="{{item.link}}">{{item.link}}</a>
+                        <div class="webpreview">
+                          <p class="website_name">{{item.site_name}}</p>
+                          <p class="webtitle_preview">{{item.title}}</p>
+                          <img class="webimage" src="{{item.src}}">
+                          <p class="webdescription">{{item.description}}</p>
+                        </div>
+                      </template>
+                      <template is="dom-if" if="{{item.isChat}}">
+                        <p class="sender" style$="color: {{item.user_color}}">{{item.from_user}}</p>
+                      </template>
+                      <span class="text">{{item.text}}</span>
+                      <div class="date">
+                        {{item.date}}
+                      </div>
+                    </div>
+                  </template>
+                </template>
+              </div>
+              <div class="sendArea horizontal layout">
+                <div class="input flex horizontal layout">
+                  <p contenteditable="true" data-placeholder$="{{text_message==placeholder}}" class="flex" on-focus="removePlaceholder" on-blur="checkPlaceholder"
+                    on-keypress="updateTextMessage">{{placeholder}}</p>
                 </div>
-              </template>
-              <template is="dom-if" if="{{!item.mine}}">
-                <div class="messageIn">
-                  <template is="dom-if" if="{{item.isPhoto}}">
-                    <template is="dom-if" if="{{item.src}}">
-                      <img src="{{item.src}}" class="img" on-click="openFullImage">
-                    </template>
-                    <template is="dom-if" if="{{!item.src}}">
-                      <paper-spinner active class="loading-spinner"></paper-spinner>
-                    </template>
-                  </template>
-                  <template is="dom-if" if="{{item.isSticker}}">
-                    <template is="dom-if" if="{{item.src}}">
-                      <img src="{{item.src}}" class="img" on-click="openFullImage">
-                    </template>
-                    <template is="dom-if" if="{{!item.src}}">
-                      <paper-spinner active class="loading-spinner"></paper-spinner>
-                      <p>Sticker does not supported</p>
-                    </template>
-                  </template>
-                  <template is="dom-if" if="{{item.isChat}}">
-                    <p class="sender" style$="color: {{item.user_color}}">{{item.from_user}}</p>
-                  </template>
-                  <span class="text">{{item.text}}</span>
-                  <div class="date">
-                    {{item.date}}
-                  </div>
-                </div>
-              </template>
+                <paper-icon-button icon="send" class="send" disabled="[[disable_send]]" on-click="sendMSG"></paper-icon-button>
+              </div>
+            </div>
+            <template is="dom-if" if="{{expand_image}}">
+              <div class="full-image-container animated zoomIn">
+                <paper-icon-button on-click="closeFullImage" class="close-icon" icon="arrow-back"></paper-icon-button>
+                <img class="full-image" src="{{expand_image}}">
+              </div>
             </template>
           </div>
-          <div class="sendArea horizontal layout">
-            <div class="input flex horizontal layout">
-              <p contenteditable="true" data-placeholder$="{{text_message==placeholder}}" class="flex" on-focus="removePlaceholder" on-blur="checkPlaceholder"
-                on-keypress="updateTextMessage">{{placeholder}}</p>
-            </div>
-            <paper-icon-button icon="send" class="send" disabled="[[disable_send]]" on-click="sendMSG"></paper-icon-button>
+        </template>
+        <div show$="{{menu_open}}" class="bar vertical layout" id="bar">
+          <div class="userInfo">
+            <img src="{{user.image}}" class="avatar">
+            <p>{{user.first_name}}</p>
+            <p class="phone">{{user.phone}}</p>
+            <paper-icon-button class="closeMenu" on-click="toggleMenu" icon="arrow-back"></paper-icon-button>
+          </div>
+          <div class="menuContent flex">
+            <ul class="menuOptions">
+              <li on-click="logout">
+                <iron-icon class="optionIcon" icon="exit-to-app"></iron-icon>
+                <span>Logout</span>
+              </li>
+            </ul>
           </div>
         </div>
-        <template is="dom-if" if="{{expand_image}}">
-          <div class="full-image-container animated zoomIn">
-            <paper-icon-button on-click="closeFullImage" class="close-icon" icon="arrow-back"></paper-icon-button>
-            <img class="full-image" src="{{expand_image}}">
-          </div>
-        </template>
-      </div>
-    </template>
-    <div show$="{{menu_open}}" class="bar vertical layout" id="bar">
-      <div class="userInfo">
-        <img src="{{user.image}}" class="avatar">
-        <p>{{user.first_name}}</p>
-        <p class="phone">{{user.phone}}</p>
-        <paper-icon-button class="closeMenu" on-click="toggleMenu" icon="arrow-back"></paper-icon-button>
-      </div>
-      <div class="menuContent flex">
-        <ul class="menuOptions">
-          <li on-click="logout">
-            <iron-icon class="optionIcon" icon="exit-to-app"></iron-icon>
-            <span>Logout</span>
-          </li>
-        </ul>
-      </div>
+      </template>
     </div>
   </template>
-</div>
-</template>
 </dom-module>
 <script>
   Polymer({
@@ -1680,10 +1755,10 @@ Example:
         });
         if (message.isPhoto) {
           var image_index = message._base.media.photo.sizes.length - 1;
-          this.getImgIndex(message._base.media.photo, image_index , newChatIndex, 0);
+          this.getImgIndex(message._base.media.photo, image_index, newChatIndex, 0);
         } else if (message.isSticker) {
           this.getStickerImg(message._base.media.document, newChatIndex, 0);
-        } else if(message.isWeb){
+        } else if (message.isWebpage) {
           var index_image = message._base.media.webpage.photo.sizes.length - 1;
           that.getImgIndex(message._base.media.webpage.photo, image_index, newChatIndex, 0)
         }
@@ -1701,11 +1776,11 @@ Example:
             updateSelected);
         } else if (message.isSticker) {
           this.getStickerImg(message._base.media.document, chat_index, this.chats[chat_index].chat.chat_messages.length);
-        } else if(message.isWeb){
+        } else if (message.isWebpage) {
           var index_image = message._base.media.webpage.photo.sizes.length - 1;
           this.getImgIndex(message._base.media.webpage.photo, chat_index, this.chats[chat_index].chat.chat_messages.length)
         }
-        
+
         this.push('chats.' + chat_index + '.chat.chat_messages', message);
 
         this.chats[chat_index].chat.last_message = message;
@@ -1939,16 +2014,23 @@ Example:
         } else if (msg.media._ === 'messageMediaDocument' && msg.media.document.mime_type === 'image/webp') {
           message.preview = message.text ? '' : msg.media.document.attributes[1].alt + ' Sticker';
           message.isSticker = true;
-        } else if(msg.media._ === 'messageMediaDocument' && msg.media.document.mime_type.indexOf('application') > -1){
+        } else if (msg.media._ === 'messageMediaDocument' && msg.media.document.mime_type.indexOf('application') > -1) {
           // message.text = "[MEDIA it doesn't implemented] " + message.text;
           message.isFile = true;
           message.filename = msg.media.document.attributes[0].file_name;
-          message.preview = message.text ? '': message.filename; 
+          message.preview = message.text ? '' : message.filename;
           message.size = this._formatBytes(msg.media.document.size, 1);
           message.type = msg.media.document.mime_type.split('/')[1];
-        } else if(msg.media._ === 'messageMediaWebPage'){
-          message.isWeb = true;
-        }else {
+        } else if (msg.media._ === 'messageMediaWebPage') {
+          var webpage = msg.media.webpage;
+          message.isWebpage = true;
+          message.title = webpage.title;
+          message.link = webpage.url;
+          message.site_name = webpage.site_name;
+          message.description = webpage.description;
+          message.text = '';
+
+        } else {
           message.text = "[MEDIA it doesn't implemented] " + message.text;
         }
       }
@@ -2299,7 +2381,7 @@ Example:
           that.getImgIndex(message._base.media.photo, index_image, index, msg_index);
         } else if (message.isSticker) {
           that.getStickerImg(message._base.media.document, index, msg_index);
-        } else if(message.isWeb){
+        } else if (message.isWebpage) {
           var index_image = message._base.media.webpage.photo.sizes.length - 1;
           that.getImgIndex(message._base.media.webpage.photo, index_image, index, msg_index)
         }
@@ -2333,62 +2415,14 @@ Example:
 
       telegramApi.getPhoto('base64', doc.thumb.location).then(setSrc);
     },
-    downloadFile: function(evt){
+
+    downloadFile: function (evt) {
       var item = evt.model.item;
       evt.model.set('item.loading', true);
-      telegramApi.downloadDocument(item._base.media.document,false,true).then(function(){
+      telegramApi.downloadDocument(item._base.media.document, false, true).then(function () {
         evt.model.set('item.loading', false);
       });
     },
-    /*
-        getStickerImg: function (doc) {
-      var that = this;
-      //console.info(doc);
-      return new Promise(function (resolve, reject) {
-        var error = function (e) {
-          reject(e);
-        }
-        // look for attributes of sticker
-        var sticker;
-        doc.attributes.forEach(function (attribute) {
-          if (attribute._ === 'documentAttributeSticker') {
-            sticker = attribute;
-          }
-        });
-
-        // request stickerset
-        that.getStickerSet(sticker).then(function (stickers) {
-          console.info(stickers);
-          var stick = {};
-          stick.hash = stickers.set.hash.toString();
-          stick.emoticon = sticker.alt;
-          // that.getSingleSticker(stick).then(function (stick_data) {
-          //   if (stick_data.stickers.length > 0){
-          //   telegramApi.getPhoto('base64', stick_data.stickers[0].thumb.location).then(resolve, reject);
-          //   } else {
-          //     resolve(stick_data);
-          //   }
-          // }, error)
-        }, error);
-      })
-    },*/
-    getStickerSet: function (sticker) {
-      //   var stickers = { stickerset: sticker.stickerset };stickers
-      //   return telegramApi.invokeApi('messages.getStickerSet', stickers)
-    },
-    // getSingleSticker: function (sticker) {
-    //   return telegramApi.invokeApi('messages.getStickers', sticker);
-    // },
-
-    // getRecursive:function(set){
-    //   var hash = set.set.hash;
-    //   var that = this;
-    //   set.documents.forEach(function(doc){
-    //     telegramApi.getPhoto('base64',doc.thumb.location).then(function(e){
-    //       console.info(e);
-    //     })
-    //   });
-    // },
-
   });
+
 </script>
