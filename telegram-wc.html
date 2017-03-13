@@ -15,6 +15,7 @@ Example:
 <link rel="import" href="bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="bower_components/iron-icons/av-icons.html">
 <link rel="import" href="bower_components/iron-icons/editor-icons.html">
+<link rel="import" href="bower_components/iron-icons/social-icons.html">
 <link rel="import" href="bower_components/paper-button/paper-button.html">
 <link rel="import" href="bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="bower_components/paper-toolbar/paper-toolbar.html">
@@ -64,6 +65,10 @@ Example:
         border: none;
         border-bottom: 1px solid #d2d2d2;
         margin: 0;
+      }
+      
+      [downloading] {
+        cursor: wait;
       }
       /* HEADER */
       
@@ -311,12 +316,64 @@ Example:
       }
       
       .progressbar {
-        width: 100%;
+        width: 100% !important;
+      }
+      
+      .fileinfo .progressbar {
         display: none;
       }
       
-      .progressbar[loading] {
+      .fileinfo .progressbar[loading] {
         display: inline-block;
+      }
+      
+      .message-button {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        min-height: 32px;
+        background-color: #41b71a;
+        border-radius: 100%;
+        padding: 5px;
+        color: #DCF8C6;
+      }
+      
+      .audio-info {
+        max-width: calc(100% - 24px);
+        box-sizing: border-box;
+        padding: 0 8px;
+      }
+      
+      .audio-name {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow-x: hidden;
+        width: 100%;
+        font-weight: bold;
+        color: #41b71a;
+        margin-bottom: 3px;
+      }
+      
+      .audio-duration {
+        margin-top: 3px;
+        color: #41b71a;
+        font-size: 10px;
+      }
+      
+      .contact-icon {
+        border-radius: 100%;
+        padding: 3px;
+        box-sizing: border-box;
+        margin-right: 10px;
+        color: white;
+      }
+      
+      .contact-name {
+        font-weight: bold;
+      }
+      
+      .contact-phone {
+        font-size: 12px;
       }
       
       .sizetype {
@@ -1006,6 +1063,33 @@ Example:
                           </div>
                         </div>
                       </template>
+                      <template is="dom-if" if="{{item.isAudio}}" id="audioModel">
+                        <div class="horizontal layout center" downloading$="{{item.downloading}}">
+                          <paper-icon-button hidden$="{{item.src}}" on-click="downloadMedia" class="message-button" icon="get-app"></paper-icon-button on-click="downloadMedia">
+                          <template is="dom-if" if="{{item.src}}">
+                            <paper-icon-button  class="message-button" on-click="pauseAudio" hidden$="{{!item.playing}}" icon="av:pause"></paper-icon-button>
+                            <paper-icon-button  class="message-button" on-click="playAudio" hidden$="{{item.playing}}" icon="av:play-arrow"></paper-icon-button>
+                            <audio class="audio-player" on-timeUpdate="updateTime" on-ended="endedAudio">
+                              <source src="{{item.src}}" type="{{item.type}}">
+                            </audio>
+                          </template>
+                          <div class="audio-info vertical layout flex">
+                            <p class="audio-name">{{item.title}}</p>
+                            <p>{{item.performer}}</p>
+                            <template is="dom-if" if="{{item.src}}">
+                              <p class="audio-duration">{{item.current_time}} /{{item.duration}}</p>
+                            </template>
+                            <template is="dom-if" if="{{!item.src}}">
+                              <template is="dom-if" if="{{item.downloading}}">
+                                <paper-progress class="progressbar" value="{{item.progress}}"></paper-progress>
+                              </template>
+                              <template is="dom-if" if="{{!item.downloading}}">
+                                <p class="audio-duration">{{item.duration}}</p>
+                              </template>
+                            </template>
+                          </div>
+                        </div>
+                      </template>
                       <span class="text">{{item.text}}</span>
                       <div class="date">
                         {{item.date}}
@@ -1072,6 +1156,12 @@ Example:
                             <p class="contact-name">{{item.first_name}} {{item.last_name}}</p>
                             <p class="contact-phone">{{item.phone_number}}</p>
                           </div>
+                        </div>
+                      </template>
+
+                      <template is="dom-if" if="{{item.isAudio}}">
+                        <div class="audio horizontal layout center">
+                          <paper-icon-button class="message-button" icon="get-app"></paper-icon-button>
                         </div>
                       </template>
                       <span class="text">{{item.text}}</span>
@@ -2052,6 +2142,16 @@ Example:
           message.preview = message.text ? '' : message.filename;
           message.size = this._formatBytes(msg.media.document.size, 1);
           message.type = msg.media.document.mime_type.split('/')[1];
+        } else if (msg.media._ === 'messageMediaDocument' && msg.media.document.mime_type.indexOf('audio') > -1) {
+          var audio = msg.media.document;
+          message.isAudio = true;
+          message.title = audio.attributes[0].title;
+          message.performer = audio.attributes[0].performer;
+          message.size = audio.size;
+          message.duration = this.prettyDuration(audio.attributes[0].duration);
+          message.file_name = audio.attributes[1].file_name;
+          message.preview = '♫ ' + message.performer + ' - ' + message.title;
+
         } else if (msg.media._ === 'messageMediaWebPage') {
           var webpage = msg.media.webpage;
           message.preview = webpage.title;
@@ -2256,7 +2356,7 @@ Example:
       } else {
         var index = id;
       }
-      return color[index%color.length]
+      return color[index % color.length]
 
     },
     _parsePhone: function (phone) {
@@ -2282,6 +2382,12 @@ Example:
         i = Math.floor(Math.log(bytes) / Math.log(k));
       return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
     },
+    prettyDuration: function (duration) {
+      var duration = moment.duration(duration, 'seconds');
+      return duration._data.hours ? moment(duration._data).format('HH:mm:ss') : moment(duration._data).format('mm:ss');
+    },
+
+
     /*------------------------------ subscribe handler -------------------------------*/
     updateShort: function (response) {
       // when status is updated
@@ -2473,6 +2579,51 @@ Example:
       telegramApi.downloadDocument(item._base.media.document, false, true).then(function () {
         evt.model.set('item.loading', false);
       });
+    },
+
+    downloadMedia: function (evt) {
+      var model = evt.model;
+      var item = evt.model.item;
+      model.set('item.downloading', true);
+      model.set('item.progress', 0);
+      function progress(bytes) {
+        model.set('item.progress', (bytes / item.size * 100).toFixed(0))
+      }
+      telegramApi.downloadDocument(item._base.media.document, progress, true).then(function (audio) {
+        model.set('item.downloading', false);
+        var blob = new Blob(audio.bytes, { type: audio.type });
+        var url = URL.createObjectURL(blob);
+        model.set('item.src', url);
+        model.set('item.type', audio.type);
+        model.set('item.current_time', this.prettyDuration(0));
+
+      }.bind(this));
+    },
+
+    /* MEDIA CONTROLLER*/
+    pauseAudio: function(evt){
+      var model = evt.model;
+      var item = evt.model.item;
+      model.set('item.playing', false);
+      var audioElement = model._children.find(function(element){return element.tagName == 'AUDIO'});
+      audioElement.pause();
+    },
+    playAudio: function(evt){
+      var model = evt.model;
+      var item = evt.model.item;
+      model.set('item.playing', true);
+      var audioElement = model._children.find(function(element){return element.tagName == 'AUDIO'});
+      audioElement.play();
+    },
+    updateTime: function(evt){
+      var model = evt.model;
+      var item = evt.model.item;
+      model.set('item.current_time', this.prettyDuration(evt.currentTarget.currentTime));
+    },
+    endedAudio: function(evt){
+      var model = evt.model;
+      var item = evt.model.item;
+      model.set('item.playing', false);
     },
   });
 
