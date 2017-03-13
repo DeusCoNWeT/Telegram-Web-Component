@@ -347,7 +347,6 @@ Example:
         --paper-slider-pin-color: #41b71a;
       }
       
-      
       .audio-info {
         max-width: calc(100% - 24px);
         box-sizing: border-box;
@@ -399,6 +398,35 @@ Example:
         --paper-spinner-layer-2-color: #5682a3;
         --paper-spinner-layer-3-color: #5682a3;
         --paper-spinner-layer-4-color: #5682a3;
+      }
+      
+      .video-container {
+        background-repeat: no-repeat;
+        background-size: 100% 100%;
+        position: relative;
+      }
+      .video-progress{
+        position:absolute;
+        bottom:5px;
+        width:100%;
+        box-sizing: border-box;
+        padding:0 5px;
+      }
+      .video-duration-size {
+        position: absolute;
+        top: 5px;
+        left: 5px;
+        color: white;
+        font-size: 10px;
+      }
+      
+      .video-download:hover {
+        box-shadow: 0px 0px 10px black;
+      }
+      
+      .video-download {
+        background-color: rgba(0, 0, 0, 0.4);
+        color: white;
       }
       
       .full-image-container {
@@ -1073,12 +1101,12 @@ Example:
                           </div>
                         </div>
                       </template>
-                      <template is="dom-if" if="{{item.isAudio}}" id="audioModel">
+                      <template is="dom-if" if="{{item.isAudio}}">
                         <div class="horizontal layout center" downloading$="{{item.downloading}}">
-                          <paper-icon-button hidden$="{{item.src}}" on-click="downloadMedia" class="message-button" icon="get-app"></paper-icon-button on-click="downloadMedia">
+                          <paper-icon-button hidden$="{{item.src}}" title="Download audio ({{item.prettySize}})" on-click="downloadAudio" class="message-button" icon="get-app"></paper-icon-button>
                           <template is="dom-if" if="{{item.src}}" on-dom-change="setInitialVol">
-                            <paper-icon-button class="message-button" on-click="pauseAudio" hidden$="{{!item.playing}}" icon="av:pause"></paper-icon-button>
-                            <paper-icon-button class="message-button" on-click="playAudio" hidden$="{{item.playing}}" icon="av:play-arrow"></paper-icon-button>
+                            <paper-icon-button class="message-button" title="Pause {{item.title}}" on-click="pauseAudio" hidden$="{{!item.playing}}" icon="av:pause"></paper-icon-button>
+                            <paper-icon-button class="message-button" title="Play {{item.title}}" on-click="playAudio" hidden$="{{item.playing}}" icon="av:play-arrow"></paper-icon-button>
                             <audio class="audio-player" on-timeUpdate="updateTime" on-ended="endedAudio">
                               <source src="{{item.src}}" type="{{item.type}}">
                             </audio>
@@ -1101,6 +1129,17 @@ Example:
                               </template>
                             </template>
                           </div>
+                        </div>
+                      </template>
+
+                      <template is="dom-if" if="{{item.isVideo}}">
+                        <div class="video-container vertical layout center-center" style$="background-image: url('{{item.video_preview}}');width:{{item.width}};height:{{item.height}}">
+                          <p class="video-duration-size">
+                            {{item.duration}} {{item.prettySize}}
+                          </p>
+                          <paper-progress hidden$="{{!item.downloading}}" class="progressbar video-progress" value="{{item.progress}}"></paper-progress>
+                          <paper-icon-button hidden$="{{item.src}}" title="Download video ({{item.prettySize}})" on-click="downloadVideo" class="message-button video-download" icon="get-app"></paper-icon-button>
+                          <paper-icon-button hidden$="{{!item.src}}" title="Play video" on-click="fullSizeVideo" class="message-button video-download" icon="av:play-arrow"></paper-icon-button>
                         </div>
                       </template>
                       <span class="text">{{item.text}}</span>
@@ -1173,8 +1212,43 @@ Example:
                       </template>
 
                       <template is="dom-if" if="{{item.isAudio}}">
-                        <div class="audio horizontal layout center">
-                          <paper-icon-button class="message-button" icon="get-app"></paper-icon-button>
+                        <div class="horizontal layout center" downloading$="{{item.downloading}}">
+                          <paper-icon-button hidden$="{{item.src}}" on-click="downloadAudio" title="Download audio ({{item.prettySize}})" class="message-button" icon="get-app"></paper-icon-button>
+                          <template is="dom-if" if="{{item.src}}" on-dom-change="setInitialVol">
+                            <paper-icon-button class="message-button" title="Pause {{item.title}}" on-click="pauseAudio" hidden$="{{!item.playing}}" icon="av:pause"></paper-icon-button>
+                            <paper-icon-button class="message-button" title="Play {{item.title}}" on-click="playAudio" hidden$="{{item.playing}}" icon="av:play-arrow"></paper-icon-button>
+                            <audio class="audio-player" on-timeUpdate="updateTime" on-ended="endedAudio">
+                              <source src="{{item.src}}" type="{{item.type}}">
+                            </audio>
+                          </template>
+                          <div class="audio-info vertical layout flex">
+                            <p class="audio-name">{{item.title}}</p>
+                            <p>{{item.performer}}</p>
+                            <template is="dom-if" if="{{item.src}}">
+                              <div class="horizontal layout">
+                                <p class="audio-duration flex">{{item.current_time}} /{{item.duration}}</p>
+                                <paper-slider on-change="setVolume" pin class="volume" value="{{item.volume}}"></paper-slider>
+                              </div>
+                            </template>
+                            <template is="dom-if" if="{{!item.src}}">
+                              <template is="dom-if" if="{{item.downloading}}">
+                                <paper-progress class="progressbar" value="{{item.progress}}"></paper-progress>
+                              </template>
+                              <template is="dom-if" if="{{!item.downloading}}">
+                                <p class="audio-duration">{{item.duration}}</p>
+                              </template>
+                            </template>
+                          </div>
+                        </div>
+                      </template>
+
+                      <template is="dom-if" if="{{item.isVideo}}">
+                        <div class="video-container vertical layout center-center" style$="background-image: url('{{item.video_preview}}');width:{{item.width}};height:{{item.height}}">
+                          <p class="video-duration-size">
+                            {{item.duration}} {{item.prettySize}}
+                          </p>
+                          <paper-icon-button hidden$="{{item.src}}" on-click="downloadVideo" title="Download video ({{item.prettySize}})" class="message-button video-download" icon="get-app"></paper-icon-button>
+                          <paper-icon-button hidden$="{{!item.src}}" on-click="fullSizeVideo" title="Play video" class="message-button video-download" icon="av:play-arrow"></paper-icon-button>
                         </div>
                       </template>
                       <span class="text">{{item.text}}</span>
@@ -1197,6 +1271,14 @@ Example:
               <div class="full-image-container animated zoomIn">
                 <paper-icon-button on-click="closeFullImage" class="close-icon" icon="arrow-back"></paper-icon-button>
                 <img class="full-image" src="{{expand_image}}">
+              </div>
+            </template>
+            <template is="dom-if" if="{{expand_video}}">
+              <div class="full-image-container animated zoomIn">
+                <paper-icon-button on-click="closeFullVideo" class="close-icon" icon="arrow-back"></paper-icon-button>
+                <video class="full-image" controls>
+                  <source src="{{expand_video}}" type="{{expand_video_type}}">
+                </video>
               </div>
             </template>
           </div>
@@ -1894,7 +1976,9 @@ Example:
           this.getStickerImg(message._base.media.document, newChatIndex, 0);
         } else if (message.isWebpage) {
           var index_image = message._base.media.webpage.photo.sizes.length - 1;
-          that.getImgIndex(message._base.media.webpage.photo, image_index, newChatIndex, 0)
+          this.getImgIndex(message._base.media.webpage.photo, image_index, newChatIndex, 0)
+        } else if (message.isVideo) {
+          this.getVideoPreview(message._base.media.video, newChatIndex, 0);
         }
       } else {
         // assign color
@@ -1913,6 +1997,8 @@ Example:
         } else if (message.isWebpage) {
           var index_image = message._base.media.webpage.photo.sizes.length - 1;
           this.getImgIndex(message._base.media.webpage.photo, chat_index, this.chats[chat_index].chat.chat_messages.length)
+        }  else if (message.isVideo) {
+          this.getVideoPreview(message._base.media.video, chat_index, this.chats[chat_index].chat.chat_messages.length);
         }
 
         this.push('chats.' + chat_index + '.chat.chat_messages', message);
@@ -1990,7 +2076,7 @@ Example:
         var me = this;
         telegramApi.getHistory({
           id: user.id,
-          take: 50,
+          take: 100,
           type: type
         }).then(resolve, reject);
       });
@@ -2161,9 +2247,28 @@ Example:
           message.title = audio.attributes[0].title;
           message.performer = audio.attributes[0].performer;
           message.size = audio.size;
+          message.prettySize = this._formatBytes(audio.size, 1);
           message.duration = this.prettyDuration(audio.attributes[0].duration);
           message.file_name = audio.attributes[1].file_name;
           message.preview = '♫ ' + message.performer + ' - ' + message.title;
+
+        } else if (msg.media._ === "messageMediaVideo") {
+          var media = msg.media.video;
+
+          message.isVideo = true;
+          message.prettySize = this._formatBytes(media.size, 1);
+          message.size = media.size;
+          if (!media.attributes || media.attributes.length === 0) {
+            var file_name = moment(media.date).format('[VID_]YYYYMMDD[_]HHmmss');
+            file_name += '.' + media.mime_type.split('/')[1];
+            var attr = { '_': 'documentAttributeFilename', file_name: file_name };
+            media.attributes = [attr];
+          }
+          message.width = (media.thumb.w * 2) + 'px';
+          message.height = (media.thumb.h * 2) + 'px';
+          message.preview = 'Video';
+          message.duration = this.prettyDuration(media.duration);
+          message.type = media.mime_type;
 
         } else if (msg.media._ === 'messageMediaWebPage') {
           var webpage = msg.media.webpage;
@@ -2554,6 +2659,8 @@ Example:
         } else if (message.isWebpage) {
           var index_image = message._base.media.webpage.photo.sizes.length - 1;
           that.getImgIndex(message._base.media.webpage.photo, index_image, index, msg_index)
+        } else if (message.isVideo) {
+          that.getVideoPreview(message._base.media.video, index, msg_index);
         }
       });
     },
@@ -2563,7 +2670,11 @@ Example:
     closeFullImage: function (e) {
       this.expand_image = "";
     },
-
+    closeFullVideo: function (evt) {
+      this.expand_video = null;
+      this.expand_video_type = null;
+      evt.currentTarget.parentElement.querySelector('video').pause()
+    },
     getStickerImg: function (doc, chat_index, message_index) {
       var that = this;
 
@@ -2594,7 +2705,7 @@ Example:
       });
     },
 
-    downloadMedia: function (evt) {
+    downloadAudio: function (evt) {
       var model = evt.model;
       var item = evt.model.item;
       model.set('item.downloading', true);
@@ -2611,6 +2722,42 @@ Example:
         model.set('item.current_time', this.prettyDuration(0));
 
       }.bind(this));
+    },
+    downloadVideo: function (evt) {
+      var model = evt.model;
+      var item = evt.model.item;
+      model.set('item.downloading', true);
+      model.set('item.progress', 0);
+      function progress(bytes) {
+        model.set('item.progress', (bytes / item.size * 100).toFixed(0));
+      }
+      telegramApi.downloadDocument(item._base.media.video, progress, true).then(function (video) {
+        model.set('item.downloading', false);
+        var blob = new Blob(video.bytes, { type: video.type });
+        var url = URL.createObjectURL(blob);
+        model.set('item.src', url);
+        model.set('item.type', video.type);
+      });
+
+    },
+    getVideoPreview: function (video, chat_index, message_index) {
+      var that = this;
+      function setSrc(img) {
+
+        var blob = new Blob([img.bytes], { type: 'image/jpeg' });
+        var blob_url = URL.createObjectURL(blob);
+        that.chats[chat_index].chat.chat_messages[message_index].video_preview = blob_url;
+        that.notifyPath('chats.' + chat_index + '.chat.chat_messages.' + message_index + '.video_preview', that.chats[
+          chat_index].chat.chat_messages[message_index].video_preview);
+        // avoid unselect user while its loading the img
+        if (that.user_selected && that.user_selected.id == that.chats[chat_index].chat.user.id) {
+          that.user_selected.chat_messages[message_index].video_preview = blob_url;
+          that.notifyPath('user_selected.chat_messages.' + message_index + '.video_preview', that.user_selected.chat_messages[
+            message_index].video_preview);
+        }
+      }
+
+      telegramApi.getDocumentPreview(video).then(setSrc);
     },
 
     /* MEDIA CONTROLLER*/
@@ -2638,17 +2785,24 @@ Example:
       var item = evt.model.item;
       model.set('item.playing', false);
     },
-    setVolume: function(evt){
+    setVolume: function (evt) {
       var audioElement = evt.target.parentElement.parentElement.parentElement.querySelector('audio');
       var item = evt.model.item;
-      audioElement.volume = item.volume/100;
+      audioElement.volume = item.volume / 100;
     },
-    setInitialVol: function(evt){
+    setInitialVol: function (evt) {
       var model = evt.model;
       var item = evt.model.item;
       var audioElement = model._children[1].querySelector('audio');
-      var volume = Math.round(audioElement.volume*100);
+      var volume = Math.round(audioElement.volume * 100);
       model.set('item.volume', volume);
+    },
+    fullSizeVideo: function (evt) {
+      var item = evt.model.item;
+      this.expand_video = item.src;
+      this.expan_video_type = item.type;
+
+      console.info('Poner en full size');
     },
   });
 
