@@ -21,6 +21,7 @@ Example:
 <link rel="import" href="bower_components/paper-toolbar/paper-toolbar.html">
 <link rel="import" href="bower_components/paper-input/paper-input.html">
 <link rel="import" href="bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="imporT" href="bower_components/paper-slider/paper-slider.html">
 <link rel="import" href="bower_components/paper-styles/shadow.html">
 <link rel="import" href="bower_components/paper-fab/paper-fab.html">
 <link rel="import" href="bower_components/paper-spinner/paper-spinner.html">
@@ -337,6 +338,15 @@ Example:
         padding: 5px;
         color: #DCF8C6;
       }
+      
+      .volume {
+        width: 100px;
+        height: 20px;
+        --paper-slider-knob-color: #41b71a;
+        --paper-slider-active-color: #41b71a;
+        --paper-slider-pin-color: #41b71a;
+      }
+      
       
       .audio-info {
         max-width: calc(100% - 24px);
@@ -1066,9 +1076,9 @@ Example:
                       <template is="dom-if" if="{{item.isAudio}}" id="audioModel">
                         <div class="horizontal layout center" downloading$="{{item.downloading}}">
                           <paper-icon-button hidden$="{{item.src}}" on-click="downloadMedia" class="message-button" icon="get-app"></paper-icon-button on-click="downloadMedia">
-                          <template is="dom-if" if="{{item.src}}">
-                            <paper-icon-button  class="message-button" on-click="pauseAudio" hidden$="{{!item.playing}}" icon="av:pause"></paper-icon-button>
-                            <paper-icon-button  class="message-button" on-click="playAudio" hidden$="{{item.playing}}" icon="av:play-arrow"></paper-icon-button>
+                          <template is="dom-if" if="{{item.src}}" on-dom-change="setInitialVol">
+                            <paper-icon-button class="message-button" on-click="pauseAudio" hidden$="{{!item.playing}}" icon="av:pause"></paper-icon-button>
+                            <paper-icon-button class="message-button" on-click="playAudio" hidden$="{{item.playing}}" icon="av:play-arrow"></paper-icon-button>
                             <audio class="audio-player" on-timeUpdate="updateTime" on-ended="endedAudio">
                               <source src="{{item.src}}" type="{{item.type}}">
                             </audio>
@@ -1077,7 +1087,10 @@ Example:
                             <p class="audio-name">{{item.title}}</p>
                             <p>{{item.performer}}</p>
                             <template is="dom-if" if="{{item.src}}">
-                              <p class="audio-duration">{{item.current_time}} /{{item.duration}}</p>
+                              <div class="horizontal layout">
+                                <p class="audio-duration flex">{{item.current_time}} /{{item.duration}}</p>
+                                <paper-slider on-change="setVolume" pin class="volume" value="{{item.volume}}"></paper-slider>
+                              </div>
                             </template>
                             <template is="dom-if" if="{{!item.src}}">
                               <template is="dom-if" if="{{item.downloading}}">
@@ -2587,7 +2600,7 @@ Example:
       model.set('item.downloading', true);
       model.set('item.progress', 0);
       function progress(bytes) {
-        model.set('item.progress', (bytes / item.size * 100).toFixed(0))
+        model.set('item.progress', (bytes / item.size * 100).toFixed(0));
       }
       telegramApi.downloadDocument(item._base.media.document, progress, true).then(function (audio) {
         model.set('item.downloading', false);
@@ -2601,29 +2614,41 @@ Example:
     },
 
     /* MEDIA CONTROLLER*/
-    pauseAudio: function(evt){
+    pauseAudio: function (evt) {
       var model = evt.model;
       var item = evt.model.item;
       model.set('item.playing', false);
-      var audioElement = model._children.find(function(element){return element.tagName == 'AUDIO'});
+      var audioElement = model._children.find(function (element) { return element.tagName == 'AUDIO' });
       audioElement.pause();
     },
-    playAudio: function(evt){
+    playAudio: function (evt) {
       var model = evt.model;
       var item = evt.model.item;
       model.set('item.playing', true);
-      var audioElement = model._children.find(function(element){return element.tagName == 'AUDIO'});
+      var audioElement = model._children.find(function (element) { return element.tagName == 'AUDIO' });
       audioElement.play();
     },
-    updateTime: function(evt){
+    updateTime: function (evt) {
       var model = evt.model;
       var item = evt.model.item;
       model.set('item.current_time', this.prettyDuration(evt.currentTarget.currentTime));
     },
-    endedAudio: function(evt){
+    endedAudio: function (evt) {
       var model = evt.model;
       var item = evt.model.item;
       model.set('item.playing', false);
+    },
+    setVolume: function(evt){
+      var audioElement = evt.target.parentElement.parentElement.parentElement.querySelector('audio');
+      var item = evt.model.item;
+      audioElement.volume = item.volume/100;
+    },
+    setInitialVol: function(evt){
+      var model = evt.model;
+      var item = evt.model.item;
+      var audioElement = model._children[1].querySelector('audio');
+      var volume = Math.round(audioElement.volume*100);
+      model.set('item.volume', volume);
     },
   });
 
