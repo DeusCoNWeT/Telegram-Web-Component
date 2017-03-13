@@ -274,7 +274,7 @@ Example:
         color: #5dad00;
       }
       
-      .location > img {
+      .location>img {
         max-width: 100%;
       }
       
@@ -996,6 +996,16 @@ Example:
                           <img src="{{item.photo_preview}}">
                         </a>
                       </template>
+
+                      <template is="dom-if" if="{{item.isContact}}">
+                        <div class="contact horizontal layout center">
+                          <iron-icon class="contact-icon" icon="social:person" style$="background-color: {{item.icon_color}}"></iron-icon>
+                          <div class="contact-info vertical layout flex">
+                            <p class="contact-name">{{item.first_name}} {{item.last_name}}</p>
+                            <p class="contact-phone">{{item.phone_number}}</p>
+                          </div>
+                        </div>
+                      </template>
                       <span class="text">{{item.text}}</span>
                       <div class="date">
                         {{item.date}}
@@ -1054,6 +1064,15 @@ Example:
                       </template>
                       <template is="dom-if" if="{{item.isChat}}">
                         <p class="sender" style$="color: {{item.user_color}}">{{item.from_user}}</p>
+                      </template>
+                      <template is="dom-if" if="{{item.isContact}}">
+                        <div class="contact horizontal layout center">
+                          <iron-icon class="contact-icon" icon="social:person" style$="background-color: {{item.icon_color}}"></iron-icon>
+                          <div class="contact-info vertical layout flex">
+                            <p class="contact-name">{{item.first_name}} {{item.last_name}}</p>
+                            <p class="contact-phone">{{item.phone_number}}</p>
+                          </div>
+                        </div>
                       </template>
                       <span class="text">{{item.text}}</span>
                       <div class="date">
@@ -2050,7 +2069,15 @@ Example:
           message.link = "https://maps.google.com/?q=" + lat_long;
           message.preview = 'Location';
           message.photo_preview = "https://maps.googleapis.com/maps/api/staticmap?sensor=false&center=" + lat_long;
-          message.photo_preview += "&zoom=15&size=300x150&scale=2&markers=color:red|size:big|" +lat_long;
+          message.photo_preview += "&zoom=15&size=300x150&scale=2&markers=color:red|size:big|" + lat_long;
+        } else if (msg.media._ === "messageMediaContact") {
+          var contact = msg.media;
+          message.preview = "Contact";
+          message.isContact = true;
+          message.first_name = contact.first_name;
+          message.last_name = contact.last_name;
+          message.phone_number = contact.phone_number;
+          message.icon_color = this._getRandomColor(contact.user_id);
         } else {
           message.text = "[MEDIA it doesn't implemented] " + message.text;
         }
@@ -2215,18 +2242,21 @@ Example:
         "#03A9F4", "#00BCD4", "#009688", "#4CAF50", "#8BC34A", "#CDDC39", "#FFEB3B",
         "#FFC107", "#FF9800", "FF5722", "#795548", "#607D8B"
       ]
-
-      var index = -1;
-      for (var i = 0; i < participants.length && index == -1; i++) {
-        if (participants[i].id == id) {
-          index = i;
+      if (participants) {
+        var index = -1;
+        for (var i = 0; i < participants.length && index == -1; i++) {
+          if (participants[i].id == id) {
+            index = i;
+          }
         }
+        if (index == -1) {
+          console.error('ID doesnt found in participants list', id, participants);
+          index = 0;
+        }
+      } else {
+        var index = id;
       }
-      if (index == -1) {
-        console.error('ID doesnt found in participants list', id, participants);
-        index = 0;
-      }
-      return color[index]
+      return color[index%color.length]
 
     },
     _parsePhone: function (phone) {
